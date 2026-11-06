@@ -35,6 +35,8 @@ function rebuild(){
     /* depth of field before the bloom: the bloom pass draws the last step to the screen with the renderer's sRGB output */
     if(THREE.BokehPass){V.dof=new THREE.BokehPass(V.scene,V.cam,{focus:12,aperture:ROOM.dof/12,maxblur:.008,width:V.w||1,height:V.h||1});V.comp.addPass(V.dof);}
     V.bloom=new THREE.UnrealBloomPass(new THREE.Vector2(V.w||1,V.h||1),.3,.35,.93);V.comp.addPass(V.bloom);
+    /* r128 tone-maps every material, render targets too: the scene was tone-mapped going into the composer, so the bloom's copy to the screen must not do it again (Ultra looked paler than Full) */
+    V.bloom.basic.toneMapped=false;
     resize(true);backApply();});
   resize(true);
 }
