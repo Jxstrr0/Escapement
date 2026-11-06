@@ -51,7 +51,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | **app** | |
 | `app/state.js` | `<script>`, VERSION, `$`, the career tables (named, filled by later PRs), `S` and `freshState`, `save` / `snapshot` / `hydrate` / slots / `applyLoaded`, theme, motion and tier helpers, `fmt$`, `hud`, `toast`, the sheet |
 | `app/perf.js` | auto-adjust graphics (`PERF`, `perfPoll`, `perfManual`), `?fps=1` meter |
-| `app/savecode.js` | Back up / Restore: `buCode`, `buRead`, `buWrite`, the two sheets |
+| `app/savecode.js` | Back up / Restore: `buCode`, `buRead`, `buWrite`, the two sheets; save safety: backup files, `buPersist`, the storage line, the reminder bar |
 | `app/pwa.js` | service worker registration, the "New version ready" bar, `PWA.canInstall` / `install` / `iosTip` |
 | `app/boot.js` | `TABS`, `TAB_RENDER`, `showTab`, the Settings sheet, intro, `start()` (scheduled with `__ldGo`) |
 | `app/build.js` | the Build tab (PR 2) |
