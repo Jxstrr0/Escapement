@@ -5,6 +5,7 @@ css/build.css
 css/test.css
 css/shop.css
 css/events.css
+css/cards.css
 html/body.html
 html/ld-libs.html
 sim/parts.js
@@ -37,5 +38,6 @@ app/rnd.js
 app/shop.js
 app/career.js
 app/events.js
+app/cards.js
 app/help.js
 html/tail.html
