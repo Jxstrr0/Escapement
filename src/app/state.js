@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.1.0.0";
+const VERSION="0.1.0.1";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -30,7 +30,7 @@ function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,
 let S=freshState();
 
 const buObjS=o=>!!o&&typeof o==="object"&&!Array.isArray(o);
-function save(){try{localStorage.setItem("esc-save",JSON.stringify(S));}catch(e){}}
+function save(){try{localStorage.setItem("esc-save",JSON.stringify(S));}catch(e){return;}buSaved();}   // buSaved: app/savecode.js (asks the browser to keep our storage)
 function snapshot(){return JSON.parse(JSON.stringify(S));}
 /* load a save object into S. false (and S untouched) if it isn't one of ours */
 function hydrate(o){if(!buObjS(o)||!buObjS(o.cfg))return false;

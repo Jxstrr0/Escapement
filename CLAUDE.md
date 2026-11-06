@@ -17,7 +17,7 @@ Sister project: Prairie Engine Works (`Jxstrr0/350Chev`). The stack, build scrip
 ```
 node build.js            # rebuild index.html and sw.js from src/
 node build.js --check    # exit 1 if either is stale, a script block does not compile, or a function is declared twice
-node check-savecode.js   # 15 save-code checks: round trip, empty save, damaged and cut-off codes, other games, storage full
+node check-savecode.js   # 16 save-code checks: round trip, empty save, damaged and cut-off codes, other games, storage full, backup files
 ```
 
 Run all three before every commit. To play a local copy: `python3 -m http.server` in the repo root and open it. The service worker only registers on a real host (or with `?sw=1`), so local testing is never cached. `?fps=1` shows the frame rate and tier in the corner of the 3D view.
@@ -67,6 +67,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 ## Save codes
 
 - **Back up** / **Restore** (Shop tab → Saves, and Settings → Saves) in `src/app/savecode.js`. A code is `ESC1:` + the four keys as JSON, LZW-squeezed, base64url, + a 6-character checksum. Restore checks the whole code before writing anything. The next format is `ESC2:`.
+- **Save safety** (bottom of `savecode.js`): **Save backup file** / **Load backup file** next to Back up / Restore (the same code as `escapement-backup-YYYY-MM-DD.txt`, through the share sheet where it can take files, else a download; loading runs the Restore sheet's checks and confirm), a "Storage: ..." line from `navigator.storage.persisted()`, one `persist()` request per visit once there is progress, and a once-per-visit reminder bar when there is progress and no backup for 14 days. The last backup time is `S.lastBackup`, inside `esc-save` (no new key).
 - Players may paste their codes to debug a game. That is their personal data: decode and run it locally only, never send it to an outside service, and don't commit it.
 
 ## How Kelbo works
@@ -83,9 +84,10 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Palette: **dark felt + brass + steel**; the light theme is a pale workshop. UI font Space Grotesk, readouts **JetBrains Mono**.
 - Money: no currency sign yet. Ask what the Haldis uses before PR 5.
 
-## Current status (0.1.0.0)
+## Current status (0.1.0.1)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
+- 0.1.0.1: save safety (backup files, storage protection, backup reminder; see Save codes).
 - Next: PR 1, the movement sim (text only).
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 

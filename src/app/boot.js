@@ -28,7 +28,8 @@ function openSettings(){
 <div class="field"><span class="lbl">Auto-adjust graphics</span>${segHtml("gfxAutoSeg","gauto",[["1","On","lowers it if it stutters"],["0","Off"]],S.gfxAuto===false?"0":"1")}</div>
 <div class="field"><span class="lbl">Theme</span>${segHtml("themeSeg","theme",[["dark","Dark","felt"],["light","Light","workshop"],["auto","Auto","follow phone"]],S.theme||"dark")}</div>
 <div class="field"><span class="lbl">Motion</span>${segHtml("reduceSeg","reduce",[["auto","Auto","follow phone"],["1","Reduced"],["0","Full"]],S.reduce==null?"auto":S.reduce?"1":"0")}</div>
-<div class="field"><span class="lbl">Saves</span><div class="row"><button class="btn" id="setBackup">Back up</button><button class="btn" id="setRestore">Restore</button></div></div>
+<div class="field"><span class="lbl">Saves</span><div class="row"><button class="btn" id="setBackup">Back up</button><button class="btn" id="setRestore">Restore</button></div>
+<div class="row"><button class="btn" data-bu="file">Save backup file</button><button class="btn" data-bu="load">Load backup file</button></div><p class="hint" data-bu-store hidden></p></div>
 ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"><button class="btn" id="pwaInstall">Install app</button></div><p class="hint">Adds Escapement to your home screen. It works offline once installed.</p>`:`<p class="hint" style="margin-top:0">On iPhone or iPad: tap Share, then <b>Add to Home Screen</b>. It works offline once installed.</p>`}</div>`:""}
 <p class="hint">Escapement ${VERSION} · © ${new Date().getFullYear()} Kelbo / Longlight Interactive</p>`);
   const pick=(id,attr,fn)=>$(id).addEventListener("click",e=>{const b=e.target.closest(`[data-${attr}]`);if(!b)return;
@@ -39,6 +40,7 @@ ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"
   pick("reduceSeg","reduce",v=>{S.reduce=v==="auto"?null:v==="1";applyReduce();});
   $("setBackup").addEventListener("click",buBackupOpen);
   $("setRestore").addEventListener("click",buRestoreOpen);
+  buStoreLine();
   if($("pwaInstall"))$("pwaInstall").addEventListener("click",()=>{PWA.install();closeSheet();});
 }
 $("setOpen").addEventListener("click",openSettings);
