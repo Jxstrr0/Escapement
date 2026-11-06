@@ -17,9 +17,9 @@
 @keyframes coPulse{50%{box-shadow:0 0 0 6px rgba(224,192,126,.12),0 0 24px rgba(224,192,126,.6)}}
 :root[data-theme=light] #coSpot{border-color:#9a7424;box-shadow:0 0 0 3px rgba(154,116,36,.25)}
 @media (max-height:560px) and (orientation:landscape){
-  #coach{display:grid;grid-template-columns:auto 1fr auto auto;grid-template-areas:"step title acts skip" "text text text text";align-items:center;column-gap:10px;padding:6px 10px 8px;bottom:6px}
+  #coach{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"step title skip" "text text text" "acts acts acts";align-items:center;column-gap:10px;padding:6px 10px 8px;bottom:6px}
   #coach .cotop{display:contents}#coStep{grid-area:step}#coSkip{grid-area:skip}#coTitle{grid-area:title;font-size:14px;margin:0;min-width:0}
-  #coText{grid-area:text;font-size:13px;line-height:1.3}#coActs{grid-area:acts;margin:0;flex-wrap:nowrap}#coActs .btn{min-height:44px}}
+  #coText{grid-area:text;font-size:13px;line-height:1.3}#coActs{grid-area:acts;margin:4px 0 0;flex-wrap:nowrap;justify-self:end}#coActs .btn{white-space:nowrap}#coActs .btn{min-height:44px}}
 html.reduce #coSpot{animation:none}
 @media (prefers-reduced-motion:reduce){#coSpot{animation:none}}
 @media (prefers-reduced-transparency:reduce){#coach{background:#111714}}

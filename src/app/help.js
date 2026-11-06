@@ -64,7 +64,7 @@ function tutResult(){const c=car(),r=repairBy(c.tutRep);return !r?"paid":r.state
 /* one step: tab it belongs to, sel (a selector, or {tab: selector}) for the ring, go() the tab "Show me" opens,
    done() moves on by itself, next (a button label) for steps you only read */
 const TUT=[
-  {tab:"shop",sel:'[data-sh="tg"]',title:"Your first repair",
+  {tab:"shop",sel:'[data-sh="tg"]',alt:'[data-sh="close"]',title:"Your first repair",
     text:()=>tutIn()?"A customer has left a watch that isn't running right. Tap <b>Timegrapher</b> to put it on the machine.":"No watches are in just now. Close week and customers bring some in.",
     done:()=>(S.tgOn&&S.tgOn.kind==="repair")||!!tutFixing()},
   {tab:"test",sel:"#tgRead",title:"Read the trace",next:"Got it",
@@ -124,7 +124,7 @@ function tutDom(){if(tutEl)return;
   addEventListener("resize",()=>{if(tutOn())tutPlace();});}
 const tutVal=v=>typeof v==="function"?v():v;
 const tutIdx=id=>TUT.findIndex(T=>T.id===id);   // steps are found by id, so cards can be added without renumbering
-function tutSel(T){if(!T.sel)return null;if(typeof T.sel==="string")return T.sel;return T.sel[curTab]||null;}
+function tutSel(T){if(!T.sel)return null;if(typeof T.sel==="string")return T.alt&&!document.querySelector(T.sel)&&curTab===T.tab?T.alt:T.sel;return T.sel[curTab]||null;}   // alt: where to point when the target isn't there (no repairs in yet)
 function tutTarget(T){const s=tutSel(T);if(!s)return null;const el=document.querySelector(s);if(!el||!el.getClientRects().length)return null;
   if(el.closest(".tabpage")&&!el.closest(".tabpage.on"))return null;return el;}
 function tutStart(again){const c=car();if(!c||c.over)return;c.tut=false;if(again||c.tutStep==null){c.tutStep=0;c.tutRep=null;}tutScrolled=-1;save();tutShow();}
@@ -151,7 +151,7 @@ function tutShow(){if(!tutOn())return tutHide();tutDom();const c=car(),T=TUT[c.t
 function tutPlace(){if(!tutEl||tutEl.hidden)return;const T=TUT[car().tutStep],el=tutTarget(T),sp=tutSpotEl;
   if(!el||sheetOn()){sp.hidden=true;return;}
   const pan=$("panel"),inPanel=pan.contains(el),A=$("app").getBoundingClientRect();let r=el.getBoundingClientRect();
-  if(inPanel&&tutScrolled!==car().tutStep){tutScrolled=car().tutStep;const P=pan.getBoundingClientRect(),room=P.height-(parseFloat(getComputedStyle(pan).paddingBottom)||0);
+  const sk=car().tutStep+"|"+tutSel(T);if(inPanel&&tutScrolled!==sk){tutScrolled=sk;const P=pan.getBoundingClientRect(),room=P.height-(parseFloat(getComputedStyle(pan).paddingBottom)||0);
     const top=r.top-P.top,want=Math.max(12,(room-r.height)/3);if(top<12||top+r.height>room-8){pan.scrollTo({top:pan.scrollTop+top-want,behavior:reduced()?"auto":"smooth"});setTimeout(tutPlace,reduced()?0:420);}
     r=el.getBoundingClientRect();}
   if(inPanel){const P=pan.getBoundingClientRect(),tb=$("tabs").getBoundingClientRect().top;if(r.bottom<P.top+4||r.top>tb-4){sp.hidden=true;return;}}
