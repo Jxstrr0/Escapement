@@ -2,6 +2,7 @@
 html/head.html
 css/style.css
 css/build.css
+css/test.css
 html/body.html
 html/ld-libs.html
 sim/parts.js

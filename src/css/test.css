@@ -1,0 +1,44 @@
+/* ===================== Escapement: Test tab CSS (app/test.js) =====================
+   The timegrapher box (.tgbox: readouts, the #tgCv trace, the machine line), which stays a dark instrument screen in both
+   themes like the 3D view; the adjust buttons; the certification buttons; the trial sheet's verdict and check table. */
+.tgbox{--chalk:#f2efe6;--muted:#b3bab4;--dim:#8f9a93;background:#0b100d;border:1px solid #2c3631;border-radius:14px;margin:0 0 14px;overflow:hidden;color:var(--chalk)}
+.tgread{display:grid;grid-template-columns:repeat(4,auto);justify-content:space-between;gap:4px;padding:10px 12px 6px}
+.tgread>div{display:flex;flex-direction:column;min-width:0}
+.tgread span{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.tgread b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:20px;font-weight:600;white-space:nowrap}
+.tgread b small{font-size:11px;font-weight:400;color:var(--muted)}
+.tgread b.ok{color:#9fd8b4}
+@media (max-width:370px){.tgread b{font-size:17px}.tgread span{font-size:10px;letter-spacing:.03em}}
+#tgCv{display:block;width:100%;height:170px;background:#0b100d;border-top:1px solid #1d2622;border-bottom:1px solid #1d2622}
+.tgfoot{display:flex;align-items:center;gap:8px;padding:4px 6px 4px 12px;font:12px var(--mono);color:var(--dim)}
+.tgfoot span{flex:1;min-width:0;line-height:1.35;padding:4px 0}
+.tgfoot .btn{color:#e0c07e;border:0;flex:0 0 auto}
+.tgpos button{font-family:var(--mono);font-weight:600}
+.seg button.lock{color:var(--dim);opacity:.55;background:repeating-linear-gradient(135deg,transparent 0 6px,var(--edge) 6px 8px)}
+#adjCard h3,#certCard h3{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#adjCard h3 .cnt,#certCard h3 .cnt{font-size:12px;font-weight:500;font-family:var(--mono);color:var(--brass-t)}
+#adjCard .slot{margin-top:4px}
+#adjCard .slot>.lbl small{font-weight:400;color:var(--dim);letter-spacing:0}
+#regBtns button{font-family:var(--mono);font-weight:600}
+#regBtns button small{font-family:var(--font);font-weight:400}
+.adjrow{margin-top:10px}
+.adjrow .btn{flex-direction:column;gap:0;line-height:1.2;padding:6px 10px}
+.adjrow .btn small{font-size:12px;font-weight:400;color:var(--muted);font-family:var(--mono)}
+.certs{display:grid;gap:8px;margin-top:10px}
+.btn.cert{flex-direction:column;align-items:flex-start;gap:2px;padding:9px 12px;text-align:left;min-height:52px}
+.btn.cert b{font-size:15px}
+.btn.cert small{font-size:12.5px;font-weight:400;color:var(--muted)}
+.btn.cert.got{border-color:var(--good)}
+.btn.cert.got b::after{content:" ✓";color:var(--good)}
+.verdict{margin:0 0 12px;padding:10px 12px;border-radius:10px;font-size:15px;line-height:1.4}
+.verdict.pass{background:rgba(108,192,143,.12);color:var(--chalk);box-shadow:inset 3px 0 0 var(--good)}
+.verdict.fail{background:rgba(224,98,90,.1);color:var(--chalk);box-shadow:inset 3px 0 0 var(--crit)}
+table.checks{width:100%;border-collapse:collapse;font-size:13.5px}
+table.checks th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);padding:0 6px 6px 0}
+table.checks td{padding:6px 6px 6px 0;border-top:1px solid var(--rule);vertical-align:top}
+table.checks td:nth-child(2),table.checks td:nth-child(3){font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.checks tr.ok td:last-child{color:var(--good)}table.checks tr.no td:last-child{color:var(--crit)}
+table.checks tr.no td:nth-child(2){color:var(--crit)}
+table.checks.days td{padding:4px 6px 4px 0;font-size:13px}
+details.raw{margin-top:12px}
+details.raw summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:600;color:var(--muted)}

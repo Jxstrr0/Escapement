@@ -7,14 +7,28 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.3.0.0";
+const VERSION="0.4.0.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
 /* ---- career tables (plan sections 6-10). Empty until the PR that fills them; keep these names. ---- */
-const SKILLS={};       // assembly, regulating, poising, finishing, complications (PR 3)
-const SKILL_XP=[];     // XP needed per skill level (PR 3)
-const TOOLS={};        // timing-basic, timing-six, timing-lab … (PR 3)
+/* the five skills (levels 1-10, from XP). The sim reads the levels: SIM.simulate(cfg, skillLvls(), …) */
+const SKILLS={
+  assembly:{name:"Assembly",blurb:"Cleaner builds: a closer first rate, less beat error out of the box, fewer bench hours."},
+  regulating:{name:"Regulating",blurb:"Surer regulator nudges, and a lower beat error when you adjust the beat."},
+  poising:{name:"Poising",blurb:"Each Poise takes out more of the difference between positions."},
+  finishing:{name:"Finishing",blurb:"Perlage, stripes and anglage done faster and better (PR 5 prices it)."},
+  complications:{name:"Complications",blurb:"Build calendars, chronographs and tourbillons without extra beat error."}};
+const SKILL_XP=[0,10,25,45,70,100,140,190,250,320];   // total XP to reach level 1, 2, … 10
+/* timing machines: which positions and temperatures you can see while adjusting, and how finely they read the beat
+   (timingRes feeds the sim: a better machine lets you set a lower beat error). The best one owned is used. */
+const TOOLS={
+  "timing-basic":{name:"Basic timing machine",positions:["DU"],temps:false,timingRes:1,unlock:"start",
+    blurb:"Reads dial up only, at room temperature."},
+  "timing-six":{name:"Six-position timing machine",positions:["DU","DD","PU","PD","PL","PR"],temps:false,timingRes:1.4,unlock:"shop:timing-six",
+    blurb:"A rotating head: all six positions."},
+  "timing-lab":{name:"Laboratory timing machine",positions:["DU","DD","PU","PD","PL","PR"],temps:true,timingRes:2,unlock:"shop:timing-lab",
+    blurb:"Six positions and a climate box: 8, 23 and 38 °C."}};
 const UPGRADES={};     // timing machines, cleaning machine, lathe, mill, CNC … (PR 5)
 const STAFF={};        // watchmakers with skill profiles and salaries (PR 5)
 const FAULTS={};       // repair faults: magnetized, dry, broken mainspring … (PR 5)
@@ -26,7 +40,8 @@ const RND={};          // R&D projects (PR 7)
 /* ---- state ---- */
 const START_YEAR=2000,END_YEAR=2030;
 function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,reduce:null,sound:true,tab:"bench",
-  cfg:Object.assign({},SIM.DEFAULT_CFG),career:null};}
+  cfg:Object.assign({},SIM.DEFAULT_CFG),career:null,
+  xp:{},piece:null,tg:{pos:"DU",temp:23,wind:0,lift:52}};}   // xp: skill XP outside a career; piece: the movement on the timegrapher (app/test.js); tg: its settings
 let S=freshState();
 
 const buObjS=o=>!!o&&typeof o==="object"&&!Array.isArray(o);
@@ -34,7 +49,15 @@ function save(){try{localStorage.setItem("esc-save",JSON.stringify(S));}catch(e)
 function snapshot(){return JSON.parse(JSON.stringify(S));}
 /* load a save object into S. false (and S untouched) if it isn't one of ours */
 function hydrate(o){if(!buObjS(o)||!buObjS(o.cfg))return false;
-  const n=freshState();Object.assign(n,o);n.cfg=SIM.normCfg(Object.assign({},SIM.DEFAULT_CFG,o.cfg)).cfg;S=n;return true;}
+  const n=freshState();Object.assign(n,o);n.cfg=SIM.normCfg(Object.assign({},SIM.DEFAULT_CFG,o.cfg)).cfg;
+  const f=freshState();n.tg=Object.assign(f.tg,buObjS(o.tg)?o.tg:{});if(!buObjS(n.xp))n.xp={};if(!buObjS(n.piece))n.piece=null;
+  S=n;return true;}
+/* skills: XP lives in the career once there is one (PR 5), else in S.xp. skillLvls() is what the sim reads */
+const xpBag=()=>S.career?(S.career.xp=buObjS(S.career.xp)?S.career.xp:{}):S.xp;
+const lvlOf=xp=>{let l=1;for(let i=1;i<SKILL_XP.length;i++)if((+xp||0)>=SKILL_XP[i])l=i+1;return l;};
+function skillLvls(){const b=xpBag(),o={};for(const k in SKILLS)o[k]=lvlOf(b[k]);return o;}
+/* add XP; returns the new level when it went up (the caller toasts it) */
+function gainXp(k,n){const b=xpBag(),was=lvlOf(b[k]);b[k]=(+b[k]||0)+n;const now=lvlOf(b[k]);return now>was?now:0;}
 function loadSaved(){try{const j=localStorage.getItem("esc-save");if(j&&hydrate(JSON.parse(j)))return true;}catch(e){}S=freshState();return false;}
 const SLOTS=3,slotKey=i=>"esc-slot"+i;
 /* a restored or loaded game: take it, store it, redraw everything */

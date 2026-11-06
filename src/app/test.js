@@ -1,24 +1,178 @@
 /* ===================== app/test.js: the Test tab =====================
-   The timegrapher trace, position and temperature buttons, the adjustment loop (Regulate, Adjust beat, Poise) and
-   certification arrive in PR 3 (plan section 6). Until then the tab shows what WATCH_SIM.simulate() says about the movement
-   on the bench, as plain text: amplitude, reserve, the six-position rates, beat error and the stress report. ---- */
-const sgn=x=>(x>=0?"+":"−")+Math.abs(x).toFixed(1);
-TAB_RENDER.test=function(){
-  const r=SIM.simulate(S.cfg,S.career&&S.career.skills,null,{seed:"bench"}),o=$("simOut");
-  const row=k=>SIM.POSITIONS.map(p=>sgn(r.rates[p][k]).padStart(6)).join("");
-  o.hidden=false;
-  o.textContent=[
+   The movement on the timegrapher (plan section 6).
+   - The piece: S.piece is the one movement on the machine, tied to the build (S.cfg). Change the build and a new piece
+     goes on: its own seed (so its own first rate and position pattern), adjustments back to zero. It carries
+     adjust {reg, beat, poise}, the bench hours spent adjusting it, how many trials it has had and its best certificate.
+   - The trace (#tgCv): time runs right to left, about 12 s across. Each beat is a dot; ticks and tocks make two lines.
+     Their slope is the rate (a line climbing to the right runs fast), the gap between them is the beat error. The trace
+     scrolls by copying the canvas onto itself and drawing only the new strip: nothing old is ever redrawn. Lite: 30 fps
+     cap, device pixel ratio 1, every other beat pair plotted. Stops when you leave the tab or hide the page.
+   - Readouts: rate, amplitude (worked out from the lift angle you set, so a wrong lift angle reads wrong), beat error,
+     beat rate. The timing machine you own (TOOLS: the best one owned) decides which positions and temperatures you see.
+   - Adjust: Regulate in regulator notches (SIM.adjustPiece adds the skill's slop), Adjust beat, Poise. Each press costs
+     bench hours (the week clock arrives in PR 6) and gives skill XP.
+   - Certify: SIM.runTrial against each grade, verdict and every check in the sheet. Free until careers (PR 5) charge
+     the fee and PR 6 makes it take weeks.
+   - The tick: WATCH_SOUND plays at the piece's beat rate and beat error while this tab is open and Sound is on. ---- */
+const sgn=(x,d)=>(x>=0?"+":"−")+Math.abs(x).toFixed(d==null?1:d);
+const POS_NAME={DU:"Dial up",DD:"Dial down",PU:"Crown up",PD:"Crown down",PL:"Crown left",PR:"Crown right"};
+const TEMP_NAME={8:"Cold",23:"Room",38:"Warm"};
+const LIFTS=[38,44,50,52];
+
+function ownedTool(){let best=TOOLS["timing-basic"];for(const id in TOOLS)if(hasUnlock(TOOLS[id].unlock))best=TOOLS[id];return best;}
+function curPiece(){const key=JSON.stringify(S.cfg);
+  if(!S.piece||S.piece.key!==key){S.pieceN=(+S.pieceN||0)+1;
+    S.piece={key,seed:"piece"+S.pieceN,adjust:{reg:0,beat:0,poise:0},hours:0,n:0,subs:0,cert:null,xpDone:false};}
+  return S.piece;}
+function pieceSim(){const p=curPiece(),tool=ownedTool();
+  return SIM.simulate(S.cfg,skillLvls(),{timingRes:tool.timingRes},{seed:p.seed,adjust:p.adjust});}
+/* what the machine shows right now: the position, temperature and wind on the settings, clamped to what it can do */
+function tgState(){const tool=ownedTool(),g=S.tg;
+  const pos=tool.positions.includes(g.pos)?g.pos:"DU",temp=tool.temps?(+g.temp||23):23,t=+g.wind||0;
+  const r=pieceSim(),m=r.m,lift=(SIM.part("escapement",r.cfg.escapement).lift)||52;
+  return{tool,pos,temp,t,r,m,rate:SIM.rateAt(m,pos,t,temp),amp:SIM.ampAt(m,t)*(+g.lift||52)/lift,beat:SIM.beatAt(m,t),bph:r.bph};}
+
+/* ---------- the trace ---------- */
+const TG={cv:null,cx:null,W:0,H:0,dpr:1,raf:0,last:0,acc:0,tSim:0,nextBeat:0,k:0,dev:0,R:null,st:null,lite:false};
+const TG_SPAN=12,TG_MS=8;   // seconds across, milliseconds top to bottom (the trace wraps, like a real one)
+const TG_COL={bg:"#0b100d",grid:"rgba(201,164,92,.10)",mid:"rgba(201,164,92,.28)",sec:"rgba(242,239,230,.05)",tick:"#e0c07e",tock:"#8fc0e8",mark:"rgba(242,239,230,.45)"};
+function tgSize(){const cv=TG.cv,w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return false;
+  const dpr=TG.lite?1:Math.min(2,window.devicePixelRatio||1),W=Math.round(w*dpr),H=Math.round(h*dpr);
+  if(W!==TG.W||H!==TG.H||dpr!==TG.dpr){TG.W=cv.width=W;TG.H=cv.height=H;TG.dpr=dpr;tgClear();}
+  return true;}
+const tgY=ms=>{const v=((ms+TG_MS/2)%TG_MS+TG_MS)%TG_MS;return TG.H-v/TG_MS*TG.H;};
+function tgGrid(x0,w){const c=TG.cx;c.fillStyle=TG_COL.bg;c.fillRect(x0,0,w,TG.H);
+  for(let i=1;i<TG_MS;i++){c.fillStyle=i===TG_MS/2?TG_COL.mid:TG_COL.grid;c.fillRect(x0,Math.round(i*TG.H/TG_MS),w,Math.max(1,TG.dpr|0));}}
+function tgClear(){if(!TG.cx)return;tgGrid(0,TG.W);}
+/* a thin line and a label where something changed; quick presses stack their labels down the side instead of overlapping */
+function tgMark(label){const c=TG.cx;if(!c||!TG.W)return;const x=TG.W-2*TG.dpr;
+  TG.stack=TG.tSim-(TG.markT||-9)<1.5?((TG.stack||0)+1)%8:0;TG.markT=TG.tSim;
+  if(!TG.stack){c.fillStyle=TG_COL.mark;c.fillRect(x,0,TG.dpr,TG.H);}
+  c.fillStyle=TG.stack?TG_COL.bg:TG_COL.mark;const y=(4+13*TG.stack)*TG.dpr;
+  c.font=`${11*TG.dpr}px "JetBrains Mono",monospace`;c.textAlign="right";c.textBaseline="top";
+  const w=c.measureText(label).width+6*TG.dpr;c.fillStyle=TG_COL.bg;c.fillRect(x-w-2*TG.dpr,y-1,w,13*TG.dpr);
+  c.fillStyle=TG_COL.mark;c.fillText(label,x-5*TG.dpr,y);}
+function tgFrame(now){
+  TG.raf=requestAnimationFrame(tgFrame);
+  if(!TG.last){TG.last=now;return;}
+  if(TG.lite&&now-TG.last<33)return;    // Lite: 30 fps
+  const dt=Math.min(.1,(now-TG.last)/1000);TG.last=now;
+  if(!tgSize())return;
+  const st=TG.st,pps=TG.W/TG_SPAN,c=TG.cx;
+  TG.acc+=dt*pps;const dx=Math.floor(TG.acc);TG.acc-=dx;
+  const t1=TG.tSim+dt;
+  if(dx>0){c.globalCompositeOperation="copy";c.drawImage(TG.cv,-dx,0);c.globalCompositeOperation="source-over";tgGrid(TG.W-dx,dx);
+    if(Math.floor(t1)>Math.floor(TG.tSim)){c.fillStyle=TG_COL.sec;c.fillRect(TG.W-1,0,1,TG.H);}}
+  const iv=3600/st.bph,perBeat=st.rate/86400*iv*1000,r=(TG.lite?2.4:2)*TG.dpr;
+  const jit=.025+Math.max(0,220-st.amp)*.0012;   // a tired balance scatters more
+  while(TG.nextBeat<=t1){
+    TG.dev+=perBeat;const tock=TG.k&1,y=TG.dev+(tock?st.beat/2:-st.beat/2)+(TG.R()*2-1)*jit;
+    if(!TG.lite||(TG.k>>1)%2===0){const x=TG.W-(t1-TG.nextBeat)*pps-r;c.fillStyle=tock?TG_COL.tock:TG_COL.tick;c.fillRect(x-r/2,tgY(y)-r/2,r,r);}
+    TG.k++;TG.nextBeat+=iv;}
+  TG.tSim=t1;}
+function tgStart(){if(!TG.cv){TG.cv=$("tgCv");TG.cx=TG.cv.getContext("2d");TG.R=SIM.rng("trace");}
+  TG.lite=gfxTier()==="lite";TG.st=tgState();
+  if(!TG.raf){TG.last=0;TG.raf=requestAnimationFrame(tgFrame);}
+  tickSet();}
+function tgStop(){if(TG.raf)cancelAnimationFrame(TG.raf);TG.raf=0;WATCH_SOUND.stop();}
+function tickSet(){const st=TG.st||tgState();WATCH_SOUND.set({bph:st.bph,beatMs:st.beat,on:!!S.sound&&curTab==="test"&&!document.hidden});}
+/* browsers only start audio from a tap: the first tap anywhere while the Test tab is open starts the tick */
+document.addEventListener("pointerdown",()=>{if(curTab==="test"&&S.sound&&!document.hidden){WATCH_SOUND.unlock();tickSet();}},{passive:true,capture:true});
+document.addEventListener("visibilitychange",()=>{if(curTab!=="test")return;if(document.hidden)tgStop();else tgStart();});
+window.addEventListener("resize",()=>{if(curTab==="test")tgSize();});
+
+/* ---------- the tab ---------- */
+function segBtns(list,cur,attr,lockFn){return list.map(([v,l,s])=>{const lk=lockFn&&lockFn(v);
+  return `<button type="button" data-${attr}="${v}" class="${String(v)===String(cur)?"on":""}${lk?" lock":""}" aria-pressed="${String(v)===String(cur)}">${l}${s?`<small>${s}</small>`:""}</button>`;}).join("");}
+function toolFor(need){for(const id in TOOLS){const t=TOOLS[id];if(need(t))return t;}return null;}
+function renderTest(){
+  const p=curPiece(),st=tgState(),T=st.tool;TG.st=st;
+  const certTxt=p.cert?`${SIM.CERT[p.cert].name}${SIM.CERT[p.cert].stamp?" · "+SIM.CERT[p.cert].stamp:""}`:"";
+  $("tgRead").innerHTML=
+    `<div><span>Rate</span><b class="${Math.abs(st.rate)<=6?"ok":""}">${sgn(st.rate,T.timingRes>1?1:0)}<small> s/d</small></b></div>`+
+    `<div><span>Amplitude</span><b>${Math.round(st.amp)}<small>°</small></b></div>`+
+    `<div><span>Beat error</span><b>${st.beat.toFixed(T.timingRes>1?2:1)}<small> ms</small></b></div>`+
+    `<div><span>Beat</span><b>${(st.bph/1000).toFixed(1)}<small>k bph</small></b></div>`;
+  $("tgMach").textContent=`${T.name} · ${POS_NAME[st.pos].toLowerCase()} · ${st.temp} °C · ${st.t?"24 h after winding":"full wind"}`;
+  $("tgSnd").textContent=S.sound?"Sound on":"Sound off";$("tgSnd").setAttribute("aria-pressed",!!S.sound);
+  $("tgPos").innerHTML=segBtns(SIM.POSITIONS.map(k=>[k,k]),st.pos,"pos",v=>!T.positions.includes(v));
+  const posHint=$("tgPosHint");posHint.hidden=T.positions.length>1;
+  if(T.positions.length===1){const six=toolFor(t=>t.positions.length>1);posHint.textContent=`Your ${T.name.toLowerCase()} reads dial up only. The other positions need the ${six.name.toLowerCase()} (Shop), but the trial tests five of them.`;}
+  $("tgTempF").hidden=!T.temps;
+  if(T.temps)$("tgTemp").innerHTML=segBtns(SIM.TEMPS.map(k=>[k,TEMP_NAME[k],k+" °C"]),st.temp,"temp");
+  $("tgWind").innerHTML=segBtns([[0,"Full wind"],[24,"After 24 h"]],st.t,"wind");
+  $("tgLift").innerHTML=segBtns(LIFTS.map(v=>[v,v+"°"]),S.tg.lift,"lift");
+  /* adjust */
+  const reg=SIM.part("regulator",st.r.cfg.regulator),step=reg.adjustRes,f=x=>(+x.toFixed(2)).toString();
+  $("regRes").textContent=`· ${reg.name.toLowerCase()}, ${f(step)} s/d a notch`;
+  $("regBtns").innerHTML=[[-5,`−${f(step*5)}`,"slower"],[-1,`−${f(step)}`,"slower"],[1,`+${f(step)}`,"faster"],[5,`+${f(step*5)}`,"faster"]].map(([n,l,s])=>
+    `<button type="button" data-reg="${n}">${l}<small>${s}</small></button>`).join("");
+  const atFloor=st.r.beatErr-st.m.beatFloor<.01,poised=p.adjust.poise>=.95-1e-9;
+  $("adjBeat").innerHTML=atFloor?"Beat as even as you can get it":`Adjust beat <small>${SIM.hoursFor("beat")} h</small>`;$("adjBeat").disabled=atFloor;
+  $("adjPoise").innerHTML=poised?"Balance fully poised":`Poise the balance <small>${SIM.hoursFor("poise")} h</small>`;$("adjPoise").disabled=poised;
+  $("adjHrs").textContent=p.hours?`${(+p.hours.toFixed(1))} h on this piece`:"";
+  const L=skillLvls();$("adjSkills").textContent=`Skills: regulating ${L.regulating} · poising ${L.poising} · assembly ${L.assembly}. Every press costs bench time and teaches you a little.`;
+  /* certify */
+  $("certNow").textContent=certTxt;
+  $("certBtns").innerHTML=SIM.CERT_ORDER.map(id=>{const C=SIM.CERT[id];
+    return `<button class="btn cert${p.cert&&SIM.CERT_ORDER.indexOf(p.cert)>=SIM.CERT_ORDER.indexOf(id)?" got":""}" data-cert="${id}"><b>${id==="bench"?"Bench check":C.name}</b>`+
+      `<small>${id==="bench"?"Your own fifteen days. Free.":`${C.body}${C.stamp&&C.stamp!==C.body?" ("+C.stamp+")":""} · ${fmt$(C.fee)} · ${C.weeks} weeks${S.career?"":" (free for now)"}`}</small></button>`;}).join("");
+  /* the raw numbers */
+  const r=st.r,row=k=>SIM.POSITIONS.map(q=>sgn(r.rates[q][k]).padStart(6)).join("");
+  $("simOut").textContent=[
     `Amplitude   ${Math.round(r.amp0)}° full wind · ${Math.round(r.amp24)}° at 24 h`,
     `Reserve     ${Math.round(r.reserveH)} h`,
-    `Beat        ${r.bph.toLocaleString("en-GB")} bph · beat error ${r.beatErr.toFixed(2)} ms`,
+    `Beat        ${r.bph.toLocaleString("en-GB")} bph · beat error ${r.beatErr.toFixed(2)} ms (floor ${st.m.beatFloor.toFixed(2)})`,
     ``,
-    `Rate s/day  `+SIM.POSITIONS.map(p=>p.padStart(6)).join(""),
+    `Rate s/day  `+SIM.POSITIONS.map(q=>q.padStart(6)).join(""),
     `  0 h       `+row("t0"),
     ` 24 h       `+row("t24"),
     `Mean ${sgn(r.rateMean24)} · spread ${r.posSpread24.toFixed(1)} · 8→38 °C ${r.tempSpread.toFixed(1)} s/day`,
+    `Adjusted    regulator ${sgn(p.adjust.reg)} s/d · beat ${Math.round(p.adjust.beat*100)}% · poise ${Math.round(p.adjust.poise*100)}%`,
     ``,
     `Shock ${(r.shock*100).toFixed(0)}% · magnet resistance ${(r.magnetResist*100).toFixed(0)}% · returns ${(r.returnRisk*100).toFixed(0)}%/yr`,
     `${r.thickness.toFixed(1)} mm · ${r.parts} parts · ${fmt$(r.cost)} parts · ${Math.round(r.hours)} h · prestige ${r.prestige}`,
     ``,
     ...(r.stress.length?r.stress.map(s=>({bad:"✖ ",warn:"▲ ",info:"· "}[s.sev])+s.text):["No stress lines: a sound build."])
-  ].join("\n");};
+  ].join("\n");}
+TAB_RENDER.test=function(){renderTest();tgStart();};
+TAB_LEAVE.test=tgStop;
+
+function levelToast(k,l){if(l)toast(`${SKILLS[k].name} up to level ${l}.`);}
+function adjDone(kind,n){const p=curPiece(),k=kind==="poise"?"poising":"regulating";
+  p.hours+=SIM.hoursFor(kind);levelToast(k,gainXp(k,SIM.ADJ.xp[kind]));
+  save();const was=TG.st;renderTest();tickSet();
+  tgMark(kind==="reg"?sgn(TG.st.rate-was.rate,1):kind==="beat"?"beat":"poise");}
+function onTap(id,fn){$(id).addEventListener("click",e=>{WATCH_SOUND.unlock();fn(e);});}
+onTap("regBtns",e=>{const b=e.target.closest("[data-reg]");if(!b)return;const p=curPiece();
+  p.adjust=SIM.adjustPiece("reg",p.adjust,S.cfg,skillLvls(),+b.dataset.reg,p.seed+"#"+(p.n++));adjDone("reg");});
+onTap("adjBeat",()=>{const p=curPiece();p.adjust=SIM.adjustPiece("beat",p.adjust,S.cfg,skillLvls(),0,p.seed+"#"+(p.n++));adjDone("beat");});
+onTap("adjPoise",()=>{const p=curPiece();p.adjust=SIM.adjustPiece("poise",p.adjust,S.cfg,skillLvls(),0,p.seed+"#"+(p.n++));adjDone("poise");});
+onTap("tgPos",e=>{const b=e.target.closest("[data-pos]");if(!b)return;
+  if(b.classList.contains("lock")){toast(`Needs the ${toolFor(t=>t.positions.length>1).name.toLowerCase()} (Shop).`);return;}
+  if(S.tg.pos===b.dataset.pos)return;S.tg.pos=b.dataset.pos;save();renderTest();tickSet();tgMark(S.tg.pos);});
+onTap("tgTemp",e=>{const b=e.target.closest("[data-temp]");if(!b)return;S.tg.temp=+b.dataset.temp;save();renderTest();tgMark(b.dataset.temp+"°");});
+onTap("tgWind",e=>{const b=e.target.closest("[data-wind]");if(!b)return;S.tg.wind=+b.dataset.wind;save();renderTest();tickSet();tgMark(S.tg.wind?"24 h":"wound");});
+onTap("tgLift",e=>{const b=e.target.closest("[data-lift]");if(!b)return;S.tg.lift=+b.dataset.lift;save();renderTest();});
+onTap("tgSnd",()=>{S.sound=!S.sound;save();renderTest();tickSet();});
+
+/* ---------- certification ---------- */
+onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
+  const id=b.dataset.cert,C=SIM.CERT[id],p=curPiece(),tool=ownedTool();
+  const t=SIM.runTrial(S.cfg,skillLvls(),{timingRes:tool.timingRes},{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
+  const res=t.tiers[id];
+  if(res.pass&&(!p.cert||SIM.CERT_ORDER.indexOf(id)>SIM.CERT_ORDER.indexOf(p.cert)))p.cert=id;
+  if(!p.xpDone){p.xpDone=true;const r=pieceSim();
+    levelToast("assembly",gainXp("assembly",4));
+    if(r.complexity)levelToast("complications",gainXp("complications",r.complexity));
+    if(r.cfg.finish.length)levelToast("finishing",gainXp("finishing",2*r.cfg.finish.length));}
+  save();renderTest();
+  const days=t.days.map((d,i)=>`<tr><td>${i+1}</td><td>${POS_NAME[d.pos]}</td><td>${d.temp} °C</td><td>${sgn(d.rate)}</td></tr>`).join("");
+  openSheet(id==="bench"?"Bench check":`${C.name} trial`,`
+<p class="verdict ${res.pass?"pass":"fail"}">${res.pass?"✓ ":"✖ "}${SIM.verdict(t,id)}</p>
+<table class="checks"><thead><tr><th>Check</th><th>Result</th><th>Limit</th><th></th></tr></thead><tbody>
+${res.checks.map(c=>`<tr class="${c.ok?"ok":"no"}"><td>${c.label}</td><td>${c.val}</td><td>${c.lim}</td><td>${c.ok?"✓":"✖"}</td></tr>`).join("")}
+</tbody></table>
+<details class="raw"><summary>The fifteen days</summary><table class="checks days"><tbody>${days}</tbody></table></details>
+<div class="row" style="margin-top:14px"><button class="btn pri" id="certOk">Back to the bench</button></div>`);
+  $("certOk").addEventListener("click",closeSheet);});
