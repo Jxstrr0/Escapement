@@ -290,3 +290,5 @@ Quartz or smartwatch products of your own, multiplayer, real brand names, watch 
 - [x] PR 7: R&D, complications, own calibre (0.8.0.0)
 - [x] PR 8: Tutorial, goals cards, photo mode, settings (0.9.0.0)
 - [x] PR 9: Blender props on Full/Ultra (0.10.0.0)
+- [x] Balance (0.10.1.0) and polish (0.10.2.0)
+- [x] **1.0.0.0: released.** Every PR in this plan is built; later work goes one PR at a time from phone testing.
