@@ -37,6 +37,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `css/shop.css` | the Shop and Career tabs: row lists with buttons, the week numbers, commissions, the books, the week report; the Build tab's Make card and the Test tab's career card |
 | `css/events.css` | the Career tab's calendar cards (coming up, reputation bars, news, goals), the Kessel Peak Trial leaderboard, the saleroom, the cracked-crystal overlay |
 | `css/cards.css` | the certificate and trophy cards: the picture in its sheet, the Trophy buttons on the Goals card, the Certificates list |
+| `css/help.css` | the tour's coach card and ring, the Help sheet's glossary, the dotted tap-to-explain labels, the intro's two buttons, the Bench tab's This week list |
 | `css/test.css` | the Test tab: the timegrapher box (dark in both themes), readouts, adjust and certify buttons, the trial sheet's check table |
 | `html/body.html` | `</style>`, all of the markup (`#app`, `#view` with the `#gl` canvas and HUD, five `.tabpage` sections, `#tabs`, sheet, toast, intro), the three.js r128 tag and the `ESC_LIBS` on-demand loader (`window.__escPost`) |
 | `html/ld-libs.html`, `ld-sim.html`, `ld-vis.html` | one-line `<script>__ld(fraction,"message")</script>` loading-bar steps after the block they report |
@@ -65,7 +66,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/boot.js` | `TABS`, `TAB_RENDER`, `showTab`, the Settings sheet, intro, `start()` (scheduled with `__ldGo`) |
 | `app/build.js` | the Build tab: `BUILD_SECS`, `UNLOCK_NAME` / `hasUnlock`, `withOpt` (fit or toggle an option with its partners), `bSim` (cached simulate), the delta line, capsule, stress report |
 | `app/test.js` | the Test tab: the piece on the machine (`S.piece` in the Sandbox, `S.career.bench` in a career; `curPiece`, `pieceCfg`, `pieceSim`, `tgMode`, a repair's faulty trace), the career card (`#tgCar`), `ownedTool`, the scrolling trace (`TG`, `tgStart` / `tgStop`), readouts, adjust and certify handlers, the trial sheet |
-| `app/bench.js` | the Bench tab: `visSync()` (the build and how it runs, to the 3D view), `benchLine()` (the movement in one line, also the view's tag), the Assembled / Exploded and loupe controls |
+| `app/bench.js` | the Bench tab: `visSync()` (the build and how it runs, to the 3D view), `benchLine()` (the movement in one line, also the view's tag), the Assembled / Exploded and loupe controls, and the This week card (`renderBenchTodo`) |
 | `app/business.js` | the career engine: `newCareer`, `normCareer`, hours (`spendHours`, `hoursLeft`), money (`pay`, `earn`, the books), upgrades and staff, repairs (`addRepair`, `startFix`), commissions (`specChecks`, `deliver`), trade, your pieces (`makePiece`, `sendTrial`, `casePiece`, `sellPiece`), `closeWeek()`, the loan |
 | `app/shop.js` | the Shop tab: the week, your bench, repairs, stock and prices, commissions, trade, work in hand, upgrades, staff, the books; `fixSheet`, `caseSheet`, `confirmSheet`; the Saves card |
 | `app/rnd.js` | R&D (PR 7): `CAL_CORE`, calibres (`normCals`, `calList`, `calOf`, `calName`, `withCal`, `calCheck`), `lockedParts`, the projects (`normRnd`, `rndWhy`, `rndTerms`, `rndSlots`, `startRnd`, `stopRnd`, `rndClose` called by `closeWeek`), the Career tab's `rndCard` and `calSheet` (name a calibre) |
@@ -73,7 +74,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/career.js` | the Career tab: Close week and its report (`doCloseWeek`), New game, the loan and closing sheets, the save slots |
 | `app/events.js` | the Career tab's cards (`calendarCard`, `repCard`, `newsCard`, `goalsCard`, `rivalsCard`) and the event sheets: `fairSheet`, `trialEntrySheet`, `raceSheet` (the trial day by day), `saleroomSheet` (live bidding), `crackFx` |
 | `app/cards.js` | certificate and trophy cards (PR 8): `S.career.certsLog` (`certLog` from `closeWeek`, `normCertsLog` on load), `drawCert` / `drawTrophy` (1080 × 1350 canvas: paper and stamp, felt and medal), `cardSheet` (the picture, Save / Share via `shareCanvas`), the Career tab's `certsCard` and the goals' Trophy buttons, `certSheetBtn` (the trial sheet's Certificate button) |
-| `app/help.js` | tutorial and help (PR 8); last app file, `</script>` |
+| `app/help.js` | the coach-card tour (`TUT`, `tutKick` after every `save()`, `tutStart` / `tutEnd`; state `c.tut`, `c.tutStep`, `c.tutRep`), the glossary (`GLOSS`, `helpSheet`, `glossSheet`) and tap-to-explain (`gA(key)` writes `data-g`), the intro's `introBench`; last app file, `</script>` |
 | `html/tail.html` | `</body></html>` (no trailing newline) |
 
 To find code, grep `src/`: `grep -rn "function showTab" src/`.
