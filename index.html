@@ -1020,16 +1020,18 @@ return api;
 </script>
 <script>
 /* ===================== Escapement: 3D (WATCH_VIS) =====================
-   three.js r128. One IIFE spread over vis/core.js, movement.js, bench.js and api.js; the public object is in api.js.
+   three.js r128. One IIFE spread over vis/core.js, studio.js, finish.js, movement.js, bench.js and api.js; the public object is in api.js.
    The vis never reads game state: the app calls WATCH_VIS.setMovement(cfg), .setRun({amp,bph,beatErr,wound}),
    .setView(name), .setMotion(reduced), .setQuality(tier), .onView(fn) and reads .fps().
    This file: module state, the renderer, the three graphics tiers and the materials.
-     lite   pixel ratio 1, Phong materials, no shadows, no post. The phone default; it must always look finished.
-     full   device pixel ratio up to 2, PBR brass and steel with a generated studio reflection, soft lamp shadow.
+     lite   pixel ratio 1, unlit metal that reflects a small baked copy of the studio light (cheaper than Phong), finishes
+            as shade maps, Lambert felt and wood, no shadows, no post. The phone default; it must always look finished.
+     full   device pixel ratio up to 2, PBR metal on the studio HDRI (PMREM) with ACES tone mapping, normal and roughness
+            maps for the finishes, polished anglage, clear-coated jewels and blued screws, soft lamp shadow.
      ultra  as full, plus bloom on the polished parts (three.js addons loaded on demand, window.__escPost). */
 const WATCH_VIS=(function(){
 "use strict";
-const V={r:null,scene:null,cam:null,canvas:null,tier:"lite",w:0,h:0,mats:null,env:null,comp:null,bloom:null,
+const V={r:null,scene:null,cam:null,canvas:null,tier:"lite",w:0,h:0,mats:null,env:null,liteEnv:null,light:null,lightTried:false,fin:null,finTier:null,comp:null,bloom:null,
   move:null,bench:null,lamp:null,run:{amp:280,bph:28800,beatErr:0,wound:true},t0:performance.now(),
   frames:0,fpsAt:performance.now(),fpsObj:{fps:0,at:0},orbit:{yaw:-.5,pitch:.9,dist:12,tx:0,ty:0,tz:0},
   cfg:null,cfgKey:"",fit:0,goal:null,view:"home",explode:0,explodeT:0,reduce:false,viewCbs:[],last:0};
@@ -1044,40 +1046,206 @@ function initRenderer(canvas){
   V.scene.fog=new THREE.Fog(0x0c110f,14,30);
   V.cam=new THREE.PerspectiveCamera(32,1,.1,100);
 }
-/* a small equirect "studio" painted on a canvas: a warm lamp patch and a dim room, so PBR brass has something to reflect (Full / Ultra) */
-function studioEnv(){
-  const c=document.createElement("canvas");c.width=256;c.height=128;const g=c.getContext("2d");
-  const bg=g.createLinearGradient(0,0,0,128);bg.addColorStop(0,"#3a3a34");bg.addColorStop(.5,"#1a1d1a");bg.addColorStop(1,"#0b0d0c");
-  g.fillStyle=bg;g.fillRect(0,0,256,128);
-  const lamp=g.createRadialGradient(80,26,2,80,26,40);lamp.addColorStop(0,"#fff4dc");lamp.addColorStop(1,"rgba(255,244,220,0)");
-  g.fillStyle=lamp;g.fillRect(0,0,256,128);
-  g.fillStyle="rgba(200,215,230,.35)";g.fillRect(170,30,50,24);   // a window on the far wall
-  const tex=new THREE.CanvasTexture(c);tex.mapping=THREE.EquirectangularReflectionMapping;tex.encoding=THREE.sRGBEncoding;
-  const pm=new THREE.PMREMGenerator(V.r),rt=pm.fromEquirectangular(tex);pm.dispose();tex.dispose();
-  return rt.texture;
-}
-/* materials per tier: the same names, cheaper shading on Lite */
+/* materials per tier: the same names, cheaper shading on Lite (vis/finish.js makes the metals, vis/studio.js the light they reflect) */
 function makeMats(tier){
   const lite=tier==="lite";
   if(V.mats)for(const k in V.mats)V.mats[k].dispose();
-  if(!lite&&!V.env)V.env=studioEnv();
-  /* colours are written as sRGB hex; the renderer outputs sRGB, so convert them to linear first or everything washes out */
-  const C=h=>new THREE.Color(h).convertSRGBToLinear();
-  const metal=(color,rough,metalness)=>(color=C(color),lite)
-    ?new THREE.MeshPhongMaterial({color,specular:C(0x6a6250),shininess:Math.round(80*(1-rough))+10})
-    :new THREE.MeshStandardMaterial({color,roughness:rough,metalness,envMap:V.env,envMapIntensity:1.1});
+  if(V.finTier!==tier){finDrop();V.finTier=tier;}
   V.mats={
-    brass:metal(0xc9a45c,.32,1),
-    gilt:metal(0xd8b46a,.22,1),
-    steel:metal(0xb8c0c6,.25,1),
-    blued:metal(0x2c4a8c,.3,1),
-    ruby:lite?new THREE.MeshPhongMaterial({color:C(0x9a0d26),specular:0xffffff,shininess:90})
-             :new THREE.MeshStandardMaterial({color:C(0x9a0d26),roughness:.1,metalness:0,envMap:V.env}),
-    felt:lite?new THREE.MeshLambertMaterial({color:C(0x1f3a2c)}):new THREE.MeshStandardMaterial({color:C(0x1f3a2c),roughness:1,metalness:0}),
-    wood:lite?new THREE.MeshLambertMaterial({color:C(0x3a2a1c)}):new THREE.MeshStandardMaterial({color:C(0x3a2a1c),roughness:.75,metalness:0})
+    brass:metalMat({c:0xc9a45c,r:.32}),
+    gilt:metalMat({c:0xd8b46a,r:.2}),
+    steel:metalMat({c:0xc4ccd2,r:.18}),
+    blued:metalMat({c:0x2a4c9a,r:.26,coat:.6,lite:1.25}),
+    ruby:gemMat(0x9a0d26),
+    felt:lite?new THREE.MeshLambertMaterial({color:sRGB(0x1f3a2c)}):new THREE.MeshStandardMaterial({color:sRGB(0x1f3a2c),roughness:1,metalness:0}),
+    wood:lite?new THREE.MeshLambertMaterial({color:sRGB(0x3a2a1c)}):new THREE.MeshStandardMaterial({color:sRGB(0x3a2a1c),roughness:.75,metalness:0})
   };
   return V.mats;
 }
+/* ---- vis/studio.js: the studio light the metal reflects ----
+   Poly Haven's "Studio Small 03" by Greg Zaal (CC0; see textures/CREDITS.md), cut down to 512 x 256 RGBE
+   (textures/studio_small_03.hdr, about 420 KB, fetched once; the service worker caches it like sounds/).
+   Until it arrives, or if it never does (opened from a file, offline on the very first visit), a painted stand-in
+   (paintedLight) does the same job, so no tier ever shows unlit metal.
+   One decoded light, V.light (linear floats; lightAim swings the brightest patch, the big softbox, up over the far side
+   of the movement as the home view sees it and adds a soft overhead fill, the way a movement is photographed; warmed a
+   little by ENV.tint, its hot spots clamped), feeds both paths:
+     Lite          three small LDR equirect canvases (sharp, satin, frosted: the same light blurred), tone-mapped once on
+                   the CPU. Lite metal is MeshBasicMaterial times that envMap: one texture read a pixel and no lights, so
+                   a phone gets moving reflections for less than the Phong it had before.
+     Full / Ultra  an RGBE DataTexture through PMREMGenerator for MeshStandardMaterial, with ACES tone mapping. ---- */
+const ENV={url:"textures/studio_small_03.hdr",clamp:22,tint:[1,.96,.88],
+  key:{elev:1.08,yaw:-.5},fill:.4,   // the softbox is swung up to ~62° above the far side of the movement as the home view sees it (yaw = the camera's); fill = a soft overhead diffuser
+  lite:{w:256,h:128,exp:1.1,lift:.02,blur:[0,3,9],gain:1.3},   // blur radii (pixels at 256 wide) for sharp / satin / frosted; gain lifts the metal colour so highlights clip toward white
+  full:{exp:.82,int:1}};
+/* a Radiance .hdr (flat or new-style RLE scanlines) to linear floats, turned, tinted and clamped */
+function hdrDecode(b){
+  let p=0;const line=()=>{let s="";while(p<b.length&&b[p]!==10)s+=String.fromCharCode(b[p++]);p++;return s;};
+  if(!/^#\?/.test(line()))return null;
+  while(p<b.length&&line()!=="");
+  const m=/-Y (\d+) \+X (\d+)/.exec(line());if(!m)return null;
+  const H=+m[1],W=+m[2],d=new Float32Array(W*H*3),sc=new Uint8Array(W*4),T=ENV.tint,cl=ENV.clamp;
+  for(let y=0;y<H;y++){
+    if(p+4>b.length)return null;
+    if(b[p]===2&&b[p+1]===2&&((b[p+2]<<8)|b[p+3])===W){p+=4;
+      for(let c=0;c<4;c++)for(let x=0;x<W;){let n=b[p++];if(!n||p>b.length)return null;
+        if(n>128){n-=128;const v=b[p++];while(n--&&x<W)sc[(x++)*4+c]=v;}else while(n--&&x<W)sc[(x++)*4+c]=b[p++];}}
+    else for(let i=0;i<W*4;i++)sc[i]=b[p++];
+    for(let x=0;x<W;x++){const e=sc[x*4+3],f=e?Math.pow(2,e-136):0,o=(y*W+x)*3;
+      for(let c=0;c<3;c++)d[o+c]=Math.min(cl,sc[x*4+c]*f*T[c]);}}
+  return lightAim({W,H,d});}
+/* the stand-in: a dark room, a pale floor, one big softbox and a ceiling lamp, painted where the photo has them */
+function paintedLight(){
+  const W=128,H=64,c=document.createElement("canvas");c.width=W;c.height=H;const g=c.getContext("2d");
+  const bg=g.createLinearGradient(0,0,0,H);bg.addColorStop(0,"#0c0c0c");bg.addColorStop(.5,"#1c1c1a");bg.addColorStop(.62,"#8a8a86");bg.addColorStop(1,"#b4b4b0");
+  g.fillStyle=bg;g.fillRect(0,0,W,H);
+  const spot=(x,y,r)=>{const s=g.createRadialGradient(x,y,1,x,y,r);s.addColorStop(0,"#ffffff");s.addColorStop(.6,"#f4f2ee");s.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=s;g.fillRect(x-r,y-r,2*r,2*r);};
+  spot(W*.42,H*.29,9);spot(W*.96,H*.12,4);
+  const px=g.getImageData(0,0,W,H).data,d=new Float32Array(W*H*3);
+  for(let i=0;i<W*H;i++)for(let k=0;k<3;k++){const v=Math.pow(px[i*4+k]/255,2.2);d[i*3+k]=v*(1+30*v*v*v*v)*ENV.tint[k];}
+  const L=lightAim({W,H,d});L.painted=true;return L;}
+/* equirect pixel <-> direction, three.js's convention: u = atan2(z, x) / 2pi + 0.5, v = asin(y) / pi + 0.5, row 0 at the top */
+function eqDir(x,y,W,H){const ph=((x+.5)/W-.5)*TAU,th=(.5-(y+.5)/H)*Math.PI,c=Math.cos(th);return[c*Math.cos(ph),Math.sin(th),c*Math.sin(ph)];}
+/* find the softbox (the brightest patch, on a coarse grid), rotate the whole light so it sits at ENV.key, add the fill */
+function lightAim(L){const {W,H,d}=L,g=8;let best=-1,bx=0,by=0;
+  for(let y=0;y<H;y+=g)for(let x=0;x<W;x+=g){let s=0;for(let j=0;j<g;j++)for(let i=0;i<g;i++){const o=((y+j)*W+x+i)*3;s+=d[o]+d[o+1]+d[o+2];}
+    if(s>best){best=s;bx=x+g/2;by=y+g/2;}}
+  const s0=eqDir(bx,by,W,H),K=ENV.key,ce=Math.cos(K.elev),t0=[-Math.sin(K.yaw)*ce,Math.sin(K.elev),-Math.cos(K.yaw)*ce];
+  let k=[s0[1]*t0[2]-s0[2]*t0[1],s0[2]*t0[0]-s0[0]*t0[2],s0[0]*t0[1]-s0[1]*t0[0]];const kl=Math.hypot(k[0],k[1],k[2]);
+  const a=Math.atan2(kl,s0[0]*t0[0]+s0[1]*t0[1]+s0[2]*t0[2]);if(kl>1e-6)k=k.map(v=>v/kl);else k=[1,0,0];
+  const ca=Math.cos(-a),sa=Math.sin(-a),out=new Float32Array(d.length);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const v=eqDir(x,y,W,H),kv=k[0]*v[0]+k[1]*v[1]+k[2]*v[2];
+    /* Rodrigues: rotate the output direction back by the swing to find where it came from */
+    const cx=k[1]*v[2]-k[2]*v[1],cy=k[2]*v[0]-k[0]*v[2],cz=k[0]*v[1]-k[1]*v[0];
+    const sx=v[0]*ca+cx*sa+k[0]*kv*(1-ca),sy=v[1]*ca+cy*sa+k[1]*kv*(1-ca),sz=v[2]*ca+cz*sa+k[2]*kv*(1-ca);
+    const u=Math.atan2(sz,sx)/TAU+.5,w=Math.asin(Math.max(-1,Math.min(1,sy)))/Math.PI+.5;
+    const sxp=Math.min(W-1,Math.floor(u*W)),syp=Math.min(H-1,Math.floor((1-w)*H)),si=(syp*W+sxp)*3,o=(y*W+x)*3,f=v[1]>0?ENV.fill*v[1]*v[1]:0;
+    for(let c=0;c<3;c++)out[o+c]=d[si+c]+f*ENV.tint[c];}
+  return{W,H,d:out};}
+/* fetch the photo once; when it lands, every tier is rebuilt on it */
+function studioStart(){
+  if(V.lightTried||typeof fetch!=="function")return;V.lightTried=true;
+  fetch(ENV.url).then(r=>r.ok?r.arrayBuffer():Promise.reject(r.status)).then(buf=>{
+    let L=null;try{L=hdrDecode(new Uint8Array(buf));}catch(e){L=null;}
+    if(!L)return;studioDrop();V.light=L;rebuild();}).catch(()=>{});}
+function studioDrop(){if(V.env){V.env.dispose();V.env=null;}if(V.liteEnv){V.liteEnv.forEach(t=>t.dispose());V.liteEnv=null;}}
+const lightNow=()=>V.light||(V.light=paintedLight());
+/* box-resample the light to w x h, then a separable box blur (twice, so it is nearly Gaussian); x wraps, y clamps */
+function lightResample(L,w,h){const out=new Float32Array(w*h*3),fx=Math.max(1,Math.round(L.W/w)),fy=Math.max(1,Math.round(L.H/h));
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){let r=0,g=0,b=0;const x0=Math.floor(x*L.W/w),y0=Math.floor(y*L.H/h);
+    for(let j=0;j<fy;j++)for(let i=0;i<fx;i++){const o=(Math.min(L.H-1,y0+j)*L.W+Math.min(L.W-1,x0+i))*3;r+=L.d[o];g+=L.d[o+1];b+=L.d[o+2];}
+    const o=(y*w+x)*3,n=fx*fy;out[o]=r/n;out[o+1]=g/n;out[o+2]=b/n;}
+  return out;}
+function lightBlur(src,w,h,r){let a=src;const n=2*r+1;
+  for(let pass=0;pass<4;pass++){const horiz=!(pass&1),b=new Float32Array(src.length);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){let s0=0,s1=0,s2=0;
+      for(let k=-r;k<=r;k++){const xx=horiz?((x+k)%w+w)%w:x,yy=horiz?y:Math.max(0,Math.min(h-1,y+k)),o=(yy*w+xx)*3;s0+=a[o];s1+=a[o+1];s2+=a[o+2];}
+      const o=(y*w+x)*3;b[o]=s0/n;b[o+1]=s1/n;b[o+2]=s2/n;}
+    a=b;}
+  return a;}
+/* Lite: [sharp, satin, frosted] sRGB canvases, ACES-ish tone curve baked in */
+function liteEnvs(){
+  if(V.liteEnv)return V.liteEnv;
+  const L=lightNow(),o=ENV.lite,w=o.w,h=o.h,base=lightResample(L,w,h);
+  const aces=x=>{x*=o.exp;return Math.max(0,Math.min(1,x*(2.51*x+.03)/(x*(2.43*x+.59)+.14)));};
+  V.liteEnv=o.blur.map(r=>{const f=r?lightBlur(base,w,h,r):base,c=document.createElement("canvas");c.width=w;c.height=h;
+    const g=c.getContext("2d"),img=g.createImageData(w,h);
+    for(let i=0;i<w*h;i++)for(let k=0;k<3;k++)img.data[i*4+k]=Math.round(255*Math.min(1,Math.pow(aces(f[i*3+k])+o.lift,1/2.2)));
+    for(let i=0;i<w*h;i++)img.data[i*4+3]=255;
+    g.putImageData(img,0,0);
+    const t=new THREE.CanvasTexture(c);t.mapping=THREE.EquirectangularReflectionMapping;t.encoding=THREE.sRGBEncoding;return t;});
+  return V.liteEnv;}
+/* Full / Ultra: the light as RGBE bytes (rows flipped: a DataTexture's first row is the bottom) through PMREM */
+function fullEnv(){
+  if(V.env)return V.env;
+  const L=lightNow(),W=L.W,H=L.H,u=new Uint8Array(W*H*4);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const s=(y*W+x)*3,o=((H-1-y)*W+x)*4,r=L.d[s],g=L.d[s+1],b=L.d[s+2],m=Math.max(r,g,b);
+    if(m<1e-20)continue;const e=Math.ceil(Math.log2(m)+1e-7),k=256/Math.pow(2,e);
+    u[o]=Math.min(255,r*k|0);u[o+1]=Math.min(255,g*k|0);u[o+2]=Math.min(255,b*k|0);u[o+3]=e+128;}
+  const t=new THREE.DataTexture(u,W,H,THREE.RGBAFormat,THREE.UnsignedByteType,THREE.EquirectangularReflectionMapping);
+  t.encoding=THREE.RGBEEncoding;t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;t.flipY=false;t.needsUpdate=true;
+  const pm=new THREE.PMREMGenerator(V.r),rt=pm.fromEquirectangular(t);pm.dispose();t.dispose();
+  V.env=rt.texture;return V.env;}
+/* ---- vis/finish.js: the watchmaker's finishes as textures, and the metal materials that wear them ----
+   Each finish starts as a small height field drawn in code (no image files):
+     perlage   overlapping spots, each with fine concentric grooves on a low dome (the pillar plate, finish "perlage")
+     stripes   Côtes de Genève: domed bands with fine lines along them (the bridges, finish "stripes"; also the rotor)
+     grain     circular graining: rings of random depth round the centre (every wheel; its texture centre is the arbor)
+     frost     a fine sandblasted grain (a plate or bridge with no decoration)
+   From the height: Full / Ultra get a normal map, a roughness map and a soft shade map; Lite gets only the shade map
+   (the pattern lit once from the lamp's side, multiplied into the colour), which costs nothing extra per pixel.
+   Drawn once per tier and kept in V.fin (a part change rebuilds the movement, not these); a tier change frees them.
+   Sizes and strengths are in FIN; tile sizes are in plate units (the plate is GEO.plateR = 4.3 across its radius). ---- */
+const FIN={size:{lite:128,full:512,ultra:1024},
+  perlage:{n:4,tile:3.0,rings:14,liteRings:3,dome:.7,groove:.22,ns:.45},
+  stripes:{n:3,tile:2.1,rot:-.55,lines:.04,ns:.7},
+  grain:{tile:3.0,rings:150,ns:.6},
+  frost:{tile:.9,ns:.12},
+  shadeFrom:[-.45,.55,.7]};    // the light direction the shade map is lit from (x right, y up the texture, z out)
+/* a small tileable value noise (hash on a grid, smoothstep between) */
+function fHash(i,j,s){let h=(i*374761393+j*668265263+s*982451653)|0;h=(h^(h>>>13))*1274126177|0;return((h^(h>>>16))>>>0)/4294967296;}
+function fNoise(x,y,per,s){const i=Math.floor(x),j=Math.floor(y),fx=x-i,fy=y-j,u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy),w=k=>((k%per)+per)%per;
+  const a=fHash(w(i),w(j),s),b=fHash(w(i+1),w(j),s),c=fHash(w(i),w(j+1),s),d=fHash(w(i+1),w(j+1),s);
+  return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+function finHeight(kind,S){const h=new Float32Array(S*S);
+  if(kind==="perlage"){const F=FIN.perlage,st=S/F.n,R=st*.74,rings=V.tier==="lite"?F.liteRings:F.rings;
+    for(let gy=-1;gy<=F.n;gy++)for(let gx=-1;gx<=F.n;gx++){const cx=gx*st+(gy&1?st/2:0),cy=gy*st,ph=fHash(gx+9,gy+9,3)*TAU;
+      for(let y=Math.floor(cy-R);y<=cy+R;y++)for(let x=Math.floor(cx-R);x<=cx+R;x++){const d=Math.hypot(x-cx,y-cy);if(d>R)continue;
+        const t=d/R,px=((x%S)+S)%S,py=((y%S)+S)%S;
+        /* a low dome, and fine circular scratches whose depth wanders round the spot (so the light catches a crescent, not a target) */
+        const a=Math.atan2(y-cy,x-cx),wob=.55+.45*Math.sin(a+ph);
+        h[py*S+px]=F.dome*(1-t*t)+F.groove*wob*Math.cos(t*rings*TAU+ph*3)*t;}}}
+  else if(kind==="stripes"){const F=FIN.stripes,w=S/F.n;
+    for(let y=0;y<S;y++)for(let x=0;x<S;x++){const t=(x%w)/w,dome=Math.sqrt(Math.max(0,1-(2*t-1)*(2*t-1)));
+      h[y*S+x]=dome*.9+F.lines*(fNoise(x*.9,y*.004,Math.round(S*.9),5)-.5)+F.lines*.5*(fNoise(x*3.1,y*.01,Math.round(S*3.1),6)-.5);}}
+  else if(kind==="grain"){const F=FIN.grain,c=S/2;
+    for(let y=0;y<S;y++)for(let x=0;x<S;x++){const d=Math.hypot(x-c+.5,y-c+.5)/c*F.rings;
+      h[y*S+x]=.6*fNoise(d,.5,1<<20,7)+.4*fNoise(d*3.7,.5,1<<20,8);}}
+  else{for(let y=0;y<S;y++)for(let x=0;x<S;x++)h[y*S+x]=.6*fNoise(x*32/S,y*32/S,32,11)+.4*fNoise(x*96/S,y*96/S,96,12);}
+  return h;}
+/* height -> the three textures; wrap = tileable or clamped (grain) */
+function finTex(kind){
+  const tier=V.tier,key=kind;if(!V.fin)V.fin={};if(V.fin[key])return V.fin[key];
+  const S=FIN.size[tier]||128,F=FIN[kind],h=finHeight(kind,S),lite=tier==="lite",wrap=kind!=="grain";
+  const at=(x,y)=>wrap?h[((y+S)%S)*S+((x+S)%S)]:h[Math.max(0,Math.min(S-1,y))*S+Math.max(0,Math.min(S-1,x))];
+  const k=S/96,L=FIN.shadeFrom,ll=Math.hypot(L[0],L[1],L[2]);
+  const mk=()=>{const c=document.createElement("canvas");c.width=c.height=S;const g=c.getContext("2d");return{c,g,img:g.createImageData(S,S)};};
+  const shade=mk(),nor=lite?null:mk(),rough=lite?null:mk();
+  for(let y=0;y<S;y++)for(let x=0;x<S;x++){
+    const du=(at(x+1,y)-at(x-1,y))*k,dv=-(at(x,y+1)-at(x,y-1))*k;   // canvas rows run down, the texture's v runs up
+    let nx=-du,ny=-dv,nz=1;const nl=Math.hypot(nx,ny,nz);nx/=nl;ny/=nl;nz/=nl;
+    const i=(y*S+x)*4,lit=Math.max(0,(nx*L[0]+ny*L[1]+nz*L[2])/ll),sh=lite?.66+.38*lit:.86+.16*lit;
+    shade.img.data[i]=shade.img.data[i+1]=shade.img.data[i+2]=Math.min(255,Math.round(255*sh));shade.img.data[i+3]=255;
+    if(nor){nor.img.data[i]=Math.round((nx*.5+.5)*255);nor.img.data[i+1]=Math.round((ny*.5+.5)*255);nor.img.data[i+2]=Math.round(nz*255);nor.img.data[i+3]=255;
+      const r=Math.round(255*(.72+.28*Math.min(1,Math.abs(at(x,y)-.5)*1.6)));rough.img.data[i]=rough.img.data[i+1]=rough.img.data[i+2]=r;rough.img.data[i+3]=255;}}
+  const tex=(o,srgb)=>{o.g.putImageData(o.img,0,0);const t=new THREE.CanvasTexture(o.c);t.encoding=srgb?THREE.sRGBEncoding:THREE.LinearEncoding;
+    t.wrapS=t.wrapT=wrap?THREE.RepeatWrapping:THREE.ClampToEdgeWrapping;t.anisotropy=lite?1:Math.min(4,V.r.capabilities.getMaxAnisotropy());
+    t.repeat.set(1/F.tile,1/F.tile);
+    if(kind==="grain")t.offset.set(.5,.5);   // the wheel's UVs are its own shape coordinates: (0,0) is the arbor
+    if(kind==="stripes"){t.center.set(.5,.5);t.rotation=F.rot;}   // the ribbons run across the bridges at a slant
+    return t;};
+  V.fin[key]={map:tex(shade,true),nmap:nor&&tex(nor,false),rmap:rough&&tex(rough,false),ns:F.ns};
+  return V.fin[key];}
+function finDrop(){if(V.fin)for(const k in V.fin){const f=V.fin[k];for(const t of [f.map,f.nmap,f.rmap])if(t)t.dispose();}V.fin=null;}
+/* colours are written as sRGB hex; the renderer outputs sRGB, so convert them to linear first or everything washes out */
+const sRGB=h=>new THREE.Color(h).convertSRGBToLinear();
+/* a metal: o = {c: sRGB hex, r: roughness, fin: finish kind or none, coat: a clear oxide film (blued steel)}.
+   Lite: the colour times the studio light (sharp, satin or frosted by roughness), plus the finish's shade map.
+   Full / Ultra: PBR metal on the PMREM light, with the finish's normal, roughness and shade maps. */
+function metalMat(o){
+  const f=o.fin?finTex(o.fin):null;
+  if(V.tier==="lite"){const E=liteEnvs(),i=o.r<.16?0:o.r<.34?1:2;
+    return new THREE.MeshBasicMaterial({color:sRGB(o.c).multiplyScalar(ENV.lite.gain*(o.lite||1)),map:f?f.map:null,envMap:E[i],combine:THREE.MultiplyOperation,reflectivity:1});}
+  const P=o.coat?THREE.MeshPhysicalMaterial:THREE.MeshStandardMaterial;
+  const m=new P({color:sRGB(o.c),roughness:o.r,metalness:1,envMap:fullEnv(),envMapIntensity:ENV.full.int,
+    map:f?f.map:null,normalMap:f?f.nmap:null,roughnessMap:f?f.rmap:null});
+  if(f)m.normalScale.set(f.ns,f.ns);
+  if(o.coat){m.clearcoat=o.coat;m.clearcoatRoughness=.08;}
+  return m;}
+/* a jewel: deep red with a glassy reflection (Lite mixes in the sharp light; Full / Ultra add a clear coat) */
+function gemMat(c){
+  if(V.tier==="lite")return new THREE.MeshBasicMaterial({color:sRGB(c),envMap:liteEnvs()[0],combine:THREE.MixOperation,reflectivity:.2});
+  return new THREE.MeshPhysicalMaterial({color:sRGB(c),roughness:.08,metalness:0,clearcoat:1,clearcoatRoughness:.02,envMap:fullEnv(),envMapIntensity:1.6,emissive:sRGB(0x2a0006)});}
 /* ---- vis/movement.js: the parametric movement (plan section 7). Built from the cfg (part ids) by buildMovement(cfg);
    the geometry numbers are in GEO, never inline. Nothing here reads game state.
    Layout (plate coordinates x, z; the crown is at +x): barrel by the crown, then centre wheel (at the middle), third,
@@ -1089,7 +1257,8 @@ function makeMats(tier){
    7 x bph / 1800 teeth so its 7-leaf escape pinion turns the escape wheel at the right speed), capped per tier for the
    mesh only (GEO.toothCap). The escape wheel steps half a tooth per beat, the train turns from it, the pallet fork
    flicks each beat and the balance swings at the amplitude the app sends (setRun).
-   Lite: every static part merged into one mesh per material, fewer curve segments, no bevels except for anglage. ---- */
+   Lite: every static part merged into one mesh per material, fewer curve segments, no bevels except for anglage.
+   Materials come from movementMats (finishes from vis/finish.js); a bridge is [face, edge] so anglage can polish the bevels. ---- */
 const GEO={
   plateR:4.3,plateY:.2,plateT:.28,
   wheelY:.6,wheelT:.06,balY:.8,bridgeY:1.12,bridgeT:.18,topY:1.32,rotorY:1.56,
@@ -1147,51 +1316,46 @@ function slab(shape,t,mat,y,o){o=o||{};
   const m=new THREE.Mesh(g,mat);m.rotation.x=-Math.PI/2;m.position.y=y;return m;}
 function cyl(r,h,mat,x,y,z,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg||12),mat);m.position.set(x,y+h/2,z);return m;}
 
-/* ---- finishing textures: grey patterns that multiply the brass colour (cheap on Lite too: a small canvas) ---- */
-function finishTex(kind,size){
-  const c=document.createElement("canvas");c.width=c.height=size;const g=c.getContext("2d");
-  g.fillStyle="#e6e6e6";g.fillRect(0,0,size,size);
-  if(kind==="stripes"){const w=size/3;for(let i=0;i<3;i++){const gr=g.createLinearGradient(i*w,0,(i+1)*w,0);
-      gr.addColorStop(0,"#b4b4b4");gr.addColorStop(.5,"#ffffff");gr.addColorStop(1,"#b4b4b4");g.fillStyle=gr;g.fillRect(i*w,0,w,size);}}
-  if(kind==="perlage"){const n=5,st=size/n;for(let y=-1;y<=n;y++)for(let x=-1;x<=n;x++){const cx=x*st+(y&1?st/2:0),cy=y*st;
-      const gr=g.createRadialGradient(cx,cy,1,cx,cy,st*.75);gr.addColorStop(0,"#ffffff");gr.addColorStop(.7,"#d0d0d0");gr.addColorStop(1,"#a8a8a8");
-      g.fillStyle=gr;g.beginPath();g.arc(cx,cy,st*.72,0,TAU);g.fill();}}
-  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;
-  t.repeat.set(kind==="stripes"?.8:2,kind==="stripes"?.8:2);
-  if(kind==="stripes"){t.center.set(.5,.5);t.rotation=-.55;}   // the ribbons run across the bridges at a slant
-  return t;}
-/* the movement's own materials (plate and bridge finish, polished steel, springs, dial-side parts); disposed on rebuild */
+/* the movement's own materials (plate and bridge finishes, anglage, wheels, polished steel, springs, dial-side parts);
+   disposed on rebuild. The finish textures themselves are shared and kept (vis/finish.js) */
 function movementMats(cfg){
-  const M=V.mats,lite=V.tier==="lite",C=h=>new THREE.Color(h).convertSRGBToLinear(),fin=new Set(cfg.finish||[]),own=[],texs=[];
-  const metal=(color,rough,map)=>{const m=lite?new THREE.MeshPhongMaterial({color:C(color),specular:C(0x6a6250),shininess:Math.round(80*(1-rough))+10,map:map||null})
-      :new THREE.MeshStandardMaterial({color:C(color),roughness:rough,metalness:1,envMap:V.env,envMapIntensity:1.1,map:map||null});own.push(m);return m;};
-  const sz=lite?64:256,tx=k=>{const t=finishTex(k,sz);texs.push(t);return t;};
-  const plate=metal(0xc9a45c,fin.has("perlage")?.38:.5,fin.has("perlage")?tx("perlage"):null);
-  const bridge=metal(0xcfac62,fin.has("stripes")?.3:.45,fin.has("stripes")?tx("stripes"):null);
-  const steel=fin.has("black-polish")?metal(0xd0d6da,.06):M.steel;
-  const pinion=GEO.train[cfg.train]&&GEO.train[cfg.train].polish?(fin.has("black-polish")?steel:metal(0xc8cfd4,.15)):M.steel;
+  const M=V.mats,fin=new Set(cfg.finish||[]),own=[],texs=[],lite=V.tier==="lite",C=sRGB;
+  const metal=o=>{const m=metalMat(o);own.push(m);return m;};
+  const plate=metal(fin.has("perlage")?{c:0xc9a45c,r:.34,fin:"perlage"}:{c:0xb99442,r:.5,fin:"frost"});
+  const bridge=metal(fin.has("stripes")?{c:0xcfac62,r:.26,fin:"stripes"}:{c:0xc29d4e,r:.42,fin:"frost"});
+  /* anglage: the bevelled edges (an extrusion's side faces) polished to a mirror */
+  const edge=fin.has("anglage")?metal({c:0xdcbc76,r:.05}):bridge;
+  const wheel=metal({c:0xd8b46a,r:.24,fin:"grain"});
+  const steel=fin.has("black-polish")?metal({c:0xd6dce0,r:.04}):M.steel;
+  const pinion=GEO.train[cfg.train]&&GEO.train[cfg.train].polish?(fin.has("black-polish")?steel:metal({c:0xcdd4d9,r:.1})):M.steel;
   const lineMat=col=>{const m=new THREE.LineBasicMaterial({color:C(col)});own.push(m);return m;};
-  const flat=(col,rough)=>{const m=lite?new THREE.MeshLambertMaterial({color:C(col)}):new THREE.MeshStandardMaterial({color:C(col),roughness:rough,metalness:0});own.push(m);return m;};
+  const flat=(col,rough)=>{const m=lite?new THREE.MeshLambertMaterial({color:C(col)}):new THREE.MeshStandardMaterial({color:C(col),roughness:rough,metalness:0,envMap:fullEnv(),envMapIntensity:.4});own.push(m);return m;};
   const S=GEO.spring[cfg.hairspring]||GEO.spring["steel-overcoil"];
-  return{plate,bridge,steel,pinion,wheel:M.gilt,blued:M.blued,ruby:M.ruby,gilt:M.gilt,
+  return{plate,bridge,bridgeSet:[bridge,edge],edge,steel,pinion,wheel,blued:M.blued,ruby:M.ruby,gilt:M.gilt,
     spring:lineMat(S.col),dial:flat(0xe9e4d6,.6),moon:flat(0x1d3570,.5),own,texs};}
 
 /* ---- merging: on every tier, the parts that never move become one mesh per material per layer ---- */
 function mergeStatic(layer){
   layer.updateMatrixWorld(true);
-  const by=new Map(),drop=[];
+  const by=new Map(),drop=[],add=(mat,g,start,count)=>{const L=by.get(mat)||[];L.push({g,start,count});by.set(mat,L);};
   layer.traverse(o=>{if(!o.isMesh||!o.userData.fixed)return;
     let g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();
     g.applyMatrix4(o.matrixWorld);
     if(!g.attributes.uv)g.setAttribute("uv",new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));
-    const L=by.get(o.material)||[];L.push(g);by.set(o.material,L);drop.push(o);o.geometry.dispose();});
+    const n=g.attributes.position.count;
+    if(Array.isArray(o.material)){for(const gr of g.groups)add(o.material[gr.materialIndex],g,gr.start,Math.min(gr.count,n-gr.start));}
+    else add(o.material,g,0,n);
+    drop.push(o);o.geometry.dispose();});
   for(const o of drop)o.parent.remove(o);
+  const done=new Set();
   for(const [mat,L] of by){
-    let n=0;for(const g of L)n+=g.attributes.position.count;
+    let n=0;for(const e of L)n+=e.count;
     const pos=new Float32Array(n*3),nor=new Float32Array(n*3),uv=new Float32Array(n*2);let at=0;
-    for(const g of L){const c=g.attributes.position.count;pos.set(g.attributes.position.array,at*3);nor.set(g.attributes.normal.array,at*3);uv.set(g.attributes.uv.array,at*2);at+=c;g.dispose();}
+    for(const {g,start,count} of L){const A=g.attributes;
+      pos.set(A.position.array.subarray(start*3,(start+count)*3),at*3);nor.set(A.normal.array.subarray(start*3,(start+count)*3),at*3);uv.set(A.uv.array.subarray(start*2,(start+count)*2),at*2);at+=count;done.add(g);}
     const mg=new THREE.BufferGeometry();mg.setAttribute("position",new THREE.BufferAttribute(pos,3));mg.setAttribute("normal",new THREE.BufferAttribute(nor,3));mg.setAttribute("uv",new THREE.BufferAttribute(uv,2));
-    const m=new THREE.Mesh(mg,mat);m.matrixAutoUpdate=false;layer.add(m);}}
+    const m=new THREE.Mesh(mg,mat);m.matrixAutoUpdate=false;layer.add(m);}
+  for(const g of done)g.dispose();}
 
 /* ---- the movement ---- */
 function buildMovement(cfg){
@@ -1281,7 +1445,7 @@ function buildMovement(cfg){
   const B=layers.bridges,bseg=lite?10:18,by=GEO.bridgeY,bt=GEO.bridgeT,bev=anglage?(lite?1:2):(lite?0:1);
   const edge=(x,z,d)=>{const l=Math.hypot(x,z)||1;return[x/l*(R-d),z/l*(R-d)];};
   const bridgeList=[];
-  const bar_=(circles,screwAt)=>{B.add(fix(slab(hullShape(circles,bseg),bt,MM.bridge,by,{seg,bevel:bev})));bridgeList.push(screwAt);};
+  const bar_=(circles,screwAt)=>{B.add(fix(slab(hullShape(circles,bseg),bt,MM.bridgeSet,by,{seg,bevel:bev})));bridgeList.push(screwAt);};
   { const [ex,ez]=edge(barrels[0][0],barrels[0][1],.5);
     bar_(barrels.map(([x,z])=>({x,z,r:.62})).concat([{x:ex,z:ez,r:.42}]),[[ex,ez]]); }
   bar_([{x:cx,z:cz,r:.3},{x:tx,z:tz,r:.28}],[[ (cx+tx)/2,(cz+tz)/2 ]]);
@@ -1291,7 +1455,7 @@ function buildMovement(cfg){
     const [p1,p2]=edge(Pp[0],Pp[1],.4);
     bar_([{x:Pp[0],z:Pp[1],r:.2},{x:p1,z:p2,r:.24}],[[p1,p2]]);
     const [k1,k2]=edge(bx,bz,.45);
-    B.add(fix(slab(hullShape([{x:bx,z:bz,r:.36},{x:k1+(k2>0?.3:-.3)*.6,z:k2,r:.48},{x:k1,z:k2,r:.48}],bseg),bt,MM.bridge,by+.04,{seg,bevel:bev})));bridgeList.push([[k1,k2]]);
+    B.add(fix(slab(hullShape([{x:bx,z:bz,r:.36},{x:k1+(k2>0?.3:-.3)*.6,z:k2,r:.48},{x:k1,z:k2,r:.48}],bseg),bt,MM.bridgeSet,by+.04,{seg,bevel:bev})));bridgeList.push([[k1,k2]]);
     /* the regulator on the cock: an index lever, or a swan-neck micro-adjust; a free-sprung balance has none */
     if(cfg.regulator==="index"||cfg.regulator==="micro-adjust"){
       const a=Math.atan2(k2-bz,k1-bx)+.9,L=balR*.9,lv=fix(new THREE.Mesh(new THREE.BoxGeometry(L,.03,.07),MM.steel));
@@ -1304,7 +1468,7 @@ function buildMovement(cfg){
   }else{
     /* the tourbillon bridge: a ring over the cage, held at two points */
     const [k1,k2]=edge(bx,bz,.35);
-    put(B,fix(slab(ringShape(1.38,1.56,0,TAU),bt,MM.bridge,by+.06,{seg})),bx,bz);
+    put(B,fix(slab(ringShape(1.38,1.56,0,TAU),bt,MM.bridgeSet,by+.06,{seg,bevel:bev})),bx,bz);
     bar_([{x:bx+(k1-bx)*.75,z:bz+(k2-bz)*.75,r:.24},{x:k1,z:k2,r:.3}],[[k1,k2]]);
     const [e1,e2]=edge(fx-.4,fz,.45);bar_([{x:fx,z:fz,r:.28},{x:e1,z:e2,r:.3}],[[e1,e2]]);}
   /* jewels at the pivots (gold chatons round them from 25 jewels), blued screws at the bridge ends */
@@ -1347,7 +1511,7 @@ function buildMovement(cfg){
     if(comps.has("perp-cal"))put(D,fix(slab(gearShape(1.5,teeth(48),5,seg),.03,MM.gilt,dy+.02,{seg})),-.6,-1.6);}
   /* the automatic rotor: a heavy brass sector on a steel hub, over everything */
   if(cfg.winding==="automatic"){const rot=new THREE.Group();
-    rot.add(slab(ringShape(3.2,R-.05,-Math.PI*.45,Math.PI*.45),.11,MM.gilt,GEO.rotorY,{seg:lite?16:40,bevel:lite?0:1}));
+    rot.add(slab(ringShape(3.2,R-.05,-Math.PI*.45,Math.PI*.45),.11,MM.bridgeSet,GEO.rotorY,{seg:lite?16:40,bevel:anglage||!lite?1:0}));
     rot.add(slab(hullShape([{x:0,z:0,r:.3},{x:3.3,z:0,r:.22}],bseg),.07,MM.gilt,GEO.rotorY+.02,{seg}));
     rot.add(cyl(.32,.14,MM.steel,0,GEO.rotorY,0,lite?12:20));layers.rotor.add(rot);anim.rotor=rot;}
 
@@ -1408,11 +1572,13 @@ function rebuild(){
   V.bench=buildBench();V.lamp=buildLights();V.move=buildMovement(V.cfg);
   V.scene.add(V.bench,V.lamp,V.move);
   V.r.shadowMap.enabled=V.tier!=="lite";V.r.shadowMap.type=THREE.PCFSoftShadowMap;
+  /* Lite bakes its tone curve into the light (vis/studio.js); Full / Ultra tone-map the HDR reflections on the GPU */
+  V.r.toneMapping=V.tier==="lite"?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;V.r.toneMappingExposure=ENV.full.exp;
   V.r.setPixelRatio(V.tier==="lite"?1:Math.min(window.devicePixelRatio||1,2));
   V.comp=null;V.bloom=null;
   if(V.tier==="ultra"&&window.__escPost)window.__escPost(ok=>{if(!ok||V.tier!=="ultra")return;
     V.comp=new THREE.EffectComposer(V.r);V.comp.addPass(new THREE.RenderPass(V.scene,V.cam));
-    V.bloom=new THREE.UnrealBloomPass(new THREE.Vector2(V.w||1,V.h||1),.35,.4,.82);V.comp.addPass(V.bloom);resize(true);});
+    V.bloom=new THREE.UnrealBloomPass(new THREE.Vector2(V.w||1,V.h||1),.3,.35,.93);V.comp.addPass(V.bloom);resize(true);});
   resize(true);
 }
 function resize(force){
@@ -1486,7 +1652,7 @@ function frame(now){
 /* ---- vis/api.js: the WATCH_VIS public object. The app calls these; the vis never reads game state. ---- */
 let started=false;
 return{
-  init(canvas){if(started)return;started=true;initRenderer(canvas);rebuild();bindOrbit(canvas);requestAnimationFrame(frame);},
+  init(canvas){if(started)return;started=true;initRenderer(canvas);rebuild();bindOrbit(canvas);requestAnimationFrame(frame);studioStart();},
   setQuality(tier){tier=tier==="ultra"||tier==="full"?tier:"lite";if(tier===V.tier&&V.move)return;V.tier=tier;if(started)rebuild();},
   /* rebuild the movement when the parts change (the same cfg again costs nothing) */
   setMovement(cfg){const k=JSON.stringify(cfg||{});if(k===V.cfgKey)return;V.cfgKey=k;V.cfg=JSON.parse(k);if(started)rebuildMove();},
@@ -1513,7 +1679,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.7.0.0";
+const VERSION="0.7.1.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
