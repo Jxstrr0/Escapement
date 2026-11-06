@@ -10,7 +10,8 @@
    mesh only (GEO.toothCap). The escape wheel steps half a tooth per beat, the train turns from it, the pallet fork
    flicks each beat and the balance swings at the amplitude the app sends (setRun).
    Lite: every static part merged into one mesh per material, fewer curve segments, no bevels except for anglage.
-   Materials come from movementMats (finishes from vis/finish.js); a bridge is [face, edge] so anglage can polish the bevels. ---- */
+   Materials come from movementMats (finishes from vis/finish.js); a bridge is [face, edge] so anglage can polish the bevels.
+   On Full / Ultra a tourbillon's coded cage gives way to the Blender model (moveModels; the escapement in it stays code). ---- */
 const GEO={
   plateR:4.3,plateY:.2,plateT:.28,
   wheelY:.6,wheelT:.06,balY:.8,bridgeY:1.12,bridgeT:.18,topY:1.32,rotorY:1.56,
@@ -158,12 +159,13 @@ function buildMovement(cfg){
   if(tour){
     cage=new THREE.Group();cage.position.set(bx,0,bz);layers.balance.add(cage);host=cage;hostB=cage;ox=bx;oz=bz;
     const cg=MM.steel;
-    const ring=new THREE.Mesh(new THREE.TorusGeometry(1.3,.05,6,lite?32:64),cg);ring.rotation.x=Math.PI/2;ring.position.y=GEO.wheelY-.05;cage.add(ring);
-    const ring2=ring.clone();ring2.position.y=GEO.bridgeY-.08;cage.add(ring2);
+    /* the coded cage (rings, pillars, arms): Full / Ultra swap in models/tourbillon-cage.glb (moveModels) */
+    const st=[],ring=new THREE.Mesh(new THREE.TorusGeometry(1.3,.05,6,lite?32:64),cg);ring.rotation.x=Math.PI/2;ring.position.y=GEO.wheelY-.05;cage.add(ring);
+    const ring2=ring.clone();ring2.position.y=GEO.bridgeY-.08;cage.add(ring2);st.push(ring,ring2);
     for(let i=0;i<3;i++){const a=i*TAU/3,b=new THREE.Mesh(new THREE.BoxGeometry(.08,GEO.bridgeY-GEO.wheelY,.08),cg);b.position.set(Math.cos(a)*1.3,(GEO.bridgeY+GEO.wheelY)/2-.06,Math.sin(a)*1.3);cage.add(b);
-      const arm=new THREE.Mesh(new THREE.BoxGeometry(1.3,.05,.12),cg);arm.position.set(Math.cos(a)*.65,GEO.bridgeY-.06,Math.sin(a)*.65);arm.rotation.y=-a;cage.add(arm);}
+      const arm=new THREE.Mesh(new THREE.BoxGeometry(1.3,.05,.12),cg);arm.position.set(Math.cos(a)*.65,GEO.bridgeY-.06,Math.sin(a)*.65);arm.rotation.y=-a;cage.add(arm);st.push(b,arm);}
     E=[bx+.95,bz+.25];Pp=[bx+.55,bz+.12];
-    anim.cage=cage;}
+    anim.cage=cage;anim.cageStand=st;}
   /* escape wheel (steel), stepping half a tooth per beat */
   const ep=new THREE.Group();ep.position.set(E[0]-ox,0,E[1]-oz);
   ep.add(slab(escapeShape(GEO.r.E,T.escape),GEO.wheelT,MM.steel,GEO.wheelY+.02,{seg}));
@@ -275,6 +277,16 @@ function buildMovement(cfg){
   anim.layers=layers;anim.mats=MM;anim.loupe=new THREE.Vector3(bx*.75+E[0]*.25,GEO.balY-.28,bz*.75+E[1]*.25);
   root.userData=anim;
   return root;}
+
+/* ---- the tourbillon cage model (Full / Ultra): models/tourbillon-cage.glb, made in mm (tools/blender/tourbillon.py) ---- */
+function moveModels(root){const u=root&&root.userData;
+  if(V.tier==="lite"||!u||!u.cage)return;
+  if(!THREE.GLTFLoader){if(window.__escPost)window.__escPost(ok=>{if(ok&&THREE.GLTFLoader&&V.move===root)moveModels(root);});return;}
+  if(!V.models)V.models={};
+  modelGet(WATCH.models.cage,src=>{if(V.move!==root)return;const o=src.clone();o.scale.setScalar(ROOM.U);o.position.y=GEO.wheelY-.08;
+    const map={cage:u.mats.steel,ruby:V.mats.ruby,gilt:V.mats.gilt};
+    o.traverse(q=>{if(!q.isMesh)return;const m=map[(q.material&&q.material.name)||""];if(m)q.material=m;q.castShadow=q.receiveShadow=true;});
+    u.cage.add(o);for(const s of u.cageStand)s.visible=false;});}
 
 /* ---- motion: called every frame with the time in seconds ---- */
 function animateMovement(u,t,dt){

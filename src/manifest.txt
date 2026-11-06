@@ -22,6 +22,7 @@ vis/studio.js
 vis/finish.js
 vis/movement.js
 vis/room.js
+vis/watch.js
 vis/bench.js
 vis/photo.js
 vis/api.js
