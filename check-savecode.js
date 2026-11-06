@@ -202,6 +202,13 @@ check("packing survives big, varied saves (LZW dictionary fills up)", () => {
   assert.deepStrictEqual(plain(a.buUnzip(a.buZip(new Uint8Array(0)))), []);
 });
 
+check("a backup file (the code plus a line break) reads back, and its name carries the local date", () => {
+  const a = load(); seed(a.localStorage); a.live = game();
+  const file = a.buCode() + "\r\n";
+  assert.deepStrictEqual(plain(a.buRead(file).data.save), game());
+  assert.strictEqual(a.buFileName(new Date(2026, 0, 5, 23, 30)), "escapement-backup-2026-01-05.txt");
+});
+
 let bad = 0;
 for (const [name, fn] of checks) {
   try { fn(); console.log("ok   " + name); }

@@ -30,7 +30,7 @@ function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,
 let S=freshState();
 
 const buObjS=o=>!!o&&typeof o==="object"&&!Array.isArray(o);
-function save(){try{localStorage.setItem("esc-save",JSON.stringify(S));}catch(e){}}
+function save(){try{localStorage.setItem("esc-save",JSON.stringify(S));}catch(e){return;}buSaved();}   // buSaved: app/savecode.js (asks the browser to keep our storage)
 function snapshot(){return JSON.parse(JSON.stringify(S));}
 /* load a save object into S. false (and S untouched) if it isn't one of ours */
 function hydrate(o){if(!buObjS(o)||!buObjS(o.cfg))return false;
