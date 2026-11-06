@@ -6,7 +6,7 @@
 .tgread>div{display:flex;flex-direction:column;min-width:0}
 .tgread span{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
 .tgread b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:20px;font-weight:600;white-space:nowrap}
-.tgread b small{font-size:11px;font-weight:400;color:var(--muted)}
+.tgread b small{margin-left:3px;font-size:11px;font-weight:400;color:var(--muted)}
 .tgread b.ok{color:#9fd8b4}
 @media (max-width:370px){.tgread b{font-size:17px}.tgread span{font-size:10px;letter-spacing:.03em}}
 #tgCv{display:block;width:100%;height:170px;background:#0b100d;border-top:1px solid #1d2622;border-bottom:1px solid #1d2622}
@@ -14,7 +14,7 @@
 .tgfoot span{flex:1;min-width:0;line-height:1.35;padding:4px 0}
 .tgfoot .btn{color:#e0c07e;border:0;flex:0 0 auto}
 .tgpos button{font-family:var(--mono);font-weight:600}
-.seg button.lock{color:var(--dim);opacity:.55;background:repeating-linear-gradient(135deg,transparent 0 6px,var(--edge) 6px 8px)}
+.seg button.lock{color:var(--dim);background:repeating-linear-gradient(135deg,transparent 0 6px,var(--edge) 6px 8px)}
 #adjCard h3,#certCard h3{display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap}
 #adjCard h3 .cnt,#certCard h3 .cnt{font-size:12px;font-weight:500;font-family:var(--mono);color:var(--brass-t)}
 #adjCard .slot{margin-top:4px}

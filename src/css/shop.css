@@ -9,7 +9,7 @@
 .shlist li:first-child{border-top:0;padding-top:2px}
 .shlist li>div:first-child{min-width:0;flex:1}
 .shlist li small{color:var(--muted);font-size:13px}
-.shlist li.own>div:first-child{opacity:.6}
+.shlist li.own b{color:var(--muted)}.shlist li.own small{color:var(--dim)}
 .shlist .acts{display:flex;flex-direction:column;gap:6px;flex:0 0 auto}
 .shlist .acts .btn{white-space:nowrap}
 .shlist .acts.h{flex-direction:row}
@@ -17,10 +17,10 @@
 .shlist .lockt{color:var(--warn)}
 .shlist .good,.good{color:var(--good)}
 .shlist.rep li,.shlist.stk li{align-items:flex-start}
-.seg.sm{margin:8px 0 4px;padding:3px}.seg.sm button{min-height:36px;font-size:13px}
+.seg.sm{margin:8px 0 4px;padding:3px}.seg.sm button{min-height:44px;font-size:13px}
 .ord{padding:10px 0;border-top:1px solid var(--rule)}.ord:first-of-type{border-top:0;padding-top:0}
 .ord p{margin:4px 0}.ord .row{margin-top:8px}.ord.offer>b{color:var(--brass-t)}
-details.card>summary{list-style:none;cursor:pointer}details.card>summary::-webkit-details-marker{display:none}
+details.card>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;flex-direction:column;justify-content:center}details.card>summary::-webkit-details-marker{display:none}
 details.card>summary h3{display:flex;align-items:center;margin:0}
 details.card>summary h3::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--dim);border-bottom:2px solid var(--dim);transform:rotate(45deg);transition:transform .2s}
 details.card[open]>summary h3{margin-bottom:8px}details.card[open]>summary h3::after{transform:rotate(225deg)}
