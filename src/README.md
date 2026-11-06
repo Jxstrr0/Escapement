@@ -48,8 +48,10 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | **WATCH_SOUND** | |
 | `sound/tick.js` | the whole block: `WATCH_SOUND` (`unlock`, `set({bph, beatMs, on})`, `stop`): two baked tick/tock buffers and a look-ahead scheduler |
 | **WATCH_VIS** (three.js) | |
-| `vis/core.js` | `<script>`, IIFE open, module state `V`, renderer, tiers, the studio reflection, materials (`makeMats`) |
-| `vis/movement.js` | the parametric movement: `GEO` (layout and sizes), gear / hull / ring shapes, finishing textures, `mergeStatic`, `buildMovement(cfg)` (layers for the exploded view), `animateMovement` (balance, escape wheel, train, fork, cage, rotor, explode) |
+| `vis/core.js` | `<script>`, IIFE open, module state `V`, renderer, tiers, materials (`makeMats`) |
+| `vis/studio.js` | the studio light the metal reflects: `ENV`, the `.hdr` decoder, `lightAim` (swings the softbox overhead, adds the fill), the painted stand-in, `liteEnvs()` (three baked LDR reflections for Lite) and `fullEnv()` (PMREM for Full / Ultra); fetches `textures/studio_small_03.hdr` once (`studioStart`) |
+| `vis/finish.js` | the finishes drawn in code (`FIN`: perlage, Côtes de Genève stripes, circular graining, frost) as shade / normal / roughness maps, cached per tier in `V.fin`; `metalMat(o)` and `gemMat(c)`, the material makers every tier uses |
+| `vis/movement.js` | the parametric movement: `GEO` (layout and sizes), gear / hull / ring shapes, `movementMats` (plate, bridge face and anglage edge, wheels, steel), `mergeStatic` (also splits [face, edge] material pairs), `buildMovement(cfg)` (layers for the exploded view), `animateMovement` (balance, escape wheel, train, fork, cage, rotor, explode) |
 | `vis/bench.js` | felt mat and bench top, lamp lights, `rebuild()` per tier and `rebuildMove()` per cfg, resize and `fitDist`, the views (`setGoal`, `setViewName`, `glide`), orbit / pinch / double-tap controls, the frame loop and the fps meter |
 | `vis/api.js` | **the WATCH_VIS public object** (`init`, `setQuality`, `setMovement`, `setRun`, `setView`, `view`, `onView`, `setMotion`, `fps`, `_state`), IIFE close, `</script>` |
 | **app** | |

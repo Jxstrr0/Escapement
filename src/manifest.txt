@@ -15,6 +15,8 @@ sim/market.js
 html/ld-sim.html
 sound/tick.js
 vis/core.js
+vis/studio.js
+vis/finish.js
 vis/movement.js
 vis/bench.js
 vis/api.js
