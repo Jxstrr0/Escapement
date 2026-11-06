@@ -44,8 +44,11 @@ function watchLayout(comps){
   const has=k=>comps.includes(k),L={},free=["bottom","right","left","top","d430"],take=(kind,pref)=>{for(const s of pref)if(free.includes(s)){free.splice(free.indexOf(s),1);L[s]=kind;return s;}return null;};
   if(has("tourbillon"))take("tourb",["bottom"]);
   if(has("moonphase"))take("moon",["bottom","top"]);
-  if(has("perp-cal")){take("date31",["right","left"]);take("day",["left","right","top"]);take("month",["top","left","right"]);}
-  if(has("chrono")){take("min30",["right","left"]);if(!has("tourbillon"))take("sec",["left","bottom"]);}
+  if(has("perp-cal"))take("date31",["right","left"]);
+  if(has("chrono")){take("min30",["right","left","top"]);if(!has("tourbillon"))take("sec",["left","bottom"]);}
+  /* the perpetual's day and month take what sub-dials are left; on a full dial (a grand complication) they move to windows by 4-5,
+     so the chronograph keeps its 30-minute counter */
+  if(has("perp-cal")){const day=take("day",["left","right","top"]);if(!day)take("dmwin",["d430"]);else if(!take("month",["top","left","right"]))take("monthwin",["d430"]);}
   if(has("power-reserve"))take("pr",["top","left","right"]);
   if(has("annual-cal"))take("daymonth",["top","bottom"]);
   if(has("date")&&!has("perp-cal"))take("datewin",["right","bottom","left","d430"]);
@@ -85,7 +88,7 @@ function dialCanvas(D,lay,spec,S){
   /* printed hour markers: Roman numerals fired into the enamel */
   const used=new Set(Object.keys(lay.L).map(s=>WATCH.hourOf[s]));if(lay.open)used.add(WATCH.hourOf[lay.open]);
   if(D.marks==="roman"){const R=["XII","I","II","III","IIII","V","VI","VII","VIII","IX","X","XI"];g.font=font(76,"400",serif);g.textAlign="center";g.textBaseline="middle";
-    for(let h=0;h<12;h++){if(used.has(h))continue;const a=h/12*TAU,r=.74*H;g.save();g.translate(Math.sin(a)*r,-Math.cos(a)*r);g.rotate(a);g.scale(h===0||h===8?.8:1,1);g.fillText(R[h],0,0);g.restore();}}
+    for(let h=0;h<12;h++){if(used.has(h))continue;const a=h/12*TAU,r=.74*H;g.save();g.translate(Math.sin(a)*r,-Math.cos(a)*r);g.rotate(h>3&&h<9?a+Math.PI:a);g.scale(h===0||h===8?.8:1,1);g.fillText(R[h],0,0);g.restore();}}
   g.restore();
   /* the name, a line under it, and the foot */
   g.textAlign="center";g.textBaseline="middle";g.fillStyle=D.print;
@@ -128,6 +131,8 @@ function dialCanvas(D,lay,spec,S){
       g.fillStyle=D.base;for(const sx of [-1,1]){g.beginPath();g.arc(x+sx*R*.62,y+R*.25,R*.42,Math.PI,0);g.fill();}
       g.strokeStyle=D.print;g.lineWidth=1.6*k;g.beginPath();g.arc(x,y+R*.25,R,Math.PI,0);g.stroke();
       g.font=font(13,"500");g.fillText("PHASE DE LUNE",x,y+R*.48);}
+    else if(kind==="dmwin"){const [x,y]=P(u,v);win(x,y-21*k,62*k,34*k,W_DAYS[today.dow]);win(x,y+21*k,62*k,34*k,W_MONTHS[today.month]);}
+    else if(kind==="monthwin"){const [x,y]=P(u,v);win(x,y,62*k,34*k,W_MONTHS[today.month]);}
     else if(kind==="datewin"){const f=s==="d430"?1:1.18,[x,y]=P(u*f,v*f);win(x,y,52*k,40*k,String(today.date));}
     else if(kind==="daymonth"){const [x,y]=P(u,v);win(x-36*k,y,62*k,34*k,W_DAYS[today.dow]);win(x+36*k,y,62*k,34*k,W_MONTHS[today.month]);}
     else if(kind==="tourb"){const [x,y]=P(u,v);g.strokeStyle=D.print;g.lineWidth=2.4*k;g.beginPath();g.arc(x,y,r*H*1.08,0,TAU);g.stroke();

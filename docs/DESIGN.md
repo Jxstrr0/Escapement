@@ -2,6 +2,13 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 0.10.2.0: polish
+
+- **Upright numerals:** Roman numerals from IIII to VIII used to point their feet at the centre, so they read upside down at the bottom of the dial. They are now turned half round to read upright: printed on the enamel dial (`dialCanvas`, `src/vis/watch.js`) and applied on the guilloché dial (`tools/blender/dials.py`, `models/dial-guilloche.glb` remade).
+- **The chronograph's counter on a full dial:** a grand complication (tourbillon, moonphase, perpetual calendar, chronograph) used to lose the 30-minute counter, because the calendar took every sub-dial. Now the chronograph takes its counter before the perpetual's day and month, and those move to a pair of windows by 4-5 (`dmwin`). A perpetual calendar with a moonphase and no chronograph puts the month in a window there (`monthwin`) instead of leaving it out.
+- **The display window** stood on the floor behind the camera, where the bench view never saw it. It now stands against the back wall, left of the bench (`ROOM_MODELS.window`, and the Lite stand-in in `buildRoom`).
+- **Certificate wording:** the line under the grade names the trial's real temperatures: "Timed for fifteen days in five positions and at 8, 23 and 38 °C, this movement met every limit the Bureau sets for a chronometer." The Observatory's says "on Kessel Peak" and "every limit for the Observatory grade".
+
 ## 0.10.1.0: balance (R&D 40% cheaper)
 
 - A bot played 12-year careers both ways. A player who only does repairs and trade batches and never spends ends with about Th 300,000 by year 8; a player who buys upgrades, hires staff and runs R&D is never rich (Th 30,000-90,000 in hand) and finished R&D only around year 13 or later. Repairs and trade are where the money comes from; cutting trade pay hurt the investing player badly and barely touched the saver.
