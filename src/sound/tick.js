@@ -8,6 +8,7 @@
    Scheduling: a 40 ms timer queues the beats due in the next 120 ms on the audio clock (never per frame).
      WATCH_SOUND.unlock()      call from a tap: browsers only allow audio after a user gesture
      WATCH_SOUND.set({bph, beatMs, on})   change the beat; on:false (or stop()) silences it
+     WATCH_SOUND.context()     the AudioContext (made on first call), shared with WORKSHOP_SOUND
      WATCH_SOUND.ready         true once the audio context exists */
 const WATCH_SOUND=(function(){
 "use strict";
@@ -43,6 +44,7 @@ function run(){if(!cfg.on||!ctx){clearInterval(timer);timer=0;return;}
 const api={
   ready:false,
   unlock(){if(init()&&ctx.state==="suspended")ctx.resume().catch(()=>{});},
+  context(){return init()?ctx:null;},   // the one AudioContext, shared with the workshop sounds (sound/workshop.js)
   set(o){Object.assign(cfg,o||{});run();},
   stop(){cfg.on=false;run();}
 };

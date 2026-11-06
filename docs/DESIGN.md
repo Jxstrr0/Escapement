@@ -2,6 +2,15 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.0.1.0: workshop sounds
+
+- Real recordings, all CC0 (`sounds/`, credited in `sounds/CREDITS.md`), played by `WORKSHOP_SOUND` (`src/sound/workshop.js`) on the tick's AudioContext. They are fetched the first time they are needed (about 430 KB in all) and the service worker keeps them for offline.
+- **The shop bell** rings when work comes in at the start of a week: repairs, a commission enquiry, a trade offer. **The till** (a drawer and coins) when a piece sells, by any road (retail, the fair, an auction lot, the dealer, a commission delivered) and when a trade batch is delivered. Repair pay makes no sound (it would ring every week).
+- **Close week** strikes a mantel clock three times; the bell and the till for the week wait for the strokes (`hold` / `release`), each at most once.
+- **Ambience**, quiet under everything once you have tapped the page: the wall clock, birds and air through the window, and from the cleaning machine on, the machine running a 22 s cycle every minute and a half. It fades out while the page is hidden and on the Test tab while the tick is on (the timegrapher needs quiet).
+- **Settings** has two switches: **Tick** (the watch on the Test tab; the Test tab's button now says Tick on / off) and **Workshop sounds** (on by default; switching it on rings the bell). Both ride in `esc-save` (`S.sound`, `S.wsound`) and stay with the device when a slot is loaded. No new storage key.
+- The Close week chime is the shop bell pitched an octave down, as a stand-in: a real clock strike can replace `chime.mp3` later without code changes.
+
 ## 1.0.0.2: speed pass
 
 - Measured on Full and Ultra in the heaviest scene (a grand complication in the manufacture): about 70 draw calls and 20,000 to 35,000 triangles on screen, a 768 px reflection map, 512 px prop textures and no per-frame texture uploads. The draw side was already lean, so the pass removes wasted frames instead of cutting detail.
