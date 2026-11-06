@@ -1,4 +1,72 @@
 /* ===================== app/career.js: the Career tab =====================
-   The calendar (weeks from 2000 to 2030), reputation tracks, the valley fair, chronometry trials, auction nights, service
-   returns, the smartwatch shift and goals. Arrives in PR 6 (plan section 9); R&D in PR 7. */
-TAB_RENDER.career=function(){};
+   The week (Close week and its report), New game (Repair bench 2000, Skip ahead 2008, or the Sandbox), the bank's loan
+   and the end of a career, and the three save slots ("esc-slot1" .. "esc-slot3": a whole game each; loading one keeps
+   this device's settings). PR 6 adds the calendar of events, reputation and goals; PR 7 R&D. */
+function renderCareer(){const el=$("careerBody"),c=car();let h="";
+  if(!c)h=`<div class="card"><h3>Start a career</h3><p>You're in the Sandbox: every part, no money. A career starts with a bench, a little cash and the rent to pay.</p><div class="row"><button class="btn pri" data-cr="new">New game</button></div></div>`;
+  else if(c.over)h=`<div class="card"><h3>The workshop is closed</h3><p>It ran from ${c.start} to ${c.year}: ${c.made} piece${c.made===1?"":"s"} made, ${c.sold.length} sold. The bank wouldn't lend twice.</p><div class="row"><button class="btn pri" data-cr="new">Start again</button></div></div>`;
+  else{const done=c.sold.length,cert=Object.keys(c.certs).map(k=>`${c.certs[k]} ${SIM.CERT[k].name}`).join(", ");
+    h=`<div class="card"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursLeft(),1)} h left</span></h3>
+<p>${c.kind==="shop"?"Your shop on the Haldis high street":upOwned("shop")?"Your shop on the high street":"A shared bench in a rented corner of a workshop"}, since ${c.start}. ${fmt$(c.cash)} in the till; ${fmt$(weeklyCosts())} a week goes out.</p>
+<p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
+<div class="row"><button class="btn pri" data-cr="close">Close week</button></div>
+<p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;}
+  h+=slotsCard();
+  if(c)h+=`<div class="row"><button class="btn ghost" data-cr="new">New game…</button></div>`;
+  el.innerHTML=h;}
+TAB_RENDER.career=renderCareer;
+$("careerBody").addEventListener("click",e=>{const b=e.target.closest("[data-cr]");if(!b)return;const k=b.dataset.cr,i=+b.dataset.i;
+  if(k==="close")doCloseWeek();
+  if(k==="new")newGameSheet();
+  if(k==="ssave"){const m=slotMeta(i);if(m)confirmSheet(`Save over slot ${i}?`,`It holds ${m.what}.`,"Save here",()=>slotSave(i));else slotSave(i);}
+  if(k==="sload")confirmSheet(`Load slot ${i}?`,"The game you're playing now is replaced (save it to another slot first if you want it).","Load it",()=>slotLoad(i));
+  if(k==="sdel")confirmSheet(`Empty slot ${i}?`,"The game saved there is gone for good (unless it's in a backup code).","Empty it",()=>{try{localStorage.removeItem(slotKey(i));}catch(e){}renderCareer();});});
+
+/* ---- New game ---- */
+function newGameSheet(){const has=inCareer();
+  openSheet("New game",`${has?`<p class="hint" style="margin-top:0">This replaces the career you're playing. Save it to a slot first (Career tab) if you want to come back to it.</p>`:""}
+<ul class="shlist fixes"><li><div><b>Repair bench, 2000</b><br><small>A shared bench in a rented corner, a basic timing machine and ${fmt$(BIZ.starts.bench.cash)}. Repairs pay the rent while you learn.</small></div><div class="acts"><button class="btn sm pri" data-ng="bench">Start</button></div></li>
+<li><div><b>Skip ahead to 2008</b><br><small>Your own shop, the six-position timing machine, a cleaning machine, ${fmt$(BIZ.starts.shop.cash)} and some skill behind you.</small></div><div class="acts"><button class="btn sm" data-ng="shop">Start</button></div></li>
+<li><div><b>Sandbox</b><br><small>No money and no calendar: every part to try. Your career, if any, is put away (it stays in its save slots).</small></div><div class="acts"><button class="btn sm" data-ng="sandbox">Open</button></div></li></ul>`);
+  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-ng]");if(!b)return;const k=b.dataset.ng;closeSheet();
+    if(k==="sandbox"){S.career=null;S.bAll=true;S.tgOn=null;S.piece=null;save();toast("The Sandbox: every part on offer.");}
+    else{newCareer(k);toast(k==="shop"?"2008: your own shop in the Haldis.":"2000: a shared bench in the Haldis. Customers' watches are waiting in the Shop tab.");}
+    applyAll();showTab(k==="sandbox"?"build":"shop");});}
+
+/* ---- Close week ---- */
+function doCloseWeek(){const c=car();if(!c||c.over)return;const was={year:c.year,week:c.week,cash:c.cash};
+  const res=closeWeek();if(!res)return;hud();
+  if(res.broke){if(!c.loanUsed){loanSheet();return;}goBroke();brokeSheet();return;}
+  weekSheet(was,res);if(TAB_RENDER[curTab])TAB_RENDER[curTab]();}
+function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
+  openSheet(`Week ${was.week} closed`,`<p class="weekd ${d<0?"neg":""}">${d>=0?"+":"−"}${fmt$(Math.abs(d)).replace("Th ","Th ")} · now ${fmt$(c.cash)}</p>
+<ul class="wklines">${res.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}<li class="dim">Rent ${fmt$(rent())} · your keep ${fmt$(BIZ.keep)}${wages()?` · wages ${fmt$(wages())}`:""}${c.loan?` · loan ${fmt$(c.loan.pay)}`:""}</li></ul>
+<div class="row"><button class="btn pri" id="wkOk">Week ${c.week}, ${c.year}</button></div>`);
+  $("wkOk").addEventListener("click",closeSheet);
+  const p=c.bench;if(p&&p.lastTrial&&!p.seen){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkTrial">See the trial result</button>`;
+    $("sheetBody").appendChild(row);$("wkTrial").addEventListener("click",()=>{p.seen=true;save();trialSheet(p.lastTrial.t,p.lastTrial.tier);});}}
+function loanSheet(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=Math.round(amt*(1+L.rate));
+  openSheet("The Haldis Savings Bank",`<p>The till is ${fmt$(-c.cash)} short. The bank will lend you ${fmt$(amt)}: ${fmt$(total)} paid back at ${fmt$(Math.ceil(total/L.weeks))} a week for a year.</p>
+<p class="hint">They lend once. Run out again and the workshop closes.</p>
+<div class="row"><button class="btn pri" id="lnYes">Take the loan</button><button class="btn" id="lnNo">Close the workshop</button></div>`);
+  $("lnYes").addEventListener("click",()=>{takeLoan();closeSheet();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();toast(`${fmt$(amt)} from the bank.`);});
+  $("lnNo").addEventListener("click",()=>{goBroke();closeSheet();brokeSheet();});}
+function brokeSheet(){const c=car();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();
+  openSheet("The workshop closes",`<p>${fmt$(-c.cash)} short and the bank won't lend again. The bench, the tools and the stock go to settle the rent.</p>
+<p class="hint">${c.made} piece${c.made===1?"":"s"} made from ${c.start} to ${c.year}.</p><div class="row"><button class="btn pri" id="brNew">Start again</button><button class="btn" id="brNo">Not now</button></div>`);
+  $("brNew").addEventListener("click",newGameSheet);$("brNo").addEventListener("click",closeSheet);}
+
+/* ---- save slots: a whole game each. Loading keeps this device's settings (theme, graphics, motion, sound) ---- */
+const KEEP_SETTINGS=["seen","theme","gfx","gfxAuto","reduce","sound","lastBackup"];
+function slotRead(i){try{const j=localStorage.getItem(slotKey(i));if(!j)return null;const o=JSON.parse(j);return buObjS(o)&&buObjS(o.cfg)?o:null;}catch(e){return null;}}
+function slotMeta(i){const o=slotRead(i);if(!o)return null;const c=o.career;
+  return{what:c?`${c.over?"a closed workshop":"a career"}, ${c.year||START_YEAR} week ${c.week||1}, ${fmt$(c.cash||0)}`:"the Sandbox",at:o.savedAt};}
+function slotSave(i){const o=snapshot();o.savedAt=Date.now();try{localStorage.setItem(slotKey(i),JSON.stringify(o));}catch(e){toast("Couldn't save: the phone's storage is full.");return;}
+  buSaved();renderCareer();toast(`Saved to slot ${i}.`);}
+function slotLoad(i){const o=slotRead(i);if(!o){toast("That slot is empty.");return;}const keep={};for(const k of KEEP_SETTINGS)keep[k]=S[k];
+  if(!hydrate(o)){toast("That save didn't read right.");return;}Object.assign(S,keep);delete S.savedAt;save();applyAll();showTab(S.tab||"bench");toast(`Slot ${i} loaded.`);}
+function slotsCard(){let h=`<div class="card"><h3>Save slots</h3><ul class="shlist">`;
+  for(let i=1;i<=SLOTS;i++){const m=slotMeta(i),when=m&&m.at?new Date(m.at).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):"";
+    h+=`<li><div><b>Slot ${i}</b><br><small>${m?`${capWord(m.what)}${when?" · saved "+when:""}`:"Empty"}</small></div>
+<div class="acts h"><button class="btn sm" data-cr="ssave" data-i="${i}">Save</button>${m?`<button class="btn sm" data-cr="sload" data-i="${i}">Load</button><button class="btn sm ghost" data-cr="sdel" data-i="${i}" aria-label="Empty slot ${i}">✕</button>`:""}</div></li>`;}
+  return h+`</ul><p class="hint">Slots live on this phone. A backup code (Shop tab) carries them all to another one.</p></div>`;}

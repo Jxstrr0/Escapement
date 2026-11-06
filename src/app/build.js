@@ -129,9 +129,14 @@ function renderMode(){const show=!S.career;$("bModeF").hidden=!show;if(!show)ret
   $("bMode").innerHTML=[["0","Workshop","what a new bench owns"],["1","Everything","try any part"]].map(([v,t,s])=>
     `<button data-ball="${v}" class="${(S.bAll?"1":"0")===v?"on":""}" aria-pressed="${(S.bAll?"1":"0")===v}">${t}<small>${s}</small></button>`).join("");}
 
-TAB_RENDER.build=function(){renderMode();renderCap();renderBuildForm();renderStress();};
+/* in a career: make the design you see (parts paid now, assembly into the work in hand) */
+function renderMake(){const el=$("bMake"),on=inCareer();el.hidden=!on;if(!on)return;const c=car(),r=bSim(S.cfg),busy=c.bench;
+  el.innerHTML=`<h3>Make this piece</h3><p>${busy?`No. ${busy.no} is on your bench: case it or scrap it before you start another.`:`Parts ${fmt$(r.cost)} now, then about ${Math.round(r.hours)} h of assembly. You have ${fmt$(c.cash)}.`}</p>
+<div class="row"><button class="btn pri" id="bMakeGo"${busy||c.cash<r.cost?" disabled":""}>Make it (${fmt$(r.cost)})</button></div>`;}
+$("bMake").addEventListener("click",e=>{if(!e.target.closest("#bMakeGo"))return;if(makePiece()){hud();TAB_RENDER.build();}});
+TAB_RENDER.build=function(){renderMode();renderCap();renderMake();renderBuildForm();renderStress();};
 
-function buildChanged(){save();renderCap();renderBuildForm();renderStress();visSync();}
+function buildChanged(){save();renderCap();renderMake();renderBuildForm();renderStress();visSync();}
 $("buildForm").addEventListener("click",e=>{
   const a=e.target.closest("[data-sec]");
   if(a){const id=a.dataset.sec;S.bOpen=bOpenId()===id?"":id;save();renderBuildForm();
