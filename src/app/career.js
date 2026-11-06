@@ -10,7 +10,8 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
     h=`<div class="card"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursLeft(),1)} h left</span></h3>
 <p>${c.kind==="shop"?"Your shop on the Haldis high street":upOwned("shop")?"Your shop on the high street":"A shared bench in a rented corner of a workshop"}, since ${c.start}. ${fmt$(c.cash)} in the till; ${fmt$(weeklyCosts())} a week goes out.</p>
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
-<div class="row"><button class="btn pri" data-cr="close">Close week</button></div>
+${c.cash<2*weeklyCosts()?`<p class="hint lockt">${c.cash<weeklyCosts()?"Not enough in the till for next week's costs.":"Two weeks of costs or less in the till."} ${c.loanUsed?"The bank won't lend again: below zero, the workshop closes.":"Below zero, the Haldis Savings Bank lends once."} Repairs and trade bring cash in fastest.</p>`:""}
+<div class="row"><button class="btn pri" data-cr="close">Close week</button>${c.lastWeek?`<button class="btn" data-cr="last">Last week</button>`:""}</div>
 <p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;
     h+=rndCard()+calendarCard()+repCard()+newsCard()+goalsCard()+certsCard()+rivalsCard();}
   h+=slotsCard();
@@ -21,6 +22,7 @@ $("careerBody").addEventListener("click",e=>{const v=e.target.closest("[data-ev]
   if(v){const k=v.dataset.ev;if(k==="fair")fairSheet();if(k==="trial")trialEntrySheet();if(k==="race")raceSheet();if(k==="sale")saleroomSheet();return;}
   const b=e.target.closest("[data-cr]");if(!b)return;const k=b.dataset.cr,i=+b.dataset.i;
   if(k==="close")doCloseWeek();
+  if(k==="last")lastWeekSheet();
   if(k==="new")newGameSheet();
   if(k==="ssave"){const m=slotMeta(i);if(m)confirmSheet(`Save over slot ${i}?`,`It holds ${m.what}.`,"Save here",()=>slotSave(i));else slotSave(i);}
   if(k==="sload")confirmSheet(`Load slot ${i}?`,"The game you're playing now is replaced (save it to another slot first if you want it).","Load it",()=>slotLoad(i));
@@ -32,16 +34,20 @@ function newGameSheet(){const has=inCareer();
 <ul class="shlist fixes"><li><div><b>Repair bench, 2000</b><br><small>A shared bench in a rented corner, a basic timing machine and ${fmt$(BIZ.starts.bench.cash)}. Repairs pay the rent while you learn.</small></div><div class="acts"><button class="btn sm pri" data-ng="bench">Start</button></div></li>
 <li><div><b>Skip ahead to 2008</b><br><small>Your own shop, the six-position timing machine, a cleaning machine, ${fmt$(BIZ.starts.shop.cash)} and some skill behind you.</small></div><div class="acts"><button class="btn sm" data-ng="shop">Start</button></div></li>
 <li><div><b>Sandbox</b><br><small>No money and no calendar: every part to try. Your career, if any, is put away (it stays in its save slots).</small></div><div class="acts"><button class="btn sm" data-ng="sandbox">Open</button></div></li></ul>`);
-  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-ng]");if(!b)return;const k=b.dataset.ng;closeSheet();
+  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-ng]");if(!b)return;const k=b.dataset.ng;
+    if(has)confirmSheet(k==="sandbox"?"Put this career away?":"Start a new career?",k==="sandbox"?"Your career is put away: it's gone unless it's in a save slot or a backup code.":"The career you're playing is replaced. Save it to a slot first (Career tab) if you want to come back to it.",k==="sandbox"?"Open the Sandbox":"Start it",()=>newGameGo(k));
+    else{closeSheet();newGameGo(k);}});}
+function newGameGo(k){closeSheet();
     if(k==="sandbox"){S.career=null;S.bAll=true;S.tgOn=null;S.piece=null;save();toast("The Sandbox: every part on offer.");}
     else{newCareer(k);toast(k==="shop"?"2008: your own shop in the Haldis.":"2000: a shared bench in the Haldis. Customers' watches are waiting in the Shop tab.");}
-    applyAll();showTab(k==="sandbox"?"build":"shop");});}
+    applyAll();showTab(k==="sandbox"?"build":"shop");}
 
 /* ---- Close week ---- */
 function doCloseWeek(){const c=car();if(!c||c.over)return;const was={year:c.year,week:c.week,cash:c.cash};
   sfx("chime");if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.hold();   // sound/workshop.js: the bell and the till wait for the clock's strokes
   let res;try{res=closeWeek();}finally{if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.release(2.9,1.6);}if(!res)return;hud();
-  if(res.broke){if(!c.loanUsed){loanSheet();return;}goBroke();brokeSheet();return;}
+  c.lastWeek={week:was.week,year:was.year,d:c.cash-was.cash,cash:c.cash,lines:res.lines.slice(0,40)};   // "Last week" on the Career card shows it again
+  if(res.broke){if(!c.loanUsed){loanSheet(amt=>{res.lines.unshift(`The Haldis Savings Bank lent you ${fmt$(amt)}.`);c.lastWeek.lines=res.lines.slice(0,40);c.lastWeek.d=c.cash-was.cash;c.lastWeek.cash=c.cash;save();weekSheet(was,res);});return;}goBroke();brokeSheet();return;}
   weekSheet(was,res);if(TAB_RENDER[curTab])TAB_RENDER[curTab]();}
 function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
   openSheet(`Week ${was.week} closed`,`<p class="weekd ${d<0?"neg":""}">${d>=0?"+":"−"}${fmt$(Math.abs(d)).replace("Th ","Th ")} · now ${fmt$(c.cash)}</p>
@@ -55,11 +61,14 @@ function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
     $("sheetBody").appendChild(row);$("wkSale").addEventListener("click",saleroomSheet);}
   const p=c.bench;if(p&&p.lastTrial&&!p.seen){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkTrial">See the trial result</button>`;
     $("sheetBody").appendChild(row);$("wkTrial").addEventListener("click",()=>{p.seen=true;save();trialSheet(p.lastTrial.t,p.lastTrial.tier);});}}
-function loanSheet(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=Math.round(amt*(1+L.rate));
+function lastWeekSheet(){const c=car(),L=c&&c.lastWeek;if(!L)return;
+  openSheet(`Week ${L.week}, ${L.year}`,`<p class="weekd ${L.d<0?"neg":""}">${L.d>=0?"+":"−"}${fmt$(Math.abs(L.d))} · then ${fmt$(L.cash)}</p>
+<ul class="wklines">${L.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}</ul>`);}
+function loanSheet(after){const c=car(),amt=loanOffer(),L=BIZ.loan,total=Math.round(amt*(1+L.rate));
   openSheet("The Haldis Savings Bank",`<p>The till is ${fmt$(-c.cash)} short. The bank will lend you ${fmt$(amt)}: ${fmt$(total)} paid back at ${fmt$(Math.ceil(total/L.weeks))} a week for a year.</p>
 <p class="hint">They lend once. Run out again and the workshop closes.</p>
 <div class="row"><button class="btn pri" id="lnYes">Take the loan</button><button class="btn" id="lnNo">Close the workshop</button></div>`);
-  $("lnYes").addEventListener("click",()=>{takeLoan();closeSheet();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();toast(`${fmt$(amt)} from the bank.`);});
+  $("lnYes").addEventListener("click",()=>{takeLoan();closeSheet();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();toast(`${fmt$(amt)} from the bank.`);if(after)after(amt);});
   $("lnNo").addEventListener("click",()=>{goBroke();closeSheet();brokeSheet();});}
 function brokeSheet(){const c=car();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();
   openSheet("The workshop closes",`<p>${fmt$(-c.cash)} short and the bank won't lend again. The bench, the tools and the stock go to settle the rent.</p>

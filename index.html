@@ -2653,7 +2653,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.0.2.0";
+const VERSION="1.0.2.1";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -2921,9 +2921,16 @@ function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("on");c
 
 /* ---- the bottom sheet (Settings, Back up, Restore …) ---- */
 let sheetBack=null;
-function openSheet(title,html){sheetBack=document.activeElement;$("sheetTitle").textContent=title;$("sheetBody").innerHTML=html;
+/* each sheet gets a fresh body element, so click listeners a sheet adds to #sheetBody go away with it (they used to pile up and act on the last item) */
+function openSheet(title,html){sheetBack=sheetOn()?sheetBack:document.activeElement;$("sheetTitle").textContent=title;
+  const ob=$("sheetBody"),nb=ob.cloneNode(false);ob.replaceWith(nb);nb.innerHTML=html;sheetHist();
   $("sheet").classList.add("on");$("scrim").classList.add("on");$("sheetBody").scrollTop=0;$("sheetClose").focus({preventScroll:true});}
-function closeSheet(){$("sheet").classList.remove("on");$("scrim").classList.remove("on");if(sheetBack&&sheetBack.focus)sheetBack.focus({preventScroll:true});sheetBack=null;}
+function closeSheet(){$("sheet").classList.remove("on");$("scrim").classList.remove("on");if(sheetBack&&sheetBack.focus)sheetBack.focus({preventScroll:true});sheetBack=null;
+  setTimeout(()=>{if(sheetPushed&&!sheetOn()){sheetPushed=false;try{history.back();}catch(e){}}},0);}   // a sheet that opens straight after keeps the entry
+/* the phone's Back button closes an open sheet instead of leaving the game: one history entry while any sheet is up */
+let sheetPushed=false;
+function sheetHist(){if(sheetPushed)return;try{history.pushState({escSheet:1},"");sheetPushed=true;}catch(e){}}
+window.addEventListener("popstate",()=>{if(!sheetPushed)return;sheetPushed=false;if(sheetOn())closeSheet();});
 const sheetOn=()=>$("sheet").classList.contains("on");
 /* ===================== app/perf.js: graphics tiers and auto-adjust =====================
    Three tiers, lite / full / ultra (S.gfx; null means the default: Lite on a phone, Full elsewhere).
@@ -3278,6 +3285,7 @@ function openSettings(){
 <div class="field"><span class="lbl">Tick</span>${segHtml("sndSeg","snd",[["1","On","the watch on the Test tab"],["0","Off"]],S.sound===false?"0":"1")}</div>
 <div class="field"><span class="lbl">Workshop sounds</span>${segHtml("wsndSeg","wsnd",[["1","On","bell, till, clock, room"],["0","Off"]],S.wsound===false?"0":"1")}</div>
 <div class="field"><span class="lbl">Help</span><div class="row"><button class="btn" id="setHelp">Help and glossary</button>${inCareer()&&!car().over?`<button class="btn" id="setTour">Take the tour</button>`:""}</div></div>
+<div class="field"><span class="lbl">Game</span><div class="row"><button class="btn" id="setNew">New game…</button></div></div>
 <div class="field"><span class="lbl">Saves</span><div class="row"><button class="btn" id="setBackup">Back up</button><button class="btn" id="setRestore">Restore</button></div>
 <div class="row"><button class="btn" data-bu="file">Save backup file</button><button class="btn" data-bu="load">Load backup file</button></div><p class="hint" data-bu-store hidden></p></div>
 ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"><button class="btn" id="pwaInstall">Install app</button></div><p class="hint">Adds Escapement to your home screen. It works offline once installed.</p>`:`<p class="hint" style="margin-top:0">On iPhone or iPad: tap Share, then <b>Add to Home Screen</b>. It works offline once installed.</p>`}</div>`:""}
@@ -3290,7 +3298,7 @@ ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"
   pick("sndSeg","snd",v=>{S.sound=v==="1";if(curTab==="test"){WATCH_SOUND.unlock();TAB_RENDER.test();}wsSync();});
   pick("wsndSeg","wsnd",v=>{S.wsound=v==="1";wsSync();if(S.wsound){WORKSHOP_SOUND.unlock();sfx("door");}});   // a bell to show it works
   pick("reduceSeg","reduce",v=>{S.reduce=v==="auto"?null:v==="1";applyReduce();});
-  $("setHelp").addEventListener("click",()=>helpSheet());if($("setTour"))$("setTour").addEventListener("click",()=>{closeSheet();tutStart(true);});   // app/help.js
+  $("setHelp").addEventListener("click",()=>helpSheet());$("setNew").addEventListener("click",()=>newGameSheet());if($("setTour"))$("setTour").addEventListener("click",()=>{closeSheet();tutStart(true);});   // app/help.js
   $("setBackup").addEventListener("click",buBackupOpen);
   $("setRestore").addEventListener("click",buRestoreOpen);
   buStoreLine();
@@ -3738,7 +3746,7 @@ onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
   const id=b.dataset.cert,C=SIM.CERT[id],p=curPiece(),tool=ownedTool();
   if(inCareer()&&id!=="bench"){
     openSheet(`Send No. ${p.no} for trial`,`<p>The ${C.body} keeps it for ${C.weeks} weeks: fifteen days of timing, then the paperwork. The fee is ${fmt$(C.fee)}, pass or fail.</p>
-<p class="hint">You have ${fmt$(car().cash)}. While it's away you can work on repairs and trade, or make the next piece.</p>
+<p class="hint">You have ${fmt$(car().cash)}. While it's away your bench waits for it: work on repairs, trade and R&D.</p>
 <div class="row"><button class="btn pri" id="trialGo">Send it (${fmt$(C.fee)})</button><button class="btn" id="trialNo">Not yet</button></div>`);
     $("trialNo").addEventListener("click",closeSheet);
     $("trialGo").addEventListener("click",()=>{if(sendTrial(id)){closeSheet();hud();renderTest();toast(`No. ${p.no} is on its way to the ${C.body}.`);}});
@@ -3986,7 +3994,7 @@ function normCareer(c){if(!buObjS(c))return null;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
   c.stock=c.stock.filter(x=>buObjS(x)&&buObjS(x.cfg)&&CASES[x.caseId]);c.jobs=c.jobs.filter(j=>buObjS(j)&&+j.h>0);
   if(c.bench&&!(buObjS(c.bench)&&buObjS(c.bench.cfg)))c.bench=null;
-  c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min(6,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
+  c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min((typeof TUT!=="undefined"?TUT.length:16)-1,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
   c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
   c.certsLog=normCertsLog(c.certsLog);   // certificates (app/cards.js)
   for(const id in c.rnd.done)c.unlocks["rnd:"+id]=true;
@@ -4063,7 +4071,7 @@ function specChecks(spec,pc){const r=pc.r,cs=CASES[pc.caseId],out=[],cert=pc.cer
 const specOk=(spec,pc)=>specChecks(spec,pc).every(x=>x.ok);
 function orderPay(o){const late=Math.max(0,car().wk-o.due);return Math.round(o.budget*Math.max(.4,1-BIZ.late*late));}
 function deliver(orderId,stockId){const c=car(),o=c.orders.find(x=>x.id===+orderId),i=c.stock.findIndex(x=>x.id===+stockId);if(!o||i<0)return;
-  const pc=c.stock[i],t=tplOf(o.tpl);if(pc.away||!specOk(t.spec,pc))return;const amt=orderPay(o),late=Math.max(0,c.wk-o.due);
+  const pc=c.stock[i],t=tplOf(o.tpl);if(pc.away||pc.lot||!specOk(t.spec,pc))return;const amt=orderPay(o),late=Math.max(0,c.wk-o.due);
   c.stock.splice(i,1);c.orders=c.orders.filter(x=>x!==o);earn(amt,`${t.title} for ${o.cust}`);sfx("sale");
   c.sold.push(soldRow(pc,amt,o.cust,"commission"));if(c.sold.length>60)c.sold.shift();
   const tr=REP_SEG[t.seg]||"press";addRep({[tr]:REP_GAIN.commission-REP_GAIN.commissionLate*late});goal("commission");
@@ -4503,7 +4511,7 @@ ${state}</div>
 function ordersCard(){const c=car();if(!c.orders.length&&!c.offers.length)return "";
   const specLine=(t,pc)=>specChecks(t.spec,pc||{cfg:{complications:[],finish:[]},r:{reserveH:0},thick:99,cert:null});
   const specTxt=t=>specLine(t).map(x=>x.label).join(" · ");
-  return `<div class="card"><h3>Commissions</h3>${c.orders.map(o=>{const t=tplOf(o.tpl),fits=c.stock.filter(pc=>specOk(t.spec,pc)),late=c.wk>o.due;
+  return `<div class="card"><h3>Commissions</h3>${c.orders.map(o=>{const t=tplOf(o.tpl),fits=c.stock.filter(pc=>pieceFree(pc)&&specOk(t.spec,pc)),late=c.wk>o.due;
     return `<div class="ord"><b>${t.title}</b> <small>· ${o.cust}</small><p>“${t.text}”</p><p class="hint">${specTxt(t)}</p>
 <p class="hint">${fmt$(orderPay(o))}${late?` (late: ${c.wk-o.due} week${c.wk-o.due>1?"s":""})`:` · due ${whenTxt(o.due)}`}</p>
 <div class="row">${fits.map(pc=>`<button class="btn pri sm" data-sh="deliver" data-id="${o.id}" data-pc="${pc.id}">Deliver No. ${pc.no}</button>`).join("")}<button class="btn ghost sm" data-sh="cancel" data-id="${o.id}">Cancel</button></div></div>`;}).join("")}
@@ -4517,7 +4525,7 @@ function tradeCard(){const c=car(),t=c.trade,o=c.tradeOffer;if(!t&&!o)return "";
 <div class="row"><button class="btn sm" data-sh="trade">Take it on</button></div></div>`;}
 function upgradesCard(){const ids=Object.keys(UPGRADES),have=ids.filter(upOwned),c=car();
   return `<details class="card shup"><summary><h3>Workshop upgrades<span class="cnt">${have.length} of ${ids.length}</span></h3></summary><ul class="shlist">${ids.map(id=>{const U=UPGRADES[id],own=upOwned(id),need=upNeeds(id);
-    return `<li class="${own?"own":""}" data-upid="${id}"><div><b>${U.name}</b><br><small>${U.blurb}</small>${need.length&&!own?`<br><small class="lockt">Needs: ${need.map(n=>UPGRADES[n].name.toLowerCase()).join(", ")}</small>`:""}</div>
+    return `<li class="${own?"own":""}" data-upid="${id}"><div><b>${U.name}</b><br><small>${U.blurb}</small>${need.length&&!own?`<br><small class="lockt">Needs: ${need.map(n=>UPGRADES[n].name.toLowerCase()).join(", ")}</small>`:!own&&c.cash<U.cost?`<br><small class="lockt">${fmt$(U.cost-c.cash)} short</small>`:""}</div>
 <div class="acts">${own?`<span class="tick">Owned</span>`:`<button class="btn sm" data-sh="buy" data-id="${id}"${need.length||c.cash<U.cost?" disabled":""}>${fmt$(U.cost)}</button>`}</div></li>`;}).join("")}</ul></details>`;}
 function staffCard(){const c=car(),cap=staffCap();
   return `<details class="card"><summary><h3>Staff<span class="cnt">${c.staff.length} of ${cap}</span></h3></summary>
@@ -4572,7 +4580,7 @@ function caseSheet(){const c=car(),p=c.bench;if(!p)return;const r=SIM.simulate(p
   const ok=c.orders.map(o=>tplOf(o.tpl)),fin=SIM.eraMult(c.year,"finish");
   openSheet(`Case No. ${p.no}`,`<p>${pieceName(p.cfg,p.no)} · ${SIM.CERT[p.cert].name} · movement ${r.thickness.toFixed(1)} mm</p>
 <ul class="shlist fixes">${Object.keys(CASES).map(id=>{const cs=CASES[id],fits=r.thickness<=cs.maxMove,lock=cs.needs&&!upOwned(cs.needs),v=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
-  const forO=ok.filter(t=>specOk(t.spec,{cfg:p.cfg,r,cert:p.cert,caseId:id,thick:r.thickness+cs.thick}));
+  const forO=ok.filter(t=>specOk(t.spec,{cfg:p.cfg,r,cert:p.cert,caseId:id,thick:+(r.thickness+cs.thick).toFixed(1)}));
   return `<li class="${fits&&!lock?"":"own"}"><div><b>${cs.name}</b><br><small>${fmt$(cs.cost)} · ${(r.thickness+cs.thick).toFixed(1)} mm cased · value ${fmt$(v)}${!fits?` · too thick: takes ${cs.maxMove} mm at most`:lock?" · needs your own shop":""}</small>${forO.length?`<br><small class="good">Fits: ${forO.map(t=>t.title.toLowerCase()).join(", ")}</small>`:""}</div>
 <div class="acts"><button class="btn sm" data-case="${id}"${!fits||lock||c.cash<cs.cost?" disabled":""}>Case</button></div></li>`;}).join("")}</ul>`);
   $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-case]");if(!b)return;if(casePiece(b.dataset.case)){closeSheet();shopChanged();}});}
@@ -4598,7 +4606,8 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
     h=`<div class="card"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursLeft(),1)} h left</span></h3>
 <p>${c.kind==="shop"?"Your shop on the Haldis high street":upOwned("shop")?"Your shop on the high street":"A shared bench in a rented corner of a workshop"}, since ${c.start}. ${fmt$(c.cash)} in the till; ${fmt$(weeklyCosts())} a week goes out.</p>
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
-<div class="row"><button class="btn pri" data-cr="close">Close week</button></div>
+${c.cash<2*weeklyCosts()?`<p class="hint lockt">${c.cash<weeklyCosts()?"Not enough in the till for next week's costs.":"Two weeks of costs or less in the till."} ${c.loanUsed?"The bank won't lend again: below zero, the workshop closes.":"Below zero, the Haldis Savings Bank lends once."} Repairs and trade bring cash in fastest.</p>`:""}
+<div class="row"><button class="btn pri" data-cr="close">Close week</button>${c.lastWeek?`<button class="btn" data-cr="last">Last week</button>`:""}</div>
 <p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;
     h+=rndCard()+calendarCard()+repCard()+newsCard()+goalsCard()+certsCard()+rivalsCard();}
   h+=slotsCard();
@@ -4609,6 +4618,7 @@ $("careerBody").addEventListener("click",e=>{const v=e.target.closest("[data-ev]
   if(v){const k=v.dataset.ev;if(k==="fair")fairSheet();if(k==="trial")trialEntrySheet();if(k==="race")raceSheet();if(k==="sale")saleroomSheet();return;}
   const b=e.target.closest("[data-cr]");if(!b)return;const k=b.dataset.cr,i=+b.dataset.i;
   if(k==="close")doCloseWeek();
+  if(k==="last")lastWeekSheet();
   if(k==="new")newGameSheet();
   if(k==="ssave"){const m=slotMeta(i);if(m)confirmSheet(`Save over slot ${i}?`,`It holds ${m.what}.`,"Save here",()=>slotSave(i));else slotSave(i);}
   if(k==="sload")confirmSheet(`Load slot ${i}?`,"The game you're playing now is replaced (save it to another slot first if you want it).","Load it",()=>slotLoad(i));
@@ -4620,16 +4630,20 @@ function newGameSheet(){const has=inCareer();
 <ul class="shlist fixes"><li><div><b>Repair bench, 2000</b><br><small>A shared bench in a rented corner, a basic timing machine and ${fmt$(BIZ.starts.bench.cash)}. Repairs pay the rent while you learn.</small></div><div class="acts"><button class="btn sm pri" data-ng="bench">Start</button></div></li>
 <li><div><b>Skip ahead to 2008</b><br><small>Your own shop, the six-position timing machine, a cleaning machine, ${fmt$(BIZ.starts.shop.cash)} and some skill behind you.</small></div><div class="acts"><button class="btn sm" data-ng="shop">Start</button></div></li>
 <li><div><b>Sandbox</b><br><small>No money and no calendar: every part to try. Your career, if any, is put away (it stays in its save slots).</small></div><div class="acts"><button class="btn sm" data-ng="sandbox">Open</button></div></li></ul>`);
-  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-ng]");if(!b)return;const k=b.dataset.ng;closeSheet();
+  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-ng]");if(!b)return;const k=b.dataset.ng;
+    if(has)confirmSheet(k==="sandbox"?"Put this career away?":"Start a new career?",k==="sandbox"?"Your career is put away: it's gone unless it's in a save slot or a backup code.":"The career you're playing is replaced. Save it to a slot first (Career tab) if you want to come back to it.",k==="sandbox"?"Open the Sandbox":"Start it",()=>newGameGo(k));
+    else{closeSheet();newGameGo(k);}});}
+function newGameGo(k){closeSheet();
     if(k==="sandbox"){S.career=null;S.bAll=true;S.tgOn=null;S.piece=null;save();toast("The Sandbox: every part on offer.");}
     else{newCareer(k);toast(k==="shop"?"2008: your own shop in the Haldis.":"2000: a shared bench in the Haldis. Customers' watches are waiting in the Shop tab.");}
-    applyAll();showTab(k==="sandbox"?"build":"shop");});}
+    applyAll();showTab(k==="sandbox"?"build":"shop");}
 
 /* ---- Close week ---- */
 function doCloseWeek(){const c=car();if(!c||c.over)return;const was={year:c.year,week:c.week,cash:c.cash};
   sfx("chime");if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.hold();   // sound/workshop.js: the bell and the till wait for the clock's strokes
   let res;try{res=closeWeek();}finally{if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.release(2.9,1.6);}if(!res)return;hud();
-  if(res.broke){if(!c.loanUsed){loanSheet();return;}goBroke();brokeSheet();return;}
+  c.lastWeek={week:was.week,year:was.year,d:c.cash-was.cash,cash:c.cash,lines:res.lines.slice(0,40)};   // "Last week" on the Career card shows it again
+  if(res.broke){if(!c.loanUsed){loanSheet(amt=>{res.lines.unshift(`The Haldis Savings Bank lent you ${fmt$(amt)}.`);c.lastWeek.lines=res.lines.slice(0,40);c.lastWeek.d=c.cash-was.cash;c.lastWeek.cash=c.cash;save();weekSheet(was,res);});return;}goBroke();brokeSheet();return;}
   weekSheet(was,res);if(TAB_RENDER[curTab])TAB_RENDER[curTab]();}
 function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
   openSheet(`Week ${was.week} closed`,`<p class="weekd ${d<0?"neg":""}">${d>=0?"+":"−"}${fmt$(Math.abs(d)).replace("Th ","Th ")} · now ${fmt$(c.cash)}</p>
@@ -4643,11 +4657,14 @@ function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
     $("sheetBody").appendChild(row);$("wkSale").addEventListener("click",saleroomSheet);}
   const p=c.bench;if(p&&p.lastTrial&&!p.seen){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkTrial">See the trial result</button>`;
     $("sheetBody").appendChild(row);$("wkTrial").addEventListener("click",()=>{p.seen=true;save();trialSheet(p.lastTrial.t,p.lastTrial.tier);});}}
-function loanSheet(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=Math.round(amt*(1+L.rate));
+function lastWeekSheet(){const c=car(),L=c&&c.lastWeek;if(!L)return;
+  openSheet(`Week ${L.week}, ${L.year}`,`<p class="weekd ${L.d<0?"neg":""}">${L.d>=0?"+":"−"}${fmt$(Math.abs(L.d))} · then ${fmt$(L.cash)}</p>
+<ul class="wklines">${L.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}</ul>`);}
+function loanSheet(after){const c=car(),amt=loanOffer(),L=BIZ.loan,total=Math.round(amt*(1+L.rate));
   openSheet("The Haldis Savings Bank",`<p>The till is ${fmt$(-c.cash)} short. The bank will lend you ${fmt$(amt)}: ${fmt$(total)} paid back at ${fmt$(Math.ceil(total/L.weeks))} a week for a year.</p>
 <p class="hint">They lend once. Run out again and the workshop closes.</p>
 <div class="row"><button class="btn pri" id="lnYes">Take the loan</button><button class="btn" id="lnNo">Close the workshop</button></div>`);
-  $("lnYes").addEventListener("click",()=>{takeLoan();closeSheet();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();toast(`${fmt$(amt)} from the bank.`);});
+  $("lnYes").addEventListener("click",()=>{takeLoan();closeSheet();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();toast(`${fmt$(amt)} from the bank.`);if(after)after(amt);});
   $("lnNo").addEventListener("click",()=>{goBroke();closeSheet();brokeSheet();});}
 function brokeSheet(){const c=car();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();
   openSheet("The workshop closes",`<p>${fmt$(-c.cash)} short and the bank won't lend again. The bench, the tools and the stock go to settle the rent.</p>
@@ -5021,7 +5038,7 @@ const GLOSS={
   beat:{t:"Beat error",g:"Timegrapher",d:"The difference between the tick and the tock, in milliseconds. On the trace it is the gap between the two lines. Under 0.5 ms is good; over 2 ms sounds limping. Adjust beat brings it down."},
   bph:{t:"Beat (bph)",g:"Timegrapher",d:"Beats per hour: how fast the balance ticks. 28,800 bph is eight ticks a second; 21,600 is six. Faster is steadier against knocks but wears the escapement more and uses more power."},
   lift:{t:"Lift angle",g:"Timegrapher",d:"The part of each swing where the pallet fork pushes the balance. The timegrapher needs it to work out amplitude. Most movements are 52°; set the wrong one and amplitude reads wrong (the rate does not change)."},
-  positions:{t:"Positions",g:"Timegrapher",d:"A watch runs differently lying flat and standing up, because gravity pulls on the balance. DU dial up, DD dial down, and the four crown positions (CU, CD, CL, CR). The trial tests five; a basic timing machine only reads dial up."},
+  positions:{t:"Positions",g:"Timegrapher",d:"A watch runs differently lying flat and standing up, because gravity pulls on the balance. DU dial up, DD dial down, and the four crown positions (PU, PD, PL, PR). The trial tests five; a basic timing machine only reads dial up."},
   temperature:{t:"Temperature",g:"Timegrapher",d:"Warm springs go soft and the watch slows. A steel hairspring drifts about 0.7 s/day per °C; an alloy or silicon spring far less. The BCH trial allows 0.6, the Observatory 0.3."},
   wind:{t:"Wind",g:"Timegrapher",d:"A full mainspring pushes harder than one that has run 24 hours. Checking both shows how well the watch holds its rate as it runs down (isochronism)."},
   iso:{t:"Isochronism",g:"Movement",d:"Keeping the same rate whether the balance swings wide or narrow. A good hairspring (an overcoil, silicon) and a steady mainspring keep the rate flat from full wind to empty."},
@@ -5041,6 +5058,7 @@ const GLOSS={
   certodds:{t:"Cert odds",g:"Business",d:"The chance a carefully adjusted piece of this build passes each grade (regulated to the middle of the window, beat set, poised). Your skills raise it; the parts set its ceiling."},
   cert:{t:"Certificates",g:"Business",d:"The Haldis Chronometry Bureau (stamp BCH) tests a movement for fifteen days in five positions and three temperatures and grants Chronometer. The Kessel Peak Observatory grants the stricter Observatory grade. Both multiply a piece's value."},
   week:{t:"Close week",g:"Business",d:"Nothing moves until you close the week: you act first (repairs, adjusting, buying), then Close week does the work, brings customers and pays the rent."},
+  bank:{t:"The bank",g:"Business",d:"Each week the rent, your keep and any wages come out of the till. If it drops below zero, the Haldis Savings Bank lends once: enough to cover it, paid back with 8% over a year. Below zero a second time and the workshop closes. The Career card warns you when two weeks of costs or less are left."},
   rep:{t:"Reputation",g:"Business",d:"Three names to make: with collectors, with the trade, and in the press. Good work, sales and prizes raise them; they fade a little each week. Better commissions open as they grow."},
   stress:{t:"Stress report",g:"Business",d:"Parts that fight each other: a heavy balance on a weak spring, a thin movement with a big rotor. Serious ones (✖) hurt the timekeeping or the life of the watch."},
 };

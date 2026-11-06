@@ -52,7 +52,7 @@ function normCareer(c){if(!buObjS(c))return null;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
   c.stock=c.stock.filter(x=>buObjS(x)&&buObjS(x.cfg)&&CASES[x.caseId]);c.jobs=c.jobs.filter(j=>buObjS(j)&&+j.h>0);
   if(c.bench&&!(buObjS(c.bench)&&buObjS(c.bench.cfg)))c.bench=null;
-  c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min(6,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
+  c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min((typeof TUT!=="undefined"?TUT.length:16)-1,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
   c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
   c.certsLog=normCertsLog(c.certsLog);   // certificates (app/cards.js)
   for(const id in c.rnd.done)c.unlocks["rnd:"+id]=true;
@@ -129,7 +129,7 @@ function specChecks(spec,pc){const r=pc.r,cs=CASES[pc.caseId],out=[],cert=pc.cer
 const specOk=(spec,pc)=>specChecks(spec,pc).every(x=>x.ok);
 function orderPay(o){const late=Math.max(0,car().wk-o.due);return Math.round(o.budget*Math.max(.4,1-BIZ.late*late));}
 function deliver(orderId,stockId){const c=car(),o=c.orders.find(x=>x.id===+orderId),i=c.stock.findIndex(x=>x.id===+stockId);if(!o||i<0)return;
-  const pc=c.stock[i],t=tplOf(o.tpl);if(pc.away||!specOk(t.spec,pc))return;const amt=orderPay(o),late=Math.max(0,c.wk-o.due);
+  const pc=c.stock[i],t=tplOf(o.tpl);if(pc.away||pc.lot||!specOk(t.spec,pc))return;const amt=orderPay(o),late=Math.max(0,c.wk-o.due);
   c.stock.splice(i,1);c.orders=c.orders.filter(x=>x!==o);earn(amt,`${t.title} for ${o.cust}`);sfx("sale");
   c.sold.push(soldRow(pc,amt,o.cust,"commission"));if(c.sold.length>60)c.sold.shift();
   const tr=REP_SEG[t.seg]||"press";addRep({[tr]:REP_GAIN.commission-REP_GAIN.commissionLate*late});goal("commission");

@@ -40,7 +40,7 @@ ${state}</div>
 function ordersCard(){const c=car();if(!c.orders.length&&!c.offers.length)return "";
   const specLine=(t,pc)=>specChecks(t.spec,pc||{cfg:{complications:[],finish:[]},r:{reserveH:0},thick:99,cert:null});
   const specTxt=t=>specLine(t).map(x=>x.label).join(" · ");
-  return `<div class="card"><h3>Commissions</h3>${c.orders.map(o=>{const t=tplOf(o.tpl),fits=c.stock.filter(pc=>specOk(t.spec,pc)),late=c.wk>o.due;
+  return `<div class="card"><h3>Commissions</h3>${c.orders.map(o=>{const t=tplOf(o.tpl),fits=c.stock.filter(pc=>pieceFree(pc)&&specOk(t.spec,pc)),late=c.wk>o.due;
     return `<div class="ord"><b>${t.title}</b> <small>· ${o.cust}</small><p>“${t.text}”</p><p class="hint">${specTxt(t)}</p>
 <p class="hint">${fmt$(orderPay(o))}${late?` (late: ${c.wk-o.due} week${c.wk-o.due>1?"s":""})`:` · due ${whenTxt(o.due)}`}</p>
 <div class="row">${fits.map(pc=>`<button class="btn pri sm" data-sh="deliver" data-id="${o.id}" data-pc="${pc.id}">Deliver No. ${pc.no}</button>`).join("")}<button class="btn ghost sm" data-sh="cancel" data-id="${o.id}">Cancel</button></div></div>`;}).join("")}
@@ -54,7 +54,7 @@ function tradeCard(){const c=car(),t=c.trade,o=c.tradeOffer;if(!t&&!o)return "";
 <div class="row"><button class="btn sm" data-sh="trade">Take it on</button></div></div>`;}
 function upgradesCard(){const ids=Object.keys(UPGRADES),have=ids.filter(upOwned),c=car();
   return `<details class="card shup"><summary><h3>Workshop upgrades<span class="cnt">${have.length} of ${ids.length}</span></h3></summary><ul class="shlist">${ids.map(id=>{const U=UPGRADES[id],own=upOwned(id),need=upNeeds(id);
-    return `<li class="${own?"own":""}" data-upid="${id}"><div><b>${U.name}</b><br><small>${U.blurb}</small>${need.length&&!own?`<br><small class="lockt">Needs: ${need.map(n=>UPGRADES[n].name.toLowerCase()).join(", ")}</small>`:""}</div>
+    return `<li class="${own?"own":""}" data-upid="${id}"><div><b>${U.name}</b><br><small>${U.blurb}</small>${need.length&&!own?`<br><small class="lockt">Needs: ${need.map(n=>UPGRADES[n].name.toLowerCase()).join(", ")}</small>`:!own&&c.cash<U.cost?`<br><small class="lockt">${fmt$(U.cost-c.cash)} short</small>`:""}</div>
 <div class="acts">${own?`<span class="tick">Owned</span>`:`<button class="btn sm" data-sh="buy" data-id="${id}"${need.length||c.cash<U.cost?" disabled":""}>${fmt$(U.cost)}</button>`}</div></li>`;}).join("")}</ul></details>`;}
 function staffCard(){const c=car(),cap=staffCap();
   return `<details class="card"><summary><h3>Staff<span class="cnt">${c.staff.length} of ${cap}</span></h3></summary>
@@ -109,7 +109,7 @@ function caseSheet(){const c=car(),p=c.bench;if(!p)return;const r=SIM.simulate(p
   const ok=c.orders.map(o=>tplOf(o.tpl)),fin=SIM.eraMult(c.year,"finish");
   openSheet(`Case No. ${p.no}`,`<p>${pieceName(p.cfg,p.no)} · ${SIM.CERT[p.cert].name} · movement ${r.thickness.toFixed(1)} mm</p>
 <ul class="shlist fixes">${Object.keys(CASES).map(id=>{const cs=CASES[id],fits=r.thickness<=cs.maxMove,lock=cs.needs&&!upOwned(cs.needs),v=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
-  const forO=ok.filter(t=>specOk(t.spec,{cfg:p.cfg,r,cert:p.cert,caseId:id,thick:r.thickness+cs.thick}));
+  const forO=ok.filter(t=>specOk(t.spec,{cfg:p.cfg,r,cert:p.cert,caseId:id,thick:+(r.thickness+cs.thick).toFixed(1)}));
   return `<li class="${fits&&!lock?"":"own"}"><div><b>${cs.name}</b><br><small>${fmt$(cs.cost)} · ${(r.thickness+cs.thick).toFixed(1)} mm cased · value ${fmt$(v)}${!fits?` · too thick: takes ${cs.maxMove} mm at most`:lock?" · needs your own shop":""}</small>${forO.length?`<br><small class="good">Fits: ${forO.map(t=>t.title.toLowerCase()).join(", ")}</small>`:""}</div>
 <div class="acts"><button class="btn sm" data-case="${id}"${!fits||lock||c.cash<cs.cost?" disabled":""}>Case</button></div></li>`;}).join("")}</ul>`);
   $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-case]");if(!b)return;if(casePiece(b.dataset.case)){closeSheet();shopChanged();}});}
