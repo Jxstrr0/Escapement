@@ -131,7 +131,7 @@ function renderMode(){const show=!S.career;$("bModeF").hidden=!show;if(!show)ret
 
 TAB_RENDER.build=function(){renderMode();renderCap();renderBuildForm();renderStress();};
 
-function buildChanged(){save();renderCap();renderBuildForm();renderStress();if(window.WATCH_VIS)WATCH_VIS.setMovement(S.cfg);}
+function buildChanged(){save();renderCap();renderBuildForm();renderStress();visSync();}
 $("buildForm").addEventListener("click",e=>{
   const a=e.target.closest("[data-sec]");
   if(a){const id=a.dataset.sec;S.bOpen=bOpenId()===id?"":id;save();renderBuildForm();
