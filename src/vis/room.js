@@ -43,7 +43,7 @@ const ROOM_MODELS={
   drawers:{file:"models/drawers.glb",at:[-410,-272,300,Math.PI/2],stages:["shop","workshop","manufacture"]},
   timing:{file:"models/timing-machine.glb",at:[128,0,-42,0],stand:"timing",parts:["timing","basic",{head:["basic"],six:["six","lab"],lab:["lab"]}]},
   cleaning:{file:"models/cleaning-machine.glb",at:[168,70,-106,0],has:"cleaning",stand:"cleaning"},
-  window:{file:"models/display-window.glb",at:[250,-272,560,Math.PI],has:"window",stand:"window"}};
+  window:{file:"models/display-window.glb",at:[-300,-272,-118,0],has:"window",stand:"window"}};
 
 /* ---- canvases: wood, plaster, wainscot, the valley, the timing machine's screen, a contact-shadow blob ---- */
 function roomCanvas(w,h,draw){const c=document.createElement("canvas");c.width=w;c.height=h;draw(c.getContext("2d"),w,h);return c;}
@@ -213,7 +213,7 @@ function buildRoom(spec){
   if(has.cnc){box(mats.white,180,600,170,430,fy-T,-20);box(mats.glass,4,240,110,339,fy-T+230,-20);box(mats.black,4,40,60,338,fy-T+500,-90);}
   if(has.bench2){const x=420,z=430;box(mats.bench,200,BN.t,140,x,-BN.t,z,{ry:-Math.PI/2,tile:110});box(mats.benchDark,200,60,40,x+60,0,z,{ry:-Math.PI/2,tile:90});
     box(mats.felt,80,.04,60,x-10,0,z,{ry:-Math.PI/2});}
-  if(has.window){const x=250,z=560,into=grp("window");box(mats.benchDark,160,260,60,x,fy-T,z,{tile:120,into});box(mats.glass,156,70,56,x,fy-T+260,z,{into});
+  if(has.window){const x=-300,z=-118,into=grp("window");box(mats.benchDark,160,260,60,x,fy-T,z,{tile:120,into});box(mats.glass,156,70,56,x,fy-T+260,z,{into});
     for(let i=0;i<4;i++)cyl(mats.brass,9,3,x-54+i*36,fy-T+262,z,{seg:lite?12:20,into});}
   if(has.climate)box(mats.white,110,34,26,280,cy-T-80,W.back+14);
   if(has.cleanroom){box(mats.white,150,300,6,-150,fy-T,W.front-4);box(mats.glass,60,80,2,-150,fy-T+190,W.front-8);}

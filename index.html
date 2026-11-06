@@ -1742,7 +1742,7 @@ const ROOM_MODELS={
   drawers:{file:"models/drawers.glb",at:[-410,-272,300,Math.PI/2],stages:["shop","workshop","manufacture"]},
   timing:{file:"models/timing-machine.glb",at:[128,0,-42,0],stand:"timing",parts:["timing","basic",{head:["basic"],six:["six","lab"],lab:["lab"]}]},
   cleaning:{file:"models/cleaning-machine.glb",at:[168,70,-106,0],has:"cleaning",stand:"cleaning"},
-  window:{file:"models/display-window.glb",at:[250,-272,560,Math.PI],has:"window",stand:"window"}};
+  window:{file:"models/display-window.glb",at:[-300,-272,-118,0],has:"window",stand:"window"}};
 
 /* ---- canvases: wood, plaster, wainscot, the valley, the timing machine's screen, a contact-shadow blob ---- */
 function roomCanvas(w,h,draw){const c=document.createElement("canvas");c.width=w;c.height=h;draw(c.getContext("2d"),w,h);return c;}
@@ -1912,7 +1912,7 @@ function buildRoom(spec){
   if(has.cnc){box(mats.white,180,600,170,430,fy-T,-20);box(mats.glass,4,240,110,339,fy-T+230,-20);box(mats.black,4,40,60,338,fy-T+500,-90);}
   if(has.bench2){const x=420,z=430;box(mats.bench,200,BN.t,140,x,-BN.t,z,{ry:-Math.PI/2,tile:110});box(mats.benchDark,200,60,40,x+60,0,z,{ry:-Math.PI/2,tile:90});
     box(mats.felt,80,.04,60,x-10,0,z,{ry:-Math.PI/2});}
-  if(has.window){const x=250,z=560,into=grp("window");box(mats.benchDark,160,260,60,x,fy-T,z,{tile:120,into});box(mats.glass,156,70,56,x,fy-T+260,z,{into});
+  if(has.window){const x=-300,z=-118,into=grp("window");box(mats.benchDark,160,260,60,x,fy-T,z,{tile:120,into});box(mats.glass,156,70,56,x,fy-T+260,z,{into});
     for(let i=0;i<4;i++)cyl(mats.brass,9,3,x-54+i*36,fy-T+262,z,{seg:lite?12:20,into});}
   if(has.climate)box(mats.white,110,34,26,280,cy-T-80,W.back+14);
   if(has.cleanroom){box(mats.white,150,300,6,-150,fy-T,W.front-4);box(mats.glass,60,80,2,-150,fy-T+190,W.front-8);}
@@ -2021,8 +2021,11 @@ function watchLayout(comps){
   const has=k=>comps.includes(k),L={},free=["bottom","right","left","top","d430"],take=(kind,pref)=>{for(const s of pref)if(free.includes(s)){free.splice(free.indexOf(s),1);L[s]=kind;return s;}return null;};
   if(has("tourbillon"))take("tourb",["bottom"]);
   if(has("moonphase"))take("moon",["bottom","top"]);
-  if(has("perp-cal")){take("date31",["right","left"]);take("day",["left","right","top"]);take("month",["top","left","right"]);}
-  if(has("chrono")){take("min30",["right","left"]);if(!has("tourbillon"))take("sec",["left","bottom"]);}
+  if(has("perp-cal"))take("date31",["right","left"]);
+  if(has("chrono")){take("min30",["right","left","top"]);if(!has("tourbillon"))take("sec",["left","bottom"]);}
+  /* the perpetual's day and month take what sub-dials are left; on a full dial (a grand complication) they move to windows by 4-5,
+     so the chronograph keeps its 30-minute counter */
+  if(has("perp-cal")){const day=take("day",["left","right","top"]);if(!day)take("dmwin",["d430"]);else if(!take("month",["top","left","right"]))take("monthwin",["d430"]);}
   if(has("power-reserve"))take("pr",["top","left","right"]);
   if(has("annual-cal"))take("daymonth",["top","bottom"]);
   if(has("date")&&!has("perp-cal"))take("datewin",["right","bottom","left","d430"]);
@@ -2062,7 +2065,7 @@ function dialCanvas(D,lay,spec,S){
   /* printed hour markers: Roman numerals fired into the enamel */
   const used=new Set(Object.keys(lay.L).map(s=>WATCH.hourOf[s]));if(lay.open)used.add(WATCH.hourOf[lay.open]);
   if(D.marks==="roman"){const R=["XII","I","II","III","IIII","V","VI","VII","VIII","IX","X","XI"];g.font=font(76,"400",serif);g.textAlign="center";g.textBaseline="middle";
-    for(let h=0;h<12;h++){if(used.has(h))continue;const a=h/12*TAU,r=.74*H;g.save();g.translate(Math.sin(a)*r,-Math.cos(a)*r);g.rotate(a);g.scale(h===0||h===8?.8:1,1);g.fillText(R[h],0,0);g.restore();}}
+    for(let h=0;h<12;h++){if(used.has(h))continue;const a=h/12*TAU,r=.74*H;g.save();g.translate(Math.sin(a)*r,-Math.cos(a)*r);g.rotate(h>3&&h<9?a+Math.PI:a);g.scale(h===0||h===8?.8:1,1);g.fillText(R[h],0,0);g.restore();}}
   g.restore();
   /* the name, a line under it, and the foot */
   g.textAlign="center";g.textBaseline="middle";g.fillStyle=D.print;
@@ -2105,6 +2108,8 @@ function dialCanvas(D,lay,spec,S){
       g.fillStyle=D.base;for(const sx of [-1,1]){g.beginPath();g.arc(x+sx*R*.62,y+R*.25,R*.42,Math.PI,0);g.fill();}
       g.strokeStyle=D.print;g.lineWidth=1.6*k;g.beginPath();g.arc(x,y+R*.25,R,Math.PI,0);g.stroke();
       g.font=font(13,"500");g.fillText("PHASE DE LUNE",x,y+R*.48);}
+    else if(kind==="dmwin"){const [x,y]=P(u,v);win(x,y-21*k,62*k,34*k,W_DAYS[today.dow]);win(x,y+21*k,62*k,34*k,W_MONTHS[today.month]);}
+    else if(kind==="monthwin"){const [x,y]=P(u,v);win(x,y,62*k,34*k,W_MONTHS[today.month]);}
     else if(kind==="datewin"){const f=s==="d430"?1:1.18,[x,y]=P(u*f,v*f);win(x,y,52*k,40*k,String(today.date));}
     else if(kind==="daymonth"){const [x,y]=P(u,v);win(x-36*k,y,62*k,34*k,W_DAYS[today.dow]);win(x+36*k,y,62*k,34*k,W_MONTHS[today.month]);}
     else if(kind==="tourb"){const [x,y]=P(u,v);g.strokeStyle=D.print;g.lineWidth=2.4*k;g.beginPath();g.arc(x,y,r*H*1.08,0,TAU);g.stroke();
@@ -2561,7 +2566,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.10.1.0";
+const VERSION="0.10.2.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -4676,9 +4681,9 @@ const CD={W:1080,H:1350,max:40};
 const CD_F='"Space Grotesk",-apple-system,"Segoe UI",sans-serif',CD_M='"JetBrains Mono",ui-monospace,Menlo,monospace';
 const CD_LBL={mean:"Mean daily rate",maxVar:"Greatest day-to-day change",posSpread:"Spread between positions",thermal:"Temperature (per °C)",beat:"Beat error",amp24:"Amplitude after 24 h"};
 const CD_INK={chronometer:{ink:"#2b3f8c",short:"BCH",ring:"HALDIS CHRONOMETRY BUREAU",grade:"Chronometer certificate",
-    law:"Timed for fifteen days in five positions and at three temperatures, this movement met every limit the Bureau sets for a chronometer."},
+    law:"Timed for fifteen days in five positions and at 8, 23 and 38 °C, this movement met every limit the Bureau sets for a chronometer."},
   observatory:{ink:"#8a2630",short:"KPO",ring:"KESSEL PEAK OBSERVATORY",grade:"Observatory grade certificate",
-    law:"Timed for fifteen days on the mountain, in five positions and at three temperatures, this movement met the Observatory's limits."}};
+    law:"Timed for fifteen days on Kessel Peak, in five positions and at 8, 23 and 38 °C, this movement met every limit for the Observatory grade."}};
 const cdTxt=(s,n)=>String(s==null?"":s).replace(/[<>&"`]/g,"").slice(0,n||90);
 const cdSg=x=>(x>=0?"+":"−")+Math.abs(+x||0).toFixed(1);
 
