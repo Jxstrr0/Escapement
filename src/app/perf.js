@@ -3,8 +3,8 @@
    Auto-adjust (S.gfxAuto, on unless false), same rules as PEW: once the scene has settled, watch the frame rate WATCH_VIS
    measures. If it stays under ~27 fps for ~8 s, step ONE tier down (ultra > full > lite) and say so in a toast. It never steps
    up, and a manual tier pick after an auto-drop is respected for the rest of the session.
-   Skipped while the page is hidden, for the first ~6 s, for 3 s after a tier or tab change, and whenever the view isn't
-   drawing. Automated browsers (navigator.webdriver) are left alone unless PERF.force is set (test hook: PERF.force=12). */
+   Skipped while the page is hidden, for the first ~6 s, for 3 s after a tier or tab change, whenever the view isn't
+   drawing, and in photo mode (html.photo, app/photo.js: a full-screen view and big still frames are not a slow phone). Automated browsers (navigator.webdriver) are left alone unless PERF.force is set (test hook: PERF.force=12). */
 const PERF={T:["lite","full","ultra"],LOW:27,NEED:8000,SETTLE:6000,HOLD:3000,boot:performance.now(),f:null,fAt:0,sAt:0,low:0,tier:null,tab:null,holdTo:0,dropped:false,manual:false,force:null};
 function perfReset(hold){PERF.low=0;PERF.sAt=0;if(hold)PERF.holdTo=performance.now()+PERF.HOLD;}
 /* the player picked a tier or flipped auto-adjust in Settings */
@@ -12,7 +12,7 @@ function perfManual(){PERF.manual=true;perfReset(true);}
 function perfPoll(){
   if(!window.WATCH_VIS)return;
   const now=performance.now();
-  if(S.gfxAuto===false||(PERF.dropped&&PERF.manual)||document.hidden||now-PERF.boot<PERF.SETTLE){perfReset(true);return;}
+  if(S.gfxAuto===false||(PERF.dropped&&PERF.manual)||document.hidden||now-PERF.boot<PERF.SETTLE||document.documentElement.classList.contains("photo")){perfReset(true);return;}
   if(navigator.webdriver&&PERF.force==null)return;
   const tier=gfxTier();if(tier!==PERF.tier){PERF.tier=tier;perfReset(true);}
   if(curTab!==PERF.tab){PERF.tab=curTab;perfReset(true);}

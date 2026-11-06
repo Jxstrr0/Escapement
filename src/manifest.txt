@@ -7,6 +7,7 @@ css/shop.css
 css/events.css
 css/cards.css
 css/help.css
+css/photo.css
 html/body.html
 html/ld-libs.html
 sim/parts.js
@@ -22,6 +23,7 @@ vis/finish.js
 vis/movement.js
 vis/room.js
 vis/bench.js
+vis/photo.js
 vis/api.js
 html/ld-vis.html
 app/state.js
@@ -33,6 +35,7 @@ app/boot.js
 app/build.js
 app/test.js
 app/bench.js
+app/photo.js
 app/business.js
 app/calendar.js
 app/rnd.js
