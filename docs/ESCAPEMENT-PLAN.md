@@ -240,6 +240,8 @@ Web Audio: a short filtered noise burst per beat at `bph/3600` Hz (28,800 bph = 
 
 The movement stays code. Blender makes the things that never change with the build:
 
+> **Done early (0.7.2.0):** the bench and room with its upgrade stages, the machines as coded stand-ins, and the loupe, tools, clocks and cabinet as CC0 Poly Haven models (`src/vis/room.js`, `models/CREDITS.md`). Still for PR 9: the case and crown, the dial set, the tourbillon cage shell, and nicer models for the machines.
+
 - Asset list: watch case and crown (three sizes), dial set (five designs), the bench with its upgrade stages (bare bench → shop → workshop → manufacture), timing machine, loupe, cleaning machine, display window, a tourbillon cage shell.
 - Low-poly, baked PBR, glTF, packed with a copy of PEW's `tools/pack-model.py`. Credits file if anything isn't original.
 - Loaded on demand on Full/Ultra only (PEW's `ld-libs` pattern). Lite uses the coded stand-ins from PR 4 and must look finished without them.

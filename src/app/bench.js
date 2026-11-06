@@ -2,9 +2,19 @@
    The 3D movement on the bench: visSync() hands the vis the current build (setMovement) and how it is running right now
    (setRun: the amplitude, beat rate and beat error the timegrapher would show), and is called whenever any of those
    change. The tab card names the movement and switches the view: Assembled / Exploded, and the loupe on the escapement
-   (a double tap on the view does the same; the vis tells us through onView). */
+   (a double tap on the view does the same; the vis tells us through onView).
+   roomSync() tells the vis what the workshop round the bench looks like (setRoom): the career stage and the machines
+   owned. It runs from visSync and from every save(), and costs nothing when nothing changed (the vis compares). */
+function roomSpec(){const c=car();
+  if(!c||c.over)return{stage:c?"corner":"shop",has:c?{timing:"basic"}:{timing:"lab",cleaning:true,lathe:true,polishing:true}};   // the Sandbox: a well-kitted shop
+  const u=upOwned,shop=c.kind==="shop"||u("shop");
+  const stage=u("cnc")&&u("cleanroom")?"manufacture":shop&&(u("mill")||u("cnc")||u("bench2"))?"workshop":shop?"shop":"corner";
+  return{stage,has:{timing:u("timing-lab")?"lab":u("timing-six")?"six":"basic",cleaning:u("cleaning"),lathe:u("lathe"),polishing:u("polishing"),
+    mill:u("mill"),cnc:u("cnc"),bench2:u("bench2"),window:u("window"),climate:u("climate"),cleanroom:u("cleanroom")}};}
+function roomSync(){if(!window.WATCH_VIS||!WATCH_VIS.setRoom)return;try{WATCH_VIS.setRoom(roomSpec());}catch(e){}}
 function visSync(){
   if(!window.WATCH_VIS)return;
+  roomSync();
   try{WATCH_VIS.setMovement(S.cfg);const st=runState();WATCH_VIS.setRun({amp:st.amp,bph:st.bph,beatErr:st.beat,wound:true});}catch(e){}
   benchTag();if(typeof curTab!=="undefined"&&curTab==="bench")renderBench();}
 /* how the movement on the bench swings: the timegrapher's reading when it is your piece there (built as designed),

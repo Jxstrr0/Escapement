@@ -18,6 +18,7 @@ vis/core.js
 vis/studio.js
 vis/finish.js
 vis/movement.js
+vis/room.js
 vis/bench.js
 vis/api.js
 html/ld-vis.html

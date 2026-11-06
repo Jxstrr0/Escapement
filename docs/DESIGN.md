@@ -2,6 +2,12 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 0.7.2.0: the workshop
+
+- **The bench is in a room now.** The movement sits in a holder on a green felt mat on a raised oak watchmaker's bench at true scale (the plate is about 15 mm across), with a riser of small parts drawers behind it, tweezers, an eye loupe, an oiler and rodico on the mat, and a window over the Haldis valley behind. Zoom out (pinch or wheel) to see the whole bench and the room; the camera stays inside the walls.
+- **It grows with the career** (`roomSpec()` in `src/app/bench.js`, sent with `WATCH_VIS.setRoom`): a shared corner with a small window and an old alarm clock to begin; your own shop (the shop upgrade) with panelled walls, a big window, a shelf, a wall clock, a longcase clock and a parts cabinet; the workshop (a mill, CNC or second bench) and the manufacture (CNC plus clean room) with pale walls. Every owned machine stands somewhere: the timing machine (basic, six-position or the climate-box lab), the cleaning machine, lathe, polishing motor, mill, CNC, second bench, display window, climate unit and the clean-room door. The Sandbox shows the shop.
+- **Lite** draws the whole room in code (one mesh per material, about 20k triangles at the default view) and downloads nothing extra. **Full / Ultra** add ten CC0 models from Poly Haven (`models/CREDITS.md`, about 2 MB, fetched once and cached offline): the arm lamp, screwdrivers, pliers, magnifier, oil and cleaner tins, alarm, wall and longcase clocks and the parts cabinet. Until a model arrives its coded stand-in shows. Models off screen are not drawn, and the far plane follows what the camera can see, so the default view costs about the same as before. **Ultra** adds depth of field (focused on the orbit target) before its bloom.
+
 ## 0.7.1.0: metal that looks like metal
 
 - **The studio light.** Every tier now reflects a real photographed studio: Poly Haven's "Studio Small 03" (CC0, `textures/CREDITS.md`), cut to 512 × 256 (`textures/studio_small_03.hdr`, about 420 KB, fetched once, then cached offline by the service worker with sounds/ and models/). On load the game swings its big umbrella softbox up over the far side of the movement and adds a soft overhead fill, the way movements are photographed. Until it arrives (or if it can't), a painted stand-in with the same layout is used, so the metal is never unlit.
