@@ -278,7 +278,7 @@ Quartz or smartwatch products of your own, multiplayer, real brand names, watch 
 
 ## Checklist
 
-- [ ] PR 0: Scaffold, tabs, PWA, CLAUDE.md, save-code check
+- [x] PR 0: Scaffold, tabs, PWA, CLAUDE.md, save-code check (0.1.0.0)
 - [ ] PR 1: Movement sim, parts tables, combos, node tests
 - [ ] PR 2: Build tab with deltas and stress report
 - [ ] PR 3: Timegrapher, adjustment loop, certification, tick sound
