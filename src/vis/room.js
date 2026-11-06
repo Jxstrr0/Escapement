@@ -11,9 +11,12 @@
              climate unit, clean-room door.
    Every tier builds the room in code (the boxes merge into one mesh per material, so Lite pays a handful of draw calls),
    with procedural wood, plaster and the valley view painted on canvases. Full / Ultra then add the CC0 models in models/
-   (ROOM_MODELS, credited in models/CREDITS.md): the arm lamp, screwdrivers, pliers, a magnifier, tins and clocks; a coded
-   stand-in tagged with the same name hides when its model lands. Soft contact shadows are painted blobs on every tier,
-   since the lamp's real shadow only covers the movement. ---- */
+   (ROOM_MODELS, credited in models/CREDITS.md): the arm lamp, screwdrivers, pliers, a magnifier, tins and clocks from Poly
+   Haven, and three machines of our own made in Blender (tools/blender/machines.py): the timing machine (its plain head,
+   six-position head and climate box are named nodes, shown per has.timing), the cleaning machine and the display window.
+   Their materials are named for roomMats() roles and become the room's own. A coded stand-in tagged with the same name
+   hides when its model lands (Lite keeps the machines' stand-ins in the big merge, as before). Soft contact shadows are
+   painted blobs on every tier, since the lamp's real shadow only covers the movement. ---- */
 const ROOM={U:286,yaw:-.5,top:-.32,floor:-.32-272,ceil:-.32-272+780,
   bench:{w:430,d:200,front:72,t:11},walls:{back:-172,front:640,side:540},
   win:{corner:{x:-50,w:210,h:220},big:{x:0,w:330,h:280},y0:84},
@@ -22,7 +25,10 @@ const ROOM={U:286,yaw:-.5,top:-.32,floor:-.32-272,ceil:-.32-272+780,
   stages:{corner:{wall:"#7f8579",wains:false,win:"corner",floor:"#3b2e22"},shop:{wall:"#d6c9a8",wains:true,win:"big",floor:"#4a3626"},
     workshop:{wall:"#c6cdc4",wains:true,win:"big",floor:"#4a3626"},manufacture:{wall:"#e2e2dc",wains:false,win:"big",floor:"#6d6a64"}}};
 /* models (Full / Ultra): file, where it goes [x, y above the bench top (or the floor's y), z, turn], lay (comes standing: lay it
-   flat), the coded stand-in it replaces, the stages it shows in. Each is set down on its surface by its bounding box. */
+   flat), the coded stand-in it replaces, the stages it shows in, has (only when that machine is owned), parts (named nodes
+   shown only for some values of a machine: [the has key, its default, {node: [values]}]). Each is set down on its surface
+   by its bounding box. The machines (made by tools/blender/machines.py) carry materials named for roomMats() roles, and
+   take the room's own materials. */
 const ROOM_MODELS={
   lamp:{file:"models/arm-lamp.glb",at:[-160,0,-66,.7],stand:"lamp"},
   screwdrivers:{file:"models/screwdrivers.glb",at:[50,0,-16,-.35],stand:"screwdrivers"},
@@ -34,7 +40,10 @@ const ROOM_MODELS={
   alarm2:{file:"models/alarm-clock.glb",at:[-300,264,-155,.25],stages:["shop","workshop","manufacture"]},
   wallclock:{file:"models/wall-clock.glb",at:[300,330,-166,0],stages:["shop","workshop","manufacture"],stand:"wallclock"},
   grandfather:{file:"models/grandfather-clock.glb",at:[479,-272,120,-Math.PI/2],stages:["shop","workshop"],stand:"grandfather"},
-  drawers:{file:"models/drawers.glb",at:[-410,-272,300,Math.PI/2],stages:["shop","workshop","manufacture"]}};
+  drawers:{file:"models/drawers.glb",at:[-410,-272,300,Math.PI/2],stages:["shop","workshop","manufacture"]},
+  timing:{file:"models/timing-machine.glb",at:[128,0,-42,0],stand:"timing",parts:["timing","basic",{head:["basic"],six:["six","lab"],lab:["lab"]}]},
+  cleaning:{file:"models/cleaning-machine.glb",at:[168,70,-106,0],has:"cleaning",stand:"cleaning"},
+  window:{file:"models/display-window.glb",at:[250,-272,560,Math.PI],has:"window",stand:"window"}};
 
 /* ---- canvases: wood, plaster, wainscot, the valley, the timing machine's screen, a contact-shadow blob ---- */
 function roomCanvas(w,h,draw){const c=document.createElement("canvas");c.width=w;c.height=h;draw(c.getContext("2d"),w,h);return c;}
@@ -187,14 +196,16 @@ function buildRoom(spec){
   if(st==="shop"||st==="workshop"){const gc=tag("grandfather",new THREE.Group());box(mats.benchDark,80,620,90,470,fy-T,120,{into:gc,tile:120});
     const face=new THREE.Mesh(new THREE.CircleGeometry(30,lite?20:40),mats.cloth);face.position.set(429,fy+520,120);face.rotation.y=-Math.PI/2;face.userData.fixed=true;gc.add(face);}
   /* machines, each where it would stand */
-  const tm=has.timing||"basic";
-  { const x=128,z=back+rd+42;box(mats.paintGrey,58,20,44,x,0,z);
-    const sc=new THREE.Mesh(new THREE.PlaneGeometry(46,15),mats.screen);sc.position.set(x,T+12,z+22.2);sc.rotation.x=-.25;sc.userData.fixed=true;G.add(sc);
-    rod(mats.dark,[x+40,0,z-6],[x+40,34,z-6],1.2);box(mats.dark,14,8,12,x+40,34,z-6);blob(70,56,x+8,0,z);
-    if(tm==="six"||tm==="lab"){cyl(mats.dark,7,10,x+40,26,z+6,{rx:Math.PI/2});}
-    if(tm==="lab"){box(mats.white,62,8,62,x+96,0,z-14);box(mats.glass,58,50,58,x+96,8,z-14);} }
-  if(has.cleaning){const x=168,z=back+rd/2,y=rh;box(mats.white,48,10,36,x,y,z);for(let i=0;i<3;i++)cyl(mats.glass,6.5,16,x-14+i*14,y+10,z+4);
-    box(mats.white,10,46,10,x+18,y+10,z-12);box(mats.white,30,8,14,x+5,y+46,z-12);}
+  /* the timing machine, cleaning machine and display window have models on Full / Ultra, so their coded stand-ins go in a
+     tagged group there; on Lite they merge with the rest of the room as they always have */
+  const grp=k=>lite?G:tag(k,new THREE.Group()),tm=has.timing||"basic";
+  { const x=128,z=back+rd+42,into=grp("timing");box(mats.paintGrey,58,20,44,x,0,z,{into});
+    const sc=new THREE.Mesh(new THREE.PlaneGeometry(46,15),mats.screen);sc.position.set(x,T+12,z+22.2);sc.rotation.x=-.25;sc.userData.fixed=true;into.add(sc);
+    rod(mats.dark,[x+40,0,z-6],[x+40,34,z-6],1.2,into);box(mats.dark,14,8,12,x+40,34,z-6,{into});blob(70,56,x+8,0,z);
+    if(tm==="six"||tm==="lab"){cyl(mats.dark,7,10,x+40,26,z+6,{rx:Math.PI/2,into});}
+    if(tm==="lab"){box(mats.white,62,8,62,x+96,0,z-14,{into});box(mats.glass,58,50,58,x+96,8,z-14,{into});} }
+  if(has.cleaning){const x=168,z=back+rd/2,y=rh,into=grp("cleaning");box(mats.white,48,10,36,x,y,z,{into});for(let i=0;i<3;i++)cyl(mats.glass,6.5,16,x-14+i*14,y+10,z+4,{into});
+    box(mats.white,10,46,10,x+18,y+10,z-12,{into});box(mats.white,30,8,14,x+5,y+46,z-12,{into});}
   if(has.lathe){const x=-112,z=30;box(mats.paint,92,6,11,x,0,z);box(mats.paint,20,20,16,x-34,6,z);cyl(mats.chrome,4,14,x-20,15,z,{rz:Math.PI/2});
     box(mats.paint,12,14,12,x+30,6,z);cyl(mats.paintGrey,9,26,x-38,0,z-34);blob(100,50,x-6,0,z-8);}
   if(has.polishing){const x=176,z=36;cyl(mats.paintGrey,9,30,x,9,z,{rz:Math.PI/2});for(const s of [-1,1])cyl(mats.cloth,13,4,x+s*19,9,z,{rz:Math.PI/2});box(mats.paintGrey,26,6,18,x,0,z);blob(56,30,x,0,z);}
@@ -202,13 +213,13 @@ function buildRoom(spec){
   if(has.cnc){box(mats.white,180,600,170,430,fy-T,-20);box(mats.glass,4,240,110,339,fy-T+230,-20);box(mats.black,4,40,60,338,fy-T+500,-90);}
   if(has.bench2){const x=420,z=430;box(mats.bench,200,BN.t,140,x,-BN.t,z,{ry:-Math.PI/2,tile:110});box(mats.benchDark,200,60,40,x+60,0,z,{ry:-Math.PI/2,tile:90});
     box(mats.felt,80,.04,60,x-10,0,z,{ry:-Math.PI/2});}
-  if(has.window){const x=250,z=560;box(mats.benchDark,160,260,60,x,fy-T,z,{tile:120});box(mats.glass,156,70,56,x,fy-T+260,z);
-    for(let i=0;i<4;i++)cyl(mats.brass,9,3,x-54+i*36,fy-T+262,z,{seg:lite?12:20});}
+  if(has.window){const x=250,z=560,into=grp("window");box(mats.benchDark,160,260,60,x,fy-T,z,{tile:120,into});box(mats.glass,156,70,56,x,fy-T+260,z,{into});
+    for(let i=0;i<4;i++)cyl(mats.brass,9,3,x-54+i*36,fy-T+262,z,{seg:lite?12:20,into});}
   if(has.climate)box(mats.white,110,34,26,280,cy-T-80,W.back+14);
   if(has.cleanroom){box(mats.white,150,300,6,-150,fy-T,W.front-4);box(mats.glass,60,80,2,-150,fy-T+190,W.front-8);}
   /* lights that belong to the room: daylight from the window */
   const day=new THREE.DirectionalLight(0xdbe6f5,lite?.35:.45);day.position.set(WN.x*.3,T+520,W.back-400);G.add(day);
-  G.userData.stands=stands;G.userData.mats=mats;G.userData.spec=st;
+  G.userData.stands=stands;G.userData.mats=mats;G.userData.spec=st;G.userData.has=has;
   mergeStatic(G);for(const k in stands)for(const o of stands[k]){mergeStatic(o);G.add(o);}
   G.rotation.y=ROOM.yaw;   // after merging: the merged meshes are in the room's own axes
   return G;}
@@ -218,13 +229,17 @@ function roomModels(G,st){
   if(V.tier==="lite")return;
   if(!THREE.GLTFLoader){if(window.__escPost)window.__escPost(ok=>{if(ok&&THREE.GLTFLoader&&V.room===G)roomModels(G,st);});return;}
   if(!V.models)V.models={};
-  for(const key in ROOM_MODELS){const m=ROOM_MODELS[key];if(m.stages&&!m.stages.includes(st))continue;
+  const has=G.userData.has||{},mats=G.userData.mats;
+  for(const key in ROOM_MODELS){const m=ROOM_MODELS[key];if(m.stages&&!m.stages.includes(st))continue;if(m.has&&!has[m.has])continue;
     modelGet(m.file,src=>{if(V.room!==G)return;src.traverse(q=>{if(q.isMesh&&q.material)q.material.envMap=fullEnv();});const o=src.clone();o.scale.setScalar(ROOM.U);
+      /* a material named for a room role becomes the room's own (on this clone only; the Poly Haven models keep theirs) */
+      o.traverse(q=>{const n=q.isMesh&&q.material&&q.material.name;if(n&&n!=="own"&&mats[n])q.material=mats[n];});
+      if(m.parts){const [k,d,show]=m.parts,v=has[k]||d;for(const n in show){const p=o.getObjectByName(n);if(p)p.visible=show[n].includes(v);}}
       const y=m.at[1]<=ROOM.floor+1?m.at[1]:ROOM.top+m.at[1];o.position.set(m.at[0],y,m.at[2]);o.rotation.order="YXZ";o.rotation.y=m.at[3];if(m.lay)o.rotation.x=-Math.PI/2;
       if(!m.stand||m.stand!=="wallclock"){o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(o);o.position.y+=y-bb.min.y;}
-      /* our own culling (roomCull): a model's box against the trimmed view, not its loose bounding spheres */
-      o.traverse(q=>{if(q.isMesh)q.frustumCulled=false;});o.updateMatrixWorld(true);o.userData.box=new THREE.Box3().setFromObject(o);
-      G.add(o);
+      /* our own culling (roomCull): a model's box against the trimmed view, not its loose bounding spheres. The box is taken
+         once the model is in the turned room, so it is in world space like the view (far from the bench the two differ a lot) */
+      o.traverse(q=>{if(q.isMesh)q.frustumCulled=false;});G.add(o);G.updateWorldMatrix(true,false);o.updateMatrixWorld(true);o.userData.box=new THREE.Box3().setFromObject(o);
       if(m.stand)for(const s of (G.userData.stands[m.stand]||[]))s.visible=false;});}}
 function modelGet(file,cb){const c=V.models[file];
   if(c&&c.scene){cb(c.scene);return;}if(c){c.wait.push(cb);return;}
