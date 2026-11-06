@@ -7,7 +7,7 @@
    instead of waiting, because that page cannot boot to offer it. Every cache name starts "esc-": the activate step only ever
    deletes "esc-" caches, never another game's on the same host. */
 "use strict";
-const CACHE = "esc-shell-v0.9.0.0-a8adce22a9", MEDIA = "esc-media-v1-fb050cf5", LIBS = "esc-libs-v1";
+const CACHE = "esc-shell-v0.9.0.0-f1c4851df0", MEDIA = "esc-media-v1-fb050cf5", LIBS = "esc-libs-v1";
 const PRECACHE = ["index.html","manifest.webmanifest","icons/apple-touch-icon.png","icons/icon-192.png","icons/icon-512-maskable.png","icons/icon-512.png"], CDN = ["https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/BokehShader.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/BokehPass.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"];
 const LIB_HOSTS = ["cdnjs.cloudflare.com", "cdn.jsdelivr.net", "fonts.googleapis.com", "fonts.gstatic.com"];
 const BASE = new URL("./", self.location).pathname;
