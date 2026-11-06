@@ -8,7 +8,9 @@ return{
   /* the workshop round the bench: {stage: corner|shop|workshop|manufacture, has: {timing, cleaning, lathe, ...}} (vis/room.js) */
   setRoom(spec){const k=JSON.stringify(spec||{});if(k===V.roomKey)return;V.roomKey=k;V.roomSpec=JSON.parse(k);if(started&&V.move)rebuildRoom();},
   setRun(o){Object.assign(V.run,o||{});},
-  /* "home", "exploded" or "loupe"; the app hears double-tap changes through onView */
+  /* the cased watch for the Dial side view: {caseId, comps, top, mid, foot} (vis/watch.js); rebuilt only when it changes */
+  setWatch(spec){const k=JSON.stringify(spec||{});if(k===V.watchKey)return;V.watchKey=k;V.watchSpec=JSON.parse(k);if(started&&V.move)rebuildWatch();},
+  /* "home", "exploded", "loupe" or "dial" (the cased watch, dial up); the app hears double-tap changes through onView */
   setView(name){setViewName(name,true);},
   get view(){return V.view;},
   onView(fn){V.viewCbs.push(fn);},

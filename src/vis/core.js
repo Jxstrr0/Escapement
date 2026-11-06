@@ -1,7 +1,8 @@
 <script>
 /* ===================== Escapement: 3D (WATCH_VIS) =====================
-   three.js r128. One IIFE spread over vis/core.js, studio.js, finish.js, movement.js, room.js, bench.js, photo.js and api.js; the public object is in api.js.
+   three.js r128. One IIFE spread over vis/core.js, studio.js, finish.js, movement.js, room.js, watch.js, bench.js, photo.js and api.js; the public object is in api.js.
    The vis never reads game state: the app calls WATCH_VIS.setMovement(cfg), .setRoom({stage,has}), .setRun({amp,bph,beatErr,wound}),
+   .setWatch({caseId,comps,top,mid,foot}) (the cased watch for the Dial side view, vis/watch.js),
    .setView(name), .setMotion(reduced), .setQuality(tier), .onView(fn), .setBackdrop(kind) and
    .photoGrab(scale) (photo mode), and reads .fps().
    This file: module state, the renderer, the three graphics tiers and the materials.
@@ -15,7 +16,7 @@ const WATCH_VIS=(function(){
 const V={r:null,scene:null,cam:null,canvas:null,tier:"lite",w:0,h:0,mats:null,env:null,room:null,roomSpec:null,roomKey:"",roomTex:null,models:null,dof:null,liteEnv:null,light:null,lightTried:false,fin:null,finTier:null,comp:null,bloom:null,
   move:null,bench:null,lamp:null,run:{amp:280,bph:28800,beatErr:0,wound:true},t0:performance.now(),
   frames:0,fpsAt:performance.now(),fpsObj:{fps:0,at:0},orbit:{yaw:-.5,pitch:.9,dist:12,tx:0,ty:0,tz:0},
-  cfg:null,cfgKey:"",fit:0,goal:null,view:"home",explode:0,explodeT:0,reduce:false,viewCbs:[],last:0};
+  cfg:null,cfgKey:"",watch:null,watchSpec:null,watchKey:"",fit:0,goal:null,view:"home",explode:0,explodeT:0,reduce:false,viewCbs:[],last:0};
 const TAU=Math.PI*2;
 
 function initRenderer(canvas){
