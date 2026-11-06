@@ -36,9 +36,9 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `html/body.html` | `</style>`, all of the markup (`#app`, `#view` with the `#gl` canvas and HUD, five `.tabpage` sections, `#tabs`, sheet, toast, intro), the three.js r128 tag and the `ESC_LIBS` on-demand loader (`window.__escPost`) |
 | `html/ld-libs.html`, `ld-sim.html`, `ld-vis.html` | one-line `<script>__ld(fraction,"message")</script>` loading-bar steps after the block they report |
 | **WATCH_SIM** (maths, runs in node) | |
-| `sim/parts.js` | `<script>`, header, IIFE open; `PARTS`, `DEFAULT_CFG` (PR 1) |
-| `sim/movement.js` | `K`, `simulate(cfg, skills, tools)` (PR 1; a stub now) |
-| `sim/combos.js` | `COMBOS` part interactions (PR 1) |
+| `sim/parts.js` | `<script>`, header, IIFE open; `SLOTS`, `MULTI`, `PARTS` (12 slots), `DEFAULT_CFG`, `part(slot,id)` |
+| `sim/movement.js` | `POSITIONS`, `TEMPS`, the `K` table, `normCfg` (fills and fixes a cfg), `model`, `ampAt` / `beatAt` / `rateAt`, `simulate(cfg, skills, tools, opts)` |
+| `sim/combos.js` | `COMBOS`: stress rules with `when`, optional `pre` (changes the model) / `post` (changes the result), and `text` |
 | `sim/trial.js` | `CERT`, `CERT_MULT`, `runTrial` (PR 3) |
 | `sim/market.js` | `MARKET_ERA`, demand and pricing (PR 5 / 6); **the WATCH_SIM export object**, `module.exports`, `</script>` |
 | **WATCH_SOUND** | |
@@ -55,7 +55,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/pwa.js` | service worker registration, the "New version ready" bar, `PWA.canInstall` / `install` / `iosTip` |
 | `app/boot.js` | `TABS`, `TAB_RENDER`, `showTab`, the Settings sheet, intro, `start()` (scheduled with `__ldGo`) |
 | `app/build.js` | the Build tab (PR 2) |
-| `app/test.js` | the Test tab: timegrapher, adjustment, certification (PR 3); `?sim=1` shows the raw sim result |
+| `app/test.js` | the Test tab: timegrapher, adjustment, certification (PR 3); for now the sim result as text |
 | `app/shop.js` | the Shop tab (PR 5); now the Saves card buttons |
 | `app/career.js` | the Career tab (PR 6) |
 | `app/help.js` | tutorial and help (PR 8); last app file, `</script>` |

@@ -88,6 +88,7 @@ h1,h2,h3{margin:0;font-weight:700;text-wrap:balance;letter-spacing:.005em}
 .hint{font-size:13px;color:var(--dim);margin:6px 0 0}
 textarea.code{width:100%;min-height:120px;resize:vertical;padding:10px;border-radius:10px;border:1px solid var(--rule);background:var(--felt);color:var(--chalk);font:13px/1.4 var(--mono);word-break:break-all}
 .buerr{color:var(--crit);min-height:1em}
+.simout{margin:8px 0 0;font-size:12px;line-height:1.5;white-space:pre-wrap;color:var(--chalk);overflow-x:auto}
 
 /* ---- bottom sheet, scrim, toast ---- */
 #scrim{position:fixed;inset:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}

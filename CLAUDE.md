@@ -18,6 +18,7 @@ Sister project: Prairie Engine Works (`Jxstrr0/350Chev`). The stack, build scrip
 node build.js            # rebuild index.html and sw.js from src/
 node build.js --check    # exit 1 if either is stale, a script block does not compile, or a function is declared twice
 node check-savecode.js   # 16 save-code checks: round trip, empty save, damaged and cut-off codes, other games, storage full, backup files
+node tools/sim-test.js   # the watch sim on DEFAULT_CFG and the named TEST_BUILDS (--brief: one line each, for commit messages)
 ```
 
 Run all three before every commit. To play a local copy: `python3 -m http.server` in the repo root and open it. The service worker only registers on a real host (or with `?sw=1`), so local testing is never cached. `?fps=1` shows the frame rate and tier in the corner of the 3D view.
@@ -82,13 +83,19 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 
 - Setting: **the Haldis**, a high watchmaking valley in the north of **Velmark**, an invented alpine country.
 - Palette: **dark felt + brass + steel**; the light theme is a pale workshop. UI font Space Grotesk, readouts **JetBrains Mono**.
+- Certification bodies: the **Haldis Chronometry Bureau** (stamp BCH) grants Chronometer; the **Kessel Peak Observatory**, a mountaintop observatory above the valley, grants the Observatory grade.
+- Sold pieces come back on a **resale market** (auction and collector market); their price follows your reputation, and you can buy them back.
+- Time: **act, then Close week** (PEW style). Nothing moves while the phone is in a pocket.
+- The double-tap **loupe** camera move is on **all tiers** (it only moves the camera); reduced motion makes it cut instead of glide.
 - Money: the Velmark **thaler** (`Th 4,850`; 100 pfennig to a thaler), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (0.1.0.2)
+## Current status (0.2.0.0)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
-- Next: PR 1, the movement sim (text only).
+- PR 1 done: `WATCH_SIM` with 12 part slots (`PARTS`, 50 options), `simulate()` (amplitude, reserve, six positions × three temperatures, beat error, shock, magnetism, thickness, cost, hours, service, prestige, return risk), 17 `COMBOS` stress rules, `tools/sim-test.js` with 12 `TEST_BUILDS`. The Test tab shows the numbers as text.
+- Part `unlock` values are `start`, `shop:<upgrade id>` (PR 5 defines those upgrades: mill, lathe, cnc, polishing, timing-six, spring-supplier, jewel-supplier) or `rnd:<project id>` (PR 7).
+- Next: PR 2, the Build tab.
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)
