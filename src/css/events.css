@@ -10,10 +10,11 @@
 .news b{display:block;margin:2px 0 4px}.news p{margin:0}
 .news.era b{color:var(--brass-t)}
 .news .new{font-family:var(--font);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--brass-ink);background:var(--brass);border-radius:999px;padding:1px 6px;margin-left:4px}
-details.more summary{cursor:pointer;color:var(--brass-t);font-size:14px;font-weight:600;padding:8px 0 2px}
+details.more summary{cursor:pointer;color:var(--brass-t);font-size:14px;font-weight:600;padding:0;min-height:44px;display:flex;align-items:center}
 .shlist.goals li{justify-content:flex-start}
 .gtick{flex:0 0 26px;height:26px;border-radius:50%;border:2px solid var(--rule);display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--brass-ink)}
 .goals li.got .gtick{background:var(--good);border-color:var(--good)}
+:root[data-theme=light] .goals li.got .gtick{color:#fff}
 .goals li:not(.got) b{color:var(--muted)}
 .chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer;width:100%}
 .chk input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--brass);flex:0 0 auto}
