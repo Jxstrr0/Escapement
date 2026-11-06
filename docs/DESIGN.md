@@ -2,6 +2,41 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 0.7.0.0: the calendar, reputation and the smartwatch years (PR 6)
+
+- **Reputation** (Career tab): three tracks, each with a tier from Unknown through Local name, Known in the valley,
+  Respected and Renowned to Legendary. **Press** (repairs done right, certificates, trial podiums, commissions from private
+  customers) brings walk-in buyers, 12% more per tier. **Collectors** (sales of finished and complicated pieces,
+  certificates, auction sales, old pieces reselling above their price) raise auction estimates and resale prices.
+  **Trade** (trade batches on time) brings bigger and better-paid batches, more often. Tier 2 commissions need the
+  segment's track at Local name and tier 3 at Respected. A wrong repair, a late delivery or a service return costs
+  reputation. Every track fades a little each week (0.8%).
+- **Coming up** card: the next auction night, the trial and the fair, soonest first, with their buttons.
+- **The Haldis Valley Fair** (week 37). Book a stand (Th 450) up to five weeks before and choose up to three stock pieces.
+  At the fair, visitors buy at your asking price more readily than walk-ins (1.6 times the chance), collectors notice
+  finished and complicated pieces, and there are commission enquiries and often a trade enquiry.
+- **The Kessel Peak Trial** (entries weeks 8-18, Th 250; results week 24). One cased stock piece against five rival shops
+  (Varn & Söhne, Halvard, Atelier Amsel, Kessler, Ostrander Frères, who get a little better every year). Thirty days: four in
+  each of five positions, cold / room / warm, four recovery days. Points from an index of the mean rate away from zero, the
+  day-to-day changes, the position spread and (weighted most) the temperature error. The results play like a race, the
+  leaderboard re-sorting day by day; then the place, the prize (Th 6,000 / 3,000 / 1,500) and where it lost most. A steel
+  hairspring falls away in the temperature days; a regulated BCH piece places around the podium; an Observatory build wins.
+- **Auction nights** at Brugg & Lell (the Spring sale, week 16; the Winter sale, week 46). From six weeks before, consign
+  stock pieces (Shop tab, Auction…) with no reserve, 80% or full value; they're held from walk-ins and the dealer. Your
+  sold pieces come back as resale lots once they're half a year old (and not again for two years); their estimate follows
+  the collectors' opinion of you, and you can bid to buy them back. In the saleroom each lot is bid up live by named
+  collectors and the rival shops (going once, going twice), then sold or bought in. 12% off the hammer for the seller, 12%
+  on top for the buyer. Never opened, the sale runs by itself at Close week.
+- **Service returns.** For two years after a sale (not to the dealer), a piece can come back on its yearly return risk:
+  dropped (cracked crystal, bent staff), magnetised, or oil drifting. You pay parts and the courier, it takes bench hours,
+  the press and collectors hear about it, and a cracked crystal flashes over the screen.
+- **The smartwatch years.** News cards (Career tab) by date from 2000 to 2030. From 2015 to 2018 trade batches pay 35%
+  less, walk-in buyers drop 20%, repairs 40%, and the press cares less about accuracy honours. From 2019 collectors pay 40%
+  more at auction and for collectors' commissions, and finished pieces are worth up to 25% more.
+- **Goals** (Career tab): first Chronometer, first commission, your own shop, a trial podium, a sale under the hammer, your
+  own calibre (R&D, next), Observatory grade, a perpetual calendar, and through the slump (2019 with staff kept on).
+- **Rival shops** card: who they are and where they placed last time; your trial history.
+
 ## 0.6.0.0: the shop and the career (PR 5)
 
 - **New game** (Career tab): **Repair bench, 2000** (a shared bench, the basic timing machine, Th 2,500), **Skip ahead to
@@ -20,7 +55,7 @@ This file describes the game as it actually is on `main`. It grows as plan PRs l
   case won't go in) and it goes into stock at its value.
 - **Selling.** Each week a few buyers (more with your own shop and a display window) look at your stock and may buy the
   best value for its price (−20%, value, +20%, +50%). The dealer in town pays 55% at once. **Commissions** (ten kinds, from a
-  retirement watch to an Observatory piece, harder ones after 20 and 60 weeks) have a spec, a budget and a deadline: deliver a
+  retirement watch to an Observatory piece, harder ones by reputation from 0.7.0.0) have a spec, a budget and a deadline: deliver a
   cased piece that meets it from stock; late pays 10% less a week. **Trade batches**: 8 to 20 plain movements for another
   brand, parts paid up front, paid on delivery.
 - **Upgrades** (14: machines, suppliers, the shop, a window, a second bench, climate control, a clean room) unlock parts and
