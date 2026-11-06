@@ -283,6 +283,62 @@ table.books td.neg,.weekd.neg{color:var(--crit)}
 .wklines{margin:0 0 14px;padding-left:18px;font-size:15px}.wklines li{margin:4px 0}.wklines li.dim{color:var(--dim);list-style:none;margin-left:-18px;margin-top:10px;font-size:13px}
 .bmake{border-color:var(--brass)}
 .tgcar h3{display:flex;align-items:baseline;flex-wrap:wrap}
+/* ---- events.css: the Career tab's calendar cards (app/events.js): coming up, reputation bars, news cards, goals; the
+   Kessel Peak Trial leaderboard, the saleroom, and the cracked-crystal overlay. Light theme through the shared tokens;
+   reduced motion turns off the race's sliding rows and the crack's flash. ---- */
+.shlist.ev li{align-items:flex-start}
+.rep3 .tier{font-size:12px;font-weight:600;color:var(--brass-t);margin-left:6px}
+.rep3 .bar{height:6px;border-radius:3px;background:var(--panel2);margin:6px 0 6px;overflow:hidden}
+.rep3 .bar i{display:block;height:100%;background:var(--brass);border-radius:3px}
+.news{padding:10px 0;border-top:1px solid var(--rule)}.news:first-of-type{border-top:0;padding-top:0}
+.news small{display:block;color:var(--dim);font-size:12px;font-family:var(--mono)}
+.news b{display:block;margin:2px 0 4px}.news p{margin:0}
+.news.era b{color:var(--brass-t)}
+.news .new{font-family:var(--font);font-weight:700;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--brass-ink);background:var(--brass);border-radius:999px;padding:1px 6px;margin-left:4px}
+details.more summary{cursor:pointer;color:var(--brass-t);font-size:14px;font-weight:600;padding:8px 0 2px}
+.shlist.goals li{justify-content:flex-start}
+.gtick{flex:0 0 26px;height:26px;border-radius:50%;border:2px solid var(--rule);display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--brass-ink)}
+.goals li.got .gtick{background:var(--good);border-color:var(--good)}
+.goals li:not(.got) b{color:var(--muted)}
+.chk{display:flex;gap:10px;align-items:flex-start;cursor:pointer;width:100%}
+.chk input{width:22px;height:22px;margin:2px 0 0;accent-color:var(--brass);flex:0 0 auto}
+/* the trial leaderboard: rows positioned by rank, sliding as the days go by */
+.race-day{font-family:var(--mono);font-size:13px;color:var(--brass-t);margin:0 0 8px}
+.race{position:relative;margin:0 0 10px}
+.rrow{position:absolute;left:0;right:0;top:0;height:40px;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:10px;background:var(--panel2);overflow:hidden;transition:transform .35s ease}
+.rrow.me{outline:2px solid var(--brass)}
+.rrow .rbar{position:absolute;left:0;bottom:0;height:3px;background:var(--steel);opacity:.7;width:0;transition:width .2s linear}
+.rrow.me .rbar{background:var(--brass);opacity:1}
+.rpl{width:18px;font-family:var(--mono);font-weight:700;color:var(--brass-t)}
+.rnm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.rpt{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+html.reduce .rrow,html.reduce .rrow .rbar{transition:none}
+.race-res{font-size:17px;margin:4px 0 6px}
+/* the saleroom */
+.lot{border:1px solid var(--rule);border-radius:12px;padding:12px;margin:0 0 10px;background:var(--panel2)}
+.lot small{color:var(--dim);font-family:var(--mono);font-size:12px}.lot b{display:block;margin:2px 0 4px;font-size:16px}.lot p{margin:2px 0}
+#slBids{flex-wrap:wrap}
+#slBids.bids4{display:grid;grid-template-columns:1fr 1fr;gap:8px}#slBids.bids4 .btn{flex-direction:column;gap:0;min-height:52px;line-height:1.2}
+#slBids .btn small{display:block;font-size:11px;font-weight:500;opacity:.8}
+.gavel{min-height:96px;text-align:center}
+.bidnow{margin:6px 0 2px;font-size:15px;color:var(--muted)}.bidnow b{display:block;font-family:var(--mono);font-size:28px;color:var(--chalk)}
+.going{margin:2px 0;color:var(--brass-t);font-style:italic}
+.hammer{font-size:18px;font-weight:700;color:var(--brass-t);margin:6px 0}
+/* a piece comes back: the crystal cracks over the screen, then fades */
+#crack{position:fixed;inset:0;pointer-events:none;z-index:90;opacity:0;visibility:hidden}
+#crack svg{width:100%;height:100%}
+#crack g{fill:none;stroke:rgba(235,242,245,.85);stroke-width:.28;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 .3px rgba(0,0,0,.8))}
+#crack.on{visibility:visible;animation:crackOn 1.9s ease-out forwards}
+#crack.on g{stroke-dasharray:60;stroke-dashoffset:60;animation:crackDraw .25s ease-out forwards}
+#crack.on::before{content:"";position:absolute;inset:0;background:#fff;opacity:0;animation:crackFlash .3s ease-out}
+@keyframes crackOn{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+@keyframes crackDraw{to{stroke-dashoffset:0}}
+@keyframes crackFlash{0%{opacity:.35}100%{opacity:0}}
+html.reduce #crack.on{animation:crackOnR 1.4s steps(1,end) forwards}
+html.reduce #crack.on g{animation:none;stroke-dasharray:none}
+html.reduce #crack.on::before{display:none}
+@keyframes crackOnR{0%{opacity:1}100%{opacity:0}}
+:root[data-theme=light] #crack g{stroke:rgba(40,46,50,.8);filter:none}
 </style>
 
 <div id="app">
@@ -367,7 +423,6 @@ table.books td.neg,.weekd.neg{color:var(--crit)}
       <h2 id="h-career">Career</h2>
       <p class="lede">Weeks from 2000 to 2030: the valley fair, chronometry trials, auction nights, and the smartwatch years.</p>
       <div id="careerBody"></div>
-      <div class="card"><h3>Calendar &amp; reputation<span class="soon">PR 6</span></h3><p>The valley fair, trials against rival shops, auction nights; collectors, trade and press each watch what you make.</p></div>
       <div class="card"><h3>R&amp;D<span class="soon">PR 7</span></h3><p>New escapements, hairsprings, complications, and one day your own calibre.</p></div>
     </section>
   </div>
@@ -766,7 +821,9 @@ const COMBOS=[
    ADJ / adjustPiece(kind, adjust, cfg, skills, n, seed) -> the new adjust after one Regulate (n notches, + = faster),
                  Adjust beat or Poise, with the skill's noise. hoursFor(kind) is the bench time each one costs.
    certOdds(cfg, skills, tools) -> share of pieces of this build a careful watchmaker at these skills gets through
-                 each grade (the Build tab's capsule). ---- */
+                 each grade (the Build tab's capsule).
+   CONTEST / runContest(cfg, skills, tools, opts) / contestIndex(days): the yearly Kessel Peak Trial against rival
+                 shops (PR 6): 30 days, an index (lower is better) and points. ---- */
 const CERT={
   bench:{name:"Bench pass",body:"your own bench",stamp:"",fee:0,weeks:0,
     mean:[-30,30],maxVar:null,posSpread:null,thermal:null,beat:2.0,amp24:180},
@@ -857,6 +914,32 @@ function certOdds(cfg,skills,tools,n){
     for(const id of CERT_ORDER)if(t.tiers[id].pass)out[id]++;}
   for(const id of CERT_ORDER)out[id]/=n;
   return out;}
+
+/* the Kessel Peak Trial (PR 6): a yearly contest, not a certificate. 30 days: four days in each of five positions, then
+   two each at 8, 23 and 38 C, then four recovery days dial up. The index adds up what an observatory frowns on (lower
+   is better): the mean rate away from zero, the day-to-day changes, the spread between positions and the temperature
+   error (per C, weighted). points = 1000 * e^(-index / scale): a chronometer near 500, an Observatory piece 600+. */
+const CONTEST={
+  days:[].concat(...["DU","DD","PU","PL","PD"].map(p=>[[p,23],[p,23],[p,23],[p,23]]),
+    [["DU",8],["DU",8],["DU",23],["DU",23],["DU",38],["DU",38],["DU",23],["DU",23],["DU",23],["DU",23]]),
+  w:{mean:1,vari:2,pos:.5,thermal:10},scale:10};
+function contestIndex(days){
+  const n=days.length,mean=a=>a.reduce((x,y)=>x+y,0)/(a.length||1),rt=days.map(d=>d.rate);
+  const mAbs=Math.abs(mean(rt)),vari=n>1?mean(rt.slice(1).map((r,i)=>Math.abs(r-rt[i]))):0;
+  const byPos={};days.forEach(d=>{if(d.temp===23)(byPos[d.pos]=byPos[d.pos]||[]).push(d.rate);});
+  const pm=Object.values(byPos).map(mean),pos=pm.length>1?Math.max(...pm)-Math.min(...pm):0;
+  const c8=days.filter(d=>d.temp===8),c38=days.filter(d=>d.temp===38);
+  const thermal=c8.length&&c38.length?Math.abs(mean(c38.map(d=>d.rate))-mean(c8.map(d=>d.rate)))/30:0;
+  const W=CONTEST.w,index=W.mean*mAbs+W.vari*vari+W.pos*pos+W.thermal*thermal;
+  return{index,points:Math.round(1000*Math.exp(-index/CONTEST.scale)),parts:{mean:mAbs,vari,pos,thermal}};}
+/* -> {days, final:{index, points, parts}, running:[points after day 1, 2, ... 30]} */
+function runContest(cfg,skills,tools,opts){
+  opts=opts||{};
+  const {P,m}=prepModel(cfg,skills,tools,opts),R=rng(opts.trialSeed!=null?opts.trialSeed:"contest");
+  const sd=TRIAL.noise*(1+P.regulator.drift*TRIAL.noiseDrift)*m.wrist/P.bph.rateStability;
+  const days=CONTEST.days.map(([pos,temp])=>({pos,temp,rate:rateAt(m,pos,TRIAL.windT,temp)+gauss(R)*sd*(temp===23?1:TRIAL.thermalNoise)}));
+  const running=days.map((d,i)=>contestIndex(days.slice(0,i+1)).points);
+  return{days,final:contestIndex(days),running};}
 /* ---- market.js: what a piece is worth and how fast it sells (PR 5), the market era table (smartwatch shift, PR 6).
    Then the WATCH_SIM export object.
    ECON            the pricing numbers: labour per bench hour, the markup (more for prestige), case markup, how a price
@@ -864,10 +947,14 @@ function certOdds(cfg,skills,tools,n){
    pieceValue(r, cert, cs)   r = simulate(); cert = best certificate; cs = the case row ({cost, mult}) or null.
    buyChance(value, price)   the chance one buyer who likes it pays this price.
    tradeTerms(r, batch)      a trade movement: {hours, parts, price} each; batch multiplies the hours (CNC).
-   eraMult(year, kind)       the market era's factor for "retail", "trade", "repairs", "collector" (1 until PR 6). ---- */
+   MARKET_ERA      the smartwatch years (2015-2018: trade, retail and repairs down, the press less taken with accuracy)
+                   and the collectors' return after (from 2019: collector money up, finishing worth more).
+   eraMult(year, kind)       the market era's factor for "retail", "trade", "repairs", "collector", "press", "finish". ---- */
 const ECON={labour:42,markup:1.45,markupPrestige:.11,caseMarkup:1.5,buyBase:.7,elastic:3,buyMax:.95,
   trade:{eff:.5,labour:18,margin:1.12}};
-const MARKET_ERA=[];
+const MARKET_ERA=[
+  {from:2015,to:2018,trade:.65,retail:.8,repairs:.6,press:.7},
+  {from:2019,to:9999,collector:1.4,finish:1.25}];
 function pieceValue(r,cert,cs){
   const base=(r.cost+r.hours*ECON.labour)*(ECON.markup+ECON.markupPrestige*r.prestige)*(CERT_MULT[cert||"none"]||1);
   return Math.round((base+(cs?cs.cost*ECON.caseMarkup:0))*(cs&&cs.mult||1)/10)*10;}
@@ -875,7 +962,7 @@ function buyChance(value,price){return Math.max(0,Math.min(ECON.buyMax,ECON.buyB
 function tradeTerms(r,batch){const hours=r.hours*ECON.trade.eff*(batch||1);
   return{hours,parts:r.cost,price:Math.round((r.cost+hours*ECON.trade.labour)*ECON.trade.margin/5)*5};}
 function eraMult(year,kind){let f=1;for(const e of MARKET_ERA)if(year>=e.from&&year<=e.to&&e[kind])f*=e[kind];return f;}
-return{SLOTS,MULTI,PARTS,DEFAULT_CFG,part,normCfg,POSITIONS,TEMPS,SKILL_NAMES,K,simulate,ampAt,rateAt,beatAt,hashStr,rng,COMBOS,prepModel,CERT,CERT_ORDER,CERT_MULT,TRIAL,ADJ,runTrial,verdict,adjustPiece,hoursFor,certOdds,MARKET_ERA,ECON,pieceValue,buyChance,tradeTerms,eraMult};
+return{SLOTS,MULTI,PARTS,DEFAULT_CFG,part,normCfg,POSITIONS,TEMPS,SKILL_NAMES,K,simulate,ampAt,rateAt,beatAt,hashStr,rng,COMBOS,prepModel,CERT,CERT_ORDER,CERT_MULT,TRIAL,ADJ,runTrial,verdict,adjustPiece,hoursFor,certOdds,CONTEST,contestIndex,runContest,MARKET_ERA,ECON,pieceValue,buyChance,tradeTerms,eraMult};
 })();
 if(typeof module!=="undefined"&&module.exports)module.exports=WATCH_SIM;
 </script>
@@ -1426,7 +1513,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.6.0.0";
+const VERSION="0.7.0.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -1501,7 +1588,7 @@ const CASES={
   platinum:{name:"Platinum case, guilloché dial",cost:3800,thick:3.6,maxMove:7,mult:1.4,metal:"platinum",needs:"shop"}};
 /* commissions. spec: cert (lowest grade), maxThick (whole watch, mm), comps (must have), finishN (at least that many
    finishes), winding, bph, reserveH (at least), shock (at least basic), metal. budget [lo, hi]; weeks to deliver;
-   tier: 1 from the start, 2 after 20 weeks, 3 after 60. seg is who asks (PR 6 adds reputation by segment) */
+   tier: 1 from the start; 2 and 3 need reputation with the segment's track (REP_SEG, app/calendar.js). seg is who asks */
 const COMMISSION_TEMPLATES=[
   {id:"retire",title:"A retirement watch",seg:"private",tier:1,spec:{cert:"bench",maxThick:8.5},budget:[2300,3100],weeks:6,
     text:"Plain, slim and honest. Something to wear on Sundays."},
@@ -1523,7 +1610,68 @@ const COMMISSION_TEMPLATES=[
     text:"Ten beats a second, and certified. I collect fast movements."},
   {id:"obs",title:"An Observatory piece",seg:"collector",tier:3,spec:{cert:"observatory",finishN:2},budget:[24000,31000],weeks:16,
     text:"Kessel Peak grade, finished to show. Money is not the question."}];
-const REP_TRACKS={},REP_TIERS=[],RIVALS=[],GOALS={};   // (PR 6)
+/* reputation (PR 6): three tracks, points from 0 up. Who earns it and what it brings is in app/calendar.js (REP_GAIN).
+   Each track's tier (REP_TIERS) opens commissions for its segment (tier 2 commissions need tier 1, tier 3 need tier 3)
+   and scales: press -> walk-in buyers; collectors -> auction bids and resale prices; trade -> batch sizes and prices */
+const REP_TRACKS={
+  collectors:{name:"Collectors",blurb:"Finishing, complications and certificates. Brings auction bids and collectors' commissions."},
+  trade:{name:"Trade",blurb:"Batches on time at a fair price. Brings bigger and better-paid trade batches."},
+  press:{name:"Press",blurb:"Newspapers and word of mouth: repairs done right, certificates, trial podiums. Brings walk-in buyers."}};
+const REP_TIERS=[{at:0,name:"Unknown"},{at:10,name:"Local name"},{at:25,name:"Known in the valley"},{at:50,name:"Respected"},
+  {at:80,name:"Renowned"},{at:120,name:"Legendary"}];
+/* rival shops: they enter the Kessel Peak Trial (trial = their index in 2000, lower is better; it improves by
+   CALENDAR.trial.rivalGain a year) and bid at auctions (bid = how keen, 1 = an average collector) */
+const RIVALS=[
+  {id:"varn",name:"Varn & Söhne",style:"The old trade house down the valley: plain, solid, never late.",trial:9,bid:.85},
+  {id:"halvard",name:"Halvard",style:"Racing chronographs and loud advertising.",trial:6.5,bid:.95},
+  {id:"amsel",name:"Atelier Amsel",style:"Two sisters and a lathe above the bakery. Finishing you can lose an afternoon in.",trial:5.8,bid:1.15},
+  {id:"kessler",name:"Kessler",style:"The valley's big manufacture: a new building every few years.",trial:4.8,bid:1},
+  {id:"ostrander",name:"Ostrander Frères",style:"Observatory chasers since 1921. Precision before anything.",trial:3.6,bid:1.05}];
+/* the dated events. fair: the Haldis Valley Fair (a stand, up to `show` pieces from stock, visitors who buy at the asking
+   price with `buy` times the usual chance, enquiries). trial: the Kessel Peak Trial (entries open to close, the piece is
+   away until back; prizes for the podium). sales: the auction nights at Brugg & Lell (seller's and buyer's fee `fee`;
+   your old pieces can come up for resale once `resaleAfter` weeks have passed, and again `resaleGap` weeks after that). Weeks are 1-52 of each year */
+const CALENDAR={
+  fair:{name:"Haldis Valley Fair",week:37,fee:450,show:3,buy:1.6,ahead:5},
+  trial:{name:"Kessel Peak Trial",open:8,close:18,back:24,fee:250,prizes:[6000,3000,1500],rivalGain:.013,rivalVar:.15},
+  sales:[{week:16,name:"Spring sale"},{week:46,name:"Winter sale"}],
+  house:"Brugg & Lell",fee:.12,ahead:6,resaleAfter:26,resaleGap:104,resaleChance:.3,resaleMax:2,
+  warranty:104};
+/* service returns: a sold piece comes back under warranty (CALENDAR.warranty weeks) on its yearly returnRisk (sim). The
+   cause is drawn from what made the risk (shock, magnetism, oil drift). hours of your or your staff's work, parts and the
+   courier both ways are yours to pay; the customer pays nothing */
+const RETURNS={courier:40,
+  shock:{name:"Dropped",text:"was dropped: a cracked crystal and a bent balance staff",hours:4,parts:120},
+  magnet:{name:"Magnetised",text:"was magnetised by a phone case and gains minutes a day",hours:.5,parts:0},
+  oil:{name:"Oil drift",text:"has its oil drifting away: it loses time and stops at night",hours:6,parts:25}};
+/* news cards on the Career tab, by date. era: the card that starts a MARKET_ERA period (sim/market.js) */
+const NEWS=[
+  {y:2000,w:2,title:"A new century at the bench",text:"The valley school takes its biggest class in twenty years. Mechanical watches are back in the windows of Velm."},
+  {y:2003,w:20,title:"Kessler opens a new building",text:"Glass, steel and three hundred benches. The small workshops wonder where the apprentices will go."},
+  {y:2006,w:30,title:"Silicon in the laboratory",text:"A research group in the capital etches a hairspring from a silicon wafer: no magnetism, no temperature error. The old hands shrug."},
+  {y:2009,w:8,title:"Hard times abroad",text:"Banks wobble across the border. Valley orders slip a little, but the repairs keep coming."},
+  {y:2012,w:26,title:"Ostrander sweep Kessel Peak",text:"First, second and fourth at the Kessel Peak Trial. 'We have been doing this since 1921,' says the younger brother."},
+  {y:2014,w:37,title:"A watch that is a phone",text:"Over the ocean a phone maker shows a watch with a screen. The valley laughs. The trade magazines don't."},
+  {y:2015,w:1,era:true,title:"The smartwatch arrives",text:"Smartwatches are in every Velm department store. Trade houses cut their orders by a third, fewer people buy a mechanical watch, and fewer bring old ones in. (Until 2018: trade −35%, retail −20%, repairs −40%.)"},
+  {y:2015,w:30,title:"'Who needs a chronometer?'",text:"A Velm newspaper asks why anyone pays for accuracy a phone gives away free. Certificates and trial podiums impress the press less for now."},
+  {y:2016,w:20,title:"Two valley workshops close",text:"Staff are being let go up and down the valley. Keeping your people on through the slump is hard, and it is remembered."},
+  {y:2017,w:45,title:"The young want something real",text:"A magazine finds students wearing their grandfathers' watches. The auction houses notice."},
+  {y:2018,w:48,title:"The bottom of the slump?",text:"Trade orders are steadying. Collectors are asking about hand finishing again."},
+  {y:2019,w:1,era:true,title:"The collectors are back",text:"A mechanical watch is a luxury again, and proud of it. Collector demand is up 40% and good finishing pays more. (From 2019: auction bids and collectors' commissions +40%, finished pieces worth up to 25% more.)"},
+  {y:2021,w:15,title:"A record night at Brugg & Lell",text:"An independent's minute repeater makes six figures. Small valley workshops are on magazine covers."},
+  {y:2025,w:10,title:"The valley's quiet centenary",text:"A hundred years of the Haldis Chronometry Bureau. The open day queue goes round the square twice."},
+  {y:2030,w:50,title:"Thirty years",text:"The valley is busier than it has been in a generation. Whatever comes next, it will still need someone who can true a hairspring."}];
+/* goals: first time each happens (checked in app/calendar.js, kept in S.career.goals as {id: week reached}) */
+const GOALS={
+  chronometer:{name:"First Chronometer",blurb:"A BCH certificate from the Haldis Chronometry Bureau."},
+  commission:{name:"First commission",blurb:"Deliver a commissioned piece."},
+  shop:{name:"Your own shop",blurb:"A door of your own on the high street."},
+  podium:{name:"Trial podium",blurb:"Top three at the Kessel Peak Trial."},
+  auction:{name:"Under the hammer",blurb:"Sell a piece at an auction night."},
+  calibre:{name:"Your own calibre",blurb:"Research a calibre of your own (R&D, coming next)."},
+  observatory:{name:"Observatory grade",blurb:"A certificate from the Kessel Peak Observatory."},
+  perpetual:{name:"A perpetual calendar",blurb:"Case and stock a perpetual calendar of your own making."},
+  survive:{name:"Through the slump",blurb:"Reach 2019 with staff on the payroll and nobody let go since 2015."}};
 const RND={};          // R&D projects (PR 7)
 
 /* the business: rent on the shared bench, your own keep (food and the room upstairs), your own bench hours a week, the loan the bank offers once, starting cash,
@@ -2401,7 +2549,8 @@ if(window.WATCH_VIS)WATCH_VIS.onView(()=>{if(curTab==="bench")renderBench();});
    - Pieces: Make (Build tab) pays for the parts and queues the assembly. Once made it goes on the timegrapher (c.bench),
      you adjust it, check or certify it (a Bureau or Observatory trial takes weeks and a fee), then case it (CASES) and it
      goes into stock (c.stock) at a price, or to a commission that fits.
-   - closeWeek(): jobs, sales, wages and rent, new repairs and offers, trials coming back, deadlines; then the week report.
+   - closeWeek(): jobs, sales, trials coming back, deadlines, the calendar's events and service returns (app/calendar.js),
+     wages and rent, new repairs and offers, news; then the week report.
      Below zero cash: the bank offers one loan (BIZ.loan). Below zero again: the workshop closes (a restart offer). */
 const car=()=>S.career;
 const inCareer=()=>!!(S.career&&!S.career.over);
@@ -2416,19 +2565,27 @@ function newCareer(kind){
   const st=BIZ.starts[kind]||BIZ.starts.bench,seed=Math.random().toString(36).slice(2,8);
   const c={kind,seed,start:st.year,year:st.year,week:1,wk:0,cash:st.cash,used:0,up:{},unlocks:{},xp:{},seq:0,
     loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
-    staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop"};
+    staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",
+    rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
+  if(kind==="shop")c.rep={collectors:6,trade:10,press:12};
   for(const id of st.up){c.up[id]=true;c.unlocks["shop:"+id]=true;}
   if(st.xp)for(const k in SKILLS)c.xp[k]=st.xp;
-  S.career=c;S.bAll=false;S.piece=null;S.tgOn=null;
+  S.career=c;S.bAll=false;S.piece=null;S.tgOn=null;c.newsN=newsSkip(c);checkGoals();
   const R=weekRng("start");for(let i=0;i<2;i++)addRepair(R);addOffer(R);refreshCands(R);
   save();}
 
 /* a loaded career: fill in anything missing (older saves, hand-edited codes) so the rest of the game can trust its shape */
 function normCareer(c){if(!buObjS(c))return null;
-  const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false};
+  const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false,
+    sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
   for(const k in d)if(!(k in c))c[k]=d[k];
-  for(const k of ["up","unlocks","xp","certs"])if(!buObjS(c[k]))c[k]={};
-  for(const k of ["jobs","repairs","stock","orders","offers","staff","cands","sold","books"])if(!Array.isArray(c[k]))c[k]=[];
+  for(const k of ["up","unlocks","xp","certs","goals"])if(!buObjS(c[k]))c[k]={};
+  for(const k of ["jobs","repairs","stock","orders","offers","staff","cands","sold","books","news","contests"])if(!Array.isArray(c[k]))c[k]=[];
+  if(!buObjS(c.rep))c.rep={};for(const k in REP_TRACKS)c.rep[k]=Math.max(0,+c.rep[k]||0);
+  for(const k of ["sale","fair","contest"])if(c[k]!=null&&!buObjS(c[k]))c[k]=null;
+  if(c.sale&&!Array.isArray(c.sale.resale))c.sale=null;if(c.fair&&!Array.isArray(c.fair.ids))c.fair=null;
+  c.sold=c.sold.filter(x=>buObjS(x)&&buObjS(x.cfg));c.news=c.news.filter(n=>buObjS(n)&&NEWS[n.i]);
+  if(!("newsN" in c)||!(+c.newsN>=0))c.newsN=newsSkip(c);c.newsN=Math.min(NEWS.length,+c.newsN||0);
   for(const k of ["cash","year","week","wk","used","seq","made"])c[k]=+c[k]||0;
   if(!c.year)c.year=c.start||START_YEAR;if(!c.week)c.week=1;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
@@ -2451,7 +2608,7 @@ function rent(){let r=BIZ.benchRent;for(const id in UPGRADES)if(upOwned(id)&&UPG
 function wages(){return car().staff.reduce((a,s)=>a+STAFF[s.kind].wage,0);}
 function weeklyCosts(){const c=car();return rent()+BIZ.keep+wages()+(c.loan?c.loan.pay:0);}
 function staffCap(){let n=0;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].staff)n+=UPGRADES[id].staff;return n;}
-function demand(){let d=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].demand)d*=UPGRADES[id].demand;return .2*d*SIM.eraMult(car().year,"retail");}
+function demand(){let d=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].demand)d*=UPGRADES[id].demand;return .2*d*(1+.12*repTier("press"))*SIM.eraMult(car().year,"retail");}
 function fixMult(cls){let f=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].fix&&UPGRADES[id].fix[cls])f*=UPGRADES[id].fix[cls];return f;}
 function batchMult(){let f=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].batch)f*=UPGRADES[id].batch;return f;}
 const dateOf=wk=>{const c=car(),y=c.start+Math.floor(wk/52);return{year:y,week:wk%52+1};};
@@ -2460,14 +2617,15 @@ const whenTxt=wk=>{const d=wk-car().wk;return d<=0?"this week":d===1?"next week"
 /* ---- upgrades and staff ---- */
 function upNeeds(id){const U=UPGRADES[id];return(U.needs||[]).filter(n=>!upOwned(n));}
 function buyUpgrade(id){const U=UPGRADES[id],c=car();if(!U||upOwned(id)||upNeeds(id).length)return false;
-  if(!pay(U.cost,U.name))return false;c.up[id]=true;c.unlocks["shop:"+id]=true;save();toast(`${U.name}: yours.`);return true;}
+  if(!pay(U.cost,U.name))return false;c.up[id]=true;c.unlocks["shop:"+id]=true;toast(`${U.name}: yours.`);checkGoals();save();return true;}
 function refreshCands(R){const c=car(),kinds=Object.keys(STAFF).filter(k=>!STAFF[k].needs||upOwned(STAFF[k].needs));
   const taken=new Set(c.staff.map(s=>s.name));c.cands=[];
   for(let i=0;i<3;i++){let n=pick(R,STAFF_NAMES);for(let j=0;j<6&&taken.has(n);j++)n=pick(R,STAFF_NAMES);taken.add(n);c.cands.push({name:n,kind:kinds[i%kinds.length]});}}
 function hire(i){const c=car(),x=c.cands[i];if(!x)return;if(c.staff.length>=staffCap()){toast(staffCap()?"No room for more staff: a second bench or a clean room makes room.":"A shared bench has no room for staff: get your own shop first.");return;}
   const K=STAFF[x.kind];if(K.hire&&!pay(K.hire,"signing "+x.name))return;
   c.staff.push({name:x.name,kind:x.kind,since:c.wk});c.cands.splice(i,1);save();toast(`${x.name} starts on Monday.`);}
-function letGo(i){const c=car(),s=c.staff[i];if(!s)return;if(!pay(STAFF[s.kind].wage,"a week's notice for "+s.name))return;c.staff.splice(i,1);save();toast(`${s.name} has left.`);}
+function letGo(i){const c=car(),s=c.staff[i];if(!s)return;if(!pay(STAFF[s.kind].wage,"a week's notice for "+s.name))return;c.staff.splice(i,1);
+  if(c.year>=2015&&c.year<=2018)c.slumpLetGo=true;save();toast(`${s.name} has left.`);}
 
 /* ---- repairs ---- */
 /* a customer's watch: a trade movement with a fault, its own seed */
@@ -2482,9 +2640,11 @@ function startFix(id,f){const r=repairBy(id),F=FAULTS[f];if(!r||r.state!=="in")r
   r.state="fixing";r.trying=f;car().jobs.push({id:nextId(),kind:"repair",ref:r.id,h:fixHours(f),label:`${F.fix}: ${r.watch}`,staff:true});save();}
 
 /* ---- commissions and trade ---- */
-function addOffer(R){const c=car(),tier=c.wk>=60?3:c.wk>=20?2:1,ok=COMMISSION_TEMPLATES.filter(t=>t.tier<=tier&&!c.offers.some(o=>o.tpl===t.id)&&!c.orders.some(o=>o.tpl===t.id));
-  if(!ok.length||c.offers.length>=3)return;const t=pick(R,ok),[lo,hi]=t.budget;
-  c.offers.push({id:nextId(),tpl:t.id,cust:pick(R,CUSTOMERS),budget:Math.round((lo+(hi-lo)*R())/50)*50,weeks:t.weeks,until:c.wk+BIZ.offerKeep});}
+/* commissions open by reputation: tier 2 needs the segment's track at "Local name", tier 3 at "Respected" */
+const tplOpen=t=>t.tier===1||repTier(REP_SEG[t.seg]||"press")>=(t.tier===2?1:3);
+function addOffer(R,max){const c=car(),ok=COMMISSION_TEMPLATES.filter(t=>tplOpen(t)&&!c.offers.some(o=>o.tpl===t.id)&&!c.orders.some(o=>o.tpl===t.id));
+  if(!ok.length||c.offers.length>=(max||3))return;const t=pick(R,ok),[lo,hi]=t.budget,era=t.seg==="collector"?SIM.eraMult(c.year,"collector"):1;
+  c.offers.push({id:nextId(),tpl:t.id,cust:pick(R,CUSTOMERS),budget:Math.round((lo+(hi-lo)*R())*era/50)*50,weeks:t.weeks,until:c.wk+BIZ.offerKeep});}
 const tplOf=id=>COMMISSION_TEMPLATES.find(t=>t.id===id);
 function acceptOffer(id){const c=car(),i=c.offers.findIndex(o=>o.id===+id);if(i<0)return;const o=c.offers.splice(i,1)[0];
   c.orders.push(Object.assign(o,{due:c.wk+o.weeks}));save();toast(`Accepted: due ${whenTxt(c.wk+o.weeks)}.`);}
@@ -2504,16 +2664,18 @@ function specChecks(spec,pc){const r=pc.r,cs=CASES[pc.caseId],out=[],cert=pc.cer
 const specOk=(spec,pc)=>specChecks(spec,pc).every(x=>x.ok);
 function orderPay(o){const late=Math.max(0,car().wk-o.due);return Math.round(o.budget*Math.max(.4,1-BIZ.late*late));}
 function deliver(orderId,stockId){const c=car(),o=c.orders.find(x=>x.id===+orderId),i=c.stock.findIndex(x=>x.id===+stockId);if(!o||i<0)return;
-  const pc=c.stock[i];if(!specOk(tplOf(o.tpl).spec,pc))return;const amt=orderPay(o);
-  c.stock.splice(i,1);c.orders=c.orders.filter(x=>x!==o);earn(amt,`${tplOf(o.tpl).title} for ${o.cust}`);
-  c.sold.push({id:pc.id,name:pc.name,cfg:pc.cfg,cert:pc.cert,caseId:pc.caseId,price:amt,wk:c.wk,to:o.cust});
+  const pc=c.stock[i],t=tplOf(o.tpl);if(pc.away||!specOk(t.spec,pc))return;const amt=orderPay(o),late=Math.max(0,c.wk-o.due);
+  c.stock.splice(i,1);c.orders=c.orders.filter(x=>x!==o);earn(amt,`${t.title} for ${o.cust}`);
+  c.sold.push(soldRow(pc,amt,o.cust,"commission"));if(c.sold.length>60)c.sold.shift();
+  const tr=REP_SEG[t.seg]||"press";addRep({[tr]:REP_GAIN.commission-REP_GAIN.commissionLate*late});goal("commission");
   save();toast(`Delivered to ${o.cust}: ${fmt$(amt)}.`);}
 /* trade: batches of plain movements for other brands. One contract at a time, parts paid up front, paid on completion */
 const TRADE_BRANDS=["Varn & Söhne","Ostmark","Tavan","Kessler","Brenner","Lindqvist"];
 const TRADE_CFGS=[{},{winding:"automatic",complications:["date"]},{bph:"21600",jewels:"17",shock:"basic"}];
 function addTradeOffer(R){const c=car();if(c.trade||c.tradeOffer)return;
   const cfg=SIM.normCfg(Object.assign({},SIM.DEFAULT_CFG,pick(R,TRADE_CFGS))).cfg,r=SIM.simulate(cfg,{},null,{seed:"trade"}),T=SIM.tradeTerms(r,1);
-  const qty=[8,12,16,20][Math.floor(R()*4)],price=Math.round(T.price*SIM.eraMult(c.year,"trade")*(.95+.1*R())/5)*5;
+  const tt=repTier("trade"),Q=[8,12,16,20,24,30,40],qty=Q[Math.min(Q.length-1,Math.floor(R()*4)+Math.floor(tt/2)+(tt>=4?1:0))];
+  const price=Math.round(T.price*(1+.03*tt)*SIM.eraMult(c.year,"trade")*(.95+.1*R())/5)*5;
   c.tradeOffer={id:nextId(),brand:pick(R,TRADE_BRANDS),cfg,qty,price,parts:T.parts,hoursEach:T.hours,weeks:Math.ceil(qty*T.hours/BIZ.hoursWeek)+3,until:c.wk+BIZ.offerKeep};}
 function tradeLine(t){const r=SIM.simulate(t.cfg,{},null,{seed:"trade"});return `${t.qty} × ${r.cfg.winding==="automatic"?"automatic":"hand-wound"}${r.cfg.complications.length?" date":""} at ${(+r.cfg.bph).toLocaleString("en-GB")} bph`;}
 function acceptTrade(){const c=car(),t=c.tradeOffer;if(!t)return;if(!pay(t.qty*t.parts,`parts for ${t.qty} movements (${t.brand})`))return;
@@ -2544,17 +2706,17 @@ function sendTrial(tier){const c=car(),p=c.bench,C=SIM.CERT[tier];if(!p||!p.made
 function casePiece(caseId){const c=car(),p=c.bench,cs=CASES[caseId];if(!p||!p.cert||!cs)return false;
   const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});if(r.thickness>cs.maxMove){toast("The movement is too thick for that case.");return false;}
   if(!pay(cs.cost,`${cs.name.split(",")[0].toLowerCase()} for No. ${p.no}`))return false;
-  const value=SIM.pieceValue(r,p.cert,cs);
+  const fin=SIM.eraMult(c.year,"finish"),value=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
   c.stock.push({id:p.id,no:p.no,name:pieceName(p.cfg,p.no),cfg:p.cfg,seed:p.seed,adjust:p.adjust,cert:p.cert,caseId,value,price:value,since:c.wk,
     thick:+(r.thickness+cs.thick).toFixed(1),r:{reserveH:r.reserveH,prestige:r.prestige,amp24:r.amp24,cost:r.cost}});
-  c.bench=null;S.tgOn=null;save();toast(`No. ${p.no} is cased and in stock at ${fmt$(value)}.`);return true;}
+  c.bench=null;S.tgOn=null;checkGoals();save();toast(`No. ${p.no} is cased and in stock at ${fmt$(value)}.`);return true;}
 function stockBy(id){return car().stock.find(x=>x.id===+id);}
-function sellPiece(pc,price,to){const c=car();c.stock=c.stock.filter(x=>x!==pc);earn(price,`${pc.name} sold${to?" to "+to:""}`);
-  c.sold.push({id:pc.id,name:pc.name,cfg:pc.cfg,cert:pc.cert,caseId:pc.caseId,price,wk:c.wk,to:to||"a buyer"});if(c.sold.length>60)c.sold.shift();}
+function sellPiece(pc,price,to,how){const c=car();c.stock=c.stock.filter(x=>x!==pc);earn(price,`${pc.name} sold${to?" to "+to:""}`);
+  c.sold.push(soldRow(pc,price,to,how));if(c.sold.length>60)c.sold.shift();}
 
 /* ---- Close week ---- */
 function closeWeek(){
-  const c=car();if(!c||c.over)return null;const rep=[],R=weekRng("close");
+  const c=car();if(!c||c.over)return null;const rep=[],R=weekRng("close");calFx={};
   /* 1. the work: staff on repairs and trade, then your hours on everything in order */
   let staffH=c.staff.reduce((a,s)=>a+BIZ.staffHours*STAFF[s.kind].eff,0),mine=hoursLeft(),myRepair=false;
   for(const j of c.jobs){if(j.staff&&staffH>0){const d=Math.min(staffH,j.h);j.h-=d;staffH-=d;}}
@@ -2566,17 +2728,19 @@ function closeWeek(){
         if(r.complexity)levelToast("complications",gainXp("complications",r.complexity));if(r.cfg.finish.length)levelToast("finishing",gainXp("finishing",2*r.cfg.finish.length));}}
     if(j.kind==="repair"){const r=repairBy(j.ref);if(!r)continue;
       if(r.trying===r.fault){const F=FAULTS[r.fault],amt=Math.round(F.pay*SIM.eraMult(c.year,"repairs"));earn(amt,`${F.fix.toLowerCase()} for ${r.cust}`);
-        rep.push(`Repaired ${r.watch} for ${r.cust}: ${fmt$(amt)}.`);c.repairs=c.repairs.filter(x=>x!==r);if(myRepair)levelToast("assembly",gainXp("assembly",1));}
-      else{r.tried.push(r.trying);r.state="in";rep.push(`${r.watch[0].toUpperCase()+r.watch.slice(1)} (${r.cust}) still runs badly: it wasn't ${FAULTS[r.trying].name.toLowerCase()}. Back on the timegrapher.`);r.trying=null;}}
+        rep.push(`Repaired ${r.watch} for ${r.cust}: ${fmt$(amt)}.`);c.repairs=c.repairs.filter(x=>x!==r);if(myRepair)levelToast("assembly",gainXp("assembly",1));addRep(REP_GAIN.repair,rep);}
+      else{r.tried.push(r.trying);addRep(REP_GAIN.repairWrong,rep);r.state="in";rep.push(`${r.watch[0].toUpperCase()+r.watch.slice(1)} (${r.cust}) still runs badly: it wasn't ${FAULTS[r.trying].name.toLowerCase()}. Back on the timegrapher.`);r.trying=null;}}
     if(j.kind==="trade"&&c.trade&&c.trade.id===j.ref){const t=c.trade,late=Math.max(0,c.wk-t.due),amt=Math.round(t.qty*t.price*Math.max(.4,1-BIZ.tradeLate*late));
-      earn(amt,`${t.qty} movements for ${t.brand}`);rep.push(`${t.brand} took delivery of ${t.qty} movements: ${fmt$(amt)}${late?` (${late} week${late>1?"s":""} late)`:""}.`);c.trade=null;}}
+      earn(amt,`${t.qty} movements for ${t.brand}`);rep.push(`${t.brand} took delivery of ${t.qty} movements: ${fmt$(amt)}${late?` (${late} week${late>1?"s":""} late)`:""}.`);c.trade=null;
+      addRep({trade:REP_GAIN.trade.trade-REP_GAIN.tradeLate*late},rep);}
+    if(j.kind==="warranty"){const s=c.sold.find(x=>x.id===j.ref);if(s)rep.push(`${s.name} went back to ${s.to}, put right.`);}}
   /* 2. retail: this week's buyers each look at the stock and may buy the best value for its price */
   const buyers=poisson(R,demand());
-  for(let b=0;b<buyers&&c.stock.length;b++){let best=null,bv=0;for(const pc of c.stock){const v=pc.value/pc.price;if(v>bv){bv=v;best=pc;}}
-    if(best&&R()<SIM.buyChance(best.value,best.price)){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
+  for(let b=0;b<buyers;b++){let best=null,bv=0;for(const pc of c.stock){if(!pieceFree(pc))continue;const v=pc.value/pc.price;if(v>bv){bv=v;best=pc;}}
+    if(best&&R()<SIM.buyChance(best.value,best.price)){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);addRep(saleGain(best),rep);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
   /* 3. trials coming back */
   const p=c.bench;if(p&&p.trial&&c.wk+1>=p.trial.back){const T=p.trial,C=SIM.CERT[T.tier];
-    if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;}
+    if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;addRep(REP_GAIN.cert[T.tier],rep);}
     rep.push(T.best?`No. ${p.no} is back from the ${C.body}: certified ${C.name}.`:`No. ${p.no} is back from the ${C.body}: refused. See the Test tab.`);
     p.lastTrial=T;p.trial=null;p.seen=false;}
   /* 4. deadlines */
@@ -2585,6 +2749,8 @@ function closeWeek(){
   for(const o of c.orders.filter(o=>c.wk+1-o.due>BIZ.lateCancel)){rep.push(`${o.cust} cancelled: ${tplOf(o.tpl).title.toLowerCase()} is too late.`);}
   c.orders=c.orders.filter(o=>c.wk+1-o.due<=BIZ.lateCancel);
   c.offers=c.offers.filter(o=>o.until>c.wk+1);if(c.tradeOffer&&c.tradeOffer.until<=c.wk+1)c.tradeOffer=null;
+  /* 4b. the calendar: the fair, the trial's results, an auction night nobody opened, service returns */
+  calClose(rep);
   /* 5. the costs */
   const rt=rent(),wg=wages();c.cash-=rt;book("out",rt,"rent");c.cash-=BIZ.keep;book("out",BIZ.keep,"your keep");
   if(wg){c.cash-=wg;book("out",wg,"wages");}
@@ -2594,9 +2760,10 @@ function closeWeek(){
   const R2=weekRng("arrive"),nr=poisson(R2,BIZ.repairsWeek*(upOwned("shop")?BIZ.repairsShop:1)*SIM.eraMult(c.year,"repairs"));
   for(let i=0;i<nr;i++)addRepair(R2);if(nr)rep.push(`${nr} watch${nr>1?"es":""} in for repair.`);
   if(R2()<1/BIZ.offerEvery){const n=c.offers.length;addOffer(R2);if(c.offers.length>n)rep.push("A commission enquiry: see the Shop tab.");}
-  if(R2()<1/BIZ.tradeEvery){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep)rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);}
+  if(R2()<(1+.2*repTier("trade"))/BIZ.tradeEvery){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep)rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);}
   if(c.wk%8===0)refreshCands(R2);
   if(newYear)rep.push(`Happy new year: ${c.year}.`);
+  calWeekStart(rep);
   save();
   return{lines:rep,cash:c.cash,broke:c.cash<0};}
 /* below zero: the bank, once; then the end */
@@ -2604,6 +2771,190 @@ function loanOffer(){const c=car(),need=-c.cash+4*weeklyCosts(),L=BIZ.loan;retur
 function takeLoan(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=amt*(1+L.rate);
   c.loan={amt,left:total,pay:Math.ceil(total/L.weeks)};c.loanUsed=true;earn(amt,"bank loan");save();}
 function goBroke(){const c=car();c.over=true;save();}
+/* ===================== app/calendar.js: the calendar, reputation, service returns and goals (plan section 9) =====================
+   The engine side of PR 6 (the Career tab's cards and the sheets are in app/events.js). Tables: REP_TRACKS, REP_TIERS,
+   RIVALS, CALENDAR, RETURNS, NEWS, GOALS (app/state.js); MARKET_ERA (sim/market.js); runContest (sim/trial.js).
+   - Reputation: S.career.rep = {collectors, trade, press} points. addRep() with a REP_GAIN row; repTier(track).
+   - The Haldis Valley Fair (week 37): a stand with up to three pieces from stock, sold to visitors, enquiries.
+   - The Kessel Peak Trial: enter a stock piece in weeks 8-18; it is away until week 24, then 30 days of results against
+     RIVALS, prize money and press.
+   - Auction nights at Brugg & Lell (weeks 16 and 46): consign stock pieces with a reserve, and your old pieces come back as
+     resale lots you can bid on. Run live in the saleroom (app/events.js) or, if you never open it, at Close week.
+   - Service returns: sold pieces under warranty come back on their returnRisk; you pay; reputation drops; a cracked crystal.
+   - News cards by date (NEWS) and goals (GOALS, S.career.goals = {id: week}).
+   closeWeek() (app/business.js) calls calClose(lines) before the costs and calWeekStart(lines) once the new week begins;
+   calFx says what the week sheet should show (the trial, the crack). */
+const REP_SEG={private:"press",trade:"trade",collector:"collectors",press:"press"};
+/* who earns what. acc: an accuracy honour (the press cares less about those in the smartwatch years: MARKET_ERA press) */
+const REP_GAIN={
+  repair:{press:.1},repairWrong:{press:-.5},
+  sale:{collectors:.3},salePrestige:.12,             // a retail sale: collectors, plus this much per point of prestige
+  cert:{chronometer:{press:1,collectors:1,acc:1},observatory:{press:4,collectors:3,acc:1}},
+  commission:2,commissionLate:1,                     // on the segment's track; minus this per week late
+  trade:{trade:3},tradeLate:1.5,
+  trialEntry:{press:1,acc:1},podium:[{press:10,collectors:4,acc:1},{press:6,collectors:2,acc:1},{press:4,collectors:1,acc:1}],
+  fair:{press:2},fairPiece:{collectors:1},
+  auction:{collectors:2},resaleUp:{collectors:.5},
+  ret:{press:-2,collectors:-1},
+  max:150,decay:.008};                              // every week each track loses this share: a name has to be kept up
+let calFx={};
+const repOf=k=>{const c=car();return c&&c.rep?(+c.rep[k]||0):0;};
+function repTier(k){const p=repOf(k);let t=0;REP_TIERS.forEach((T,i)=>{if(p>=T.at)t=i;});return t;}
+function addRep(g,lines,why){const c=car();if(!c||!g)return;const acc=g.acc?SIM.eraMult(c.year,"press"):1;
+  for(const k in REP_TRACKS)if(g[k]){const was=repTier(k),d=g[k]>0?g[k]*acc:g[k];c.rep[k]=Math.max(0,Math.min(REP_GAIN.max,repOf(k)+d));
+    const now=repTier(k);if(now>was){const m=`Reputation with the ${REP_TRACKS[k].name.toLowerCase()}: ${REP_TIERS[now].name}.`;if(lines)lines.push(m);else toast(m);}}}
+/* absolute week number of a (year, week 1-52) in this career */
+const wkAt=(y,w)=>(y-car().start)*52+(w-1);
+const newsWk=n=>wkAt(n.y,n.w);
+/* the next time a week of the year comes round, from now (this week counts) */
+function nextWeek(w){const c=car();return c.week<=w?wkAt(c.year,w):wkAt(c.year+1,w);}
+
+/* ---- goals ---- */
+function goal(id,lines){const c=car();if(!c||!GOALS[id]||c.goals[id]!=null)return;c.goals[id]=c.wk;
+  const m=`Goal reached: ${GOALS[id].name}.`;if(lines)lines.push(m);else toast(m);}
+function checkGoals(lines){const c=car();if(!c)return;
+  if(c.certs.chronometer)goal("chronometer",lines);if(c.certs.observatory)goal("observatory",lines);
+  if(upOwned("shop"))goal("shop",lines);
+  if(c.stock.some(x=>x.cfg.complications.includes("perp-cal"))||c.sold.some(x=>x.cfg&&x.cfg.complications&&x.cfg.complications.includes("perp-cal")&&x.how!=="resale"))goal("perpetual",lines);}
+
+/* ---- stock pieces that are spoken for: at the trial (away) or consigned to a sale (lot) ---- */
+const pieceFree=x=>!x.away&&!x.lot;
+
+/* ---- the Haldis Valley Fair ---- */
+function fairState(){const c=car(),F=CALENDAR.fair,at=nextWeek(F.week),d=at-c.wk,entered=c.fair&&c.fair.year===c.year&&c.week<=F.week;
+  return{at,d,open:d<=F.ahead&&!entered,entered};}
+function enterFair(ids){const c=car(),F=CALENDAR.fair;ids=ids.filter(id=>stockBy(id)).slice(0,F.show);if(!ids.length)return false;
+  if(!pay(F.fee,`a stand at the ${F.name}`))return false;c.fair={year:c.year,ids};save();toast(`Your stand is booked: week ${F.week}.`);return true;}
+function fairClose(lines,R){const c=car(),F=CALENDAR.fair;if(!c.fair||c.fair.year!==c.year||c.week!==F.week)return;
+  lines.push(`The ${F.name}: a busy week on your stand.`);addRep(REP_GAIN.fair,lines);
+  for(const id of c.fair.ids){const pc=stockBy(id);if(!pc||pc.away)continue;
+    if(pc.cfg.finish.length||pc.cfg.complications.length)addRep(REP_GAIN.fairPiece,lines);
+    if(R()<Math.min(.95,SIM.buyChance(pc.value,pc.price)*F.buy)){const who=pick(R,CUSTOMERS);pc.lot=null;sellPiece(pc,pc.price,who+" at the fair");addRep(saleGain(pc),lines);lines.push(`Sold ${pc.name} at the fair to ${who}: ${fmt$(pc.price)}.`);}}
+  const n=c.offers.length;addOffer(R,4);addOffer(R,4);if(c.offers.length>n)lines.push(`${c.offers.length-n} commission enquir${c.offers.length-n>1?"ies":"y"} from the fair.`);
+  if(!c.trade&&!c.tradeOffer){addTradeOffer(R);if(c.tradeOffer)lines.push(`${c.tradeOffer.brand} stopped by the stand about a trade batch.`);}
+  c.fair=null;c.fairs=(+c.fairs||0)+1;}
+/* what a retail sale does for the collectors' opinion */
+function saleGain(pc){return{collectors:REP_GAIN.sale.collectors+REP_GAIN.salePrestige*((pc.r&&pc.r.prestige)||0)};}
+
+/* ---- the Kessel Peak Trial ---- */
+function trialState(){const c=car(),T=CALENDAR.trial,e=c.contest&&c.contest.year===c.year?c.contest:null;
+  return{entry:e,open:!e&&c.week>=T.open&&c.week<=T.close,opensIn:c.week<T.open?T.open-c.week:c.week>T.close?wkAt(c.year+1,T.open)-c.wk:0};}
+function enterTrial(id){const c=car(),T=CALENDAR.trial,pc=stockBy(id);if(!pc||!pieceFree(pc)||!trialState().open)return false;
+  if(!pay(T.fee,`entry to the ${T.name}`))return false;pc.away="trial";c.contest={year:c.year,id:pc.id,no:pc.no,name:pc.name,res:null,seen:false};
+  addRep(REP_GAIN.trialEntry);save();toast(`No. ${pc.no} goes up to Kessel Peak. Results in week ${T.back}.`);return true;}
+function rivalPoints(rv,year,R){const T=CALENDAR.trial,g=Math.pow(1-T.rivalGain,Math.max(0,year-2000));
+  const idx=Math.max(.8,rv.trial*g*(1+T.rivalVar*(R()+R()+R()-1.5)*1.4));return Math.round(1000*Math.exp(-idx/SIM.CONTEST.scale));}
+function trialClose(lines){const c=car(),T=CALENDAR.trial,e=c.contest;if(!e||e.year!==c.year||e.res||c.week!==T.back)return;
+  const pc=stockBy(e.id);if(!pc){c.contest=null;return;}pc.away=null;
+  const t=SIM.runContest(pc.cfg,skillLvls(),{timingRes:ownedTool().timingRes},{seed:pc.seed,adjust:pc.adjust,trialSeed:pc.seed+"k"+c.year});
+  const R=weekRng("contest"),field=RIVALS.map(rv=>({id:rv.id,name:rv.name,points:rivalPoints(rv,c.year,R)}));
+  field.push({id:"me",name:"You: No. "+pc.no,points:t.final.points});field.sort((a,b)=>b.points-a.points);
+  const place=field.findIndex(f=>f.id==="me")+1,prize=T.prizes[place-1]||0;
+  e.res={place,prize,points:t.final.points,parts:t.final.parts,running:t.running,days:t.days.map(d=>[d.pos,d.temp,+d.rate.toFixed(2)]),field,seed:pc.seed+c.year};
+  c.contests.push({year:c.year,no:pc.no,place,points:t.final.points,of:field.length,field:field.map(f=>[f.id,f.points])});if(c.contests.length>12)c.contests.shift();
+  if(prize)earn(prize,`${T.name} prize`);if(place<=3){addRep(REP_GAIN.podium[place-1],lines);goal("podium",lines);}
+  lines.push(`The ${T.name} results are in: No. ${pc.no} placed ${ordinal(place)} of ${field.length}${prize?`, ${fmt$(prize)} in prize money`:""}.`);
+  calFx.trial=true;}
+const ordinal=n=>n+(n%100>10&&n%100<14?"th":["th","st","nd","rd"][n%10]||"th");
+
+/* ---- auction nights ---- */
+function saleNext(){const c=car();if(c.sale&&c.sale.wk===c.wk&&!c.sale.done)return{at:c.wk,week:c.week,name:c.sale.name,now:true};
+  let best=null;for(const s0 of CALENDAR.sales){const at=s0.week>c.week?wkAt(c.year,s0.week):wkAt(c.year+1,s0.week);if(!best||at<best.at)best={at,week:s0.week,name:s0.name};}
+  return best;}
+function canConsign(){const n=saleNext(),c=car();return n.now?!c.sale.opened:n.at-c.wk<=CALENDAR.ahead;}
+function consign(id,reserve){const pc=stockBy(id);if(!pc||pc.away)return;if(reserve==null){pc.lot=null;}else{if(!canConsign())return;pc.lot={reserve:+reserve};}save();}
+const COLLECTORS=["a Velm banker","a collector from over the border","the Haldis museum","a young tech founder","an old valley family","a dealer from the capital","Judge Falk","Dr Abelard","a phone bidder","a bidder in the room"];
+/* set up this week's sale: your old pieces that come back on the market */
+function saleOpen(lines){const c=car(),S0=CALENDAR.sales.find(s=>s.week===c.week);if(!S0||(c.sale&&c.sale.wk===c.wk))return;
+  const R=weekRng("resale"),tier=repTier("collectors"),resale=[];
+  for(const s of c.sold.slice().reverse()){if(resale.length>=CALENDAR.resaleMax)break;
+    if(s.how==="dealer"||c.wk-s.wk<CALENDAR.resaleAfter||s.resoldWk&&c.wk-s.resoldWk<CALENDAR.resaleGap)continue;
+    if(R()<CALENDAR.resaleChance)resale.push({kind:"resale",sid:s.id,swk:s.wk,name:s.name,cert:s.cert,was:s.price,
+      est:Math.round(s.price*(.75+.12*tier)*SIM.eraMult(c.year,"collector")/50)*50});}
+  c.sale={wk:c.wk,name:S0.name,resale,done:false,opened:false,lots:null,i:0,results:[]};
+  lines.push(`Auction night at ${CALENDAR.house} this week: the ${S0.name}.${c.stock.some(x=>x.lot)?" Your consigned pieces are in the catalogue.":""}${resale.length?` ${resale.length} of your old pieces ${resale.length>1?"are":"is"} in it too.`:""}`);}
+/* freeze the catalogue (when the saleroom opens, or at Close week) */
+function saleLots(){const c=car(),sl=c.sale;if(sl.lots)return sl.lots;
+  sl.lots=c.stock.filter(x=>x.lot&&!x.away).map(x=>({kind:"mine",id:x.id,name:x.name,cert:x.cert,value:x.value,reserve:x.lot.reserve,est:lotEst(x)}))
+    .concat(sl.resale);sl.opened=true;return sl.lots;}
+/* the catalogue estimate for one of your stock pieces: its value, the collectors' opinion of you, the era, its prestige */
+const lotEst=x=>Math.round(x.value*(.85+.12*repTier("collectors"))*SIM.eraMult(car().year,"collector")*(1+Math.min(.3,.02*((x.r&&x.r.prestige)||0)))/50)*50;
+const bidStep=x=>x<1000?50:x<3000?100:x<6000?250:x<15000?500:x<40000?1000:2500;
+/* one lot: the bidders' limits, then the bidding up to the hammer. mine = the player's top bid (resale lots) or 0.
+   -> {steps:[[amount, bidder]], hammer, buyer, sold, me} */
+function lotRun(lot,mine){const c=car(),R=SIM.rng(`${c.seed}|sale|${c.sale.wk}|${lot.kind}|${lot.id||lot.sid}`),tier=repTier("collectors");
+  const n=4+Math.min(4,tier)+Math.floor(R()*2),rv=RIVALS.slice(),co=COLLECTORS.slice(),bidders=[];
+  for(let i=0;i<n;i++){const from=i<2?rv:co;if(!from.length)break;const x=from.splice(Math.floor(R()*from.length),1)[0];
+    const g=Math.sqrt(-2*Math.log(1-R()))*Math.cos(2*Math.PI*R());
+    bidders.push({name:x.name||x,max:lot.est*(x.bid||1)*Math.exp(.22*g)*.9});}
+  if(mine)bidders.push({name:"You",max:mine,me:true});
+  bidders.sort((a,b)=>b.max-a.max);const top=bidders[0];
+  const floor=lot.kind==="mine"?lot.value*lot.reserve:0;
+  const st0=bidStep(lot.est*.5);let price=Math.max(st0,Math.round(lot.est*.5/st0)*st0);const steps=[];let lead=null;
+  /* you may cut the step: your bid stops exactly at your limit (to the nearest Th 50) rather than lose to the increment */
+  const cut=b=>Math.floor(b.max/50)*50;
+  while(steps.length<200){const next=lead?price+bidStep(price):price,can=bidders.filter(b=>b!==lead&&(b.max>=next||b.me&&lead&&cut(b)>price));if(!can.length)break;
+    const b=can[Math.floor(R()*can.length)];price=b.me&&b.max<next?cut(b):next;lead=b;steps.push([price,b.name]);}
+  if(!lead){lead=top;steps.push([price,top.name]);}
+  const sold=price>=floor;
+  if(steps.length>14){const keep=[steps[0]];const k=(steps.length-1)/12;for(let i=1;i<12;i++)keep.push(steps[Math.round(i*k)]);keep.push(steps[steps.length-1]);steps.splice(0,steps.length,...keep);}
+  return{steps,hammer:price,buyer:lead.name,sold,me:!!lead.me};}
+/* settle a lot once its bidding is over */
+function lotSettle(lot,res,lines){const c=car(),sl=c.sale,F=CALENDAR.fee;let line;
+  if(lot.kind==="mine"){const pc=stockBy(lot.id);if(!pc)return;pc.lot=null;
+    if(res.sold){const net=Math.round(res.hammer*(1-F));c.stock=c.stock.filter(x=>x!==pc);earn(net,`${pc.name} at ${CALENDAR.house} (hammer ${fmt$(res.hammer)}, less ${Math.round(F*100)}%)`);
+      c.sold.push(soldRow(pc,res.hammer,res.buyer,"auction"));addRep(REP_GAIN.auction,lines);goal("auction",lines);
+      line=`${pc.name}: sold to ${res.buyer} for ${fmt$(res.hammer)} (${fmt$(net)} to you).`;}
+    else line=`${pc.name}: bought in at ${fmt$(res.hammer)}, below your reserve. It's back in stock.`;}
+  else{const s=c.sold.find(x=>x.id===lot.sid&&x.wk===lot.swk);
+    if(res.me){const cost=Math.round(res.hammer*(1+F));if(c.cash<cost){line=`${lot.name}: you couldn't cover ${fmt$(cost)}; it went to the underbidder.`;}
+      else{c.cash-=cost;book("out",cost,`bought back ${lot.name}`);if(s){c.sold=c.sold.filter(x=>x!==s);c.stock.push(stockFromSold(s));}
+        line=`${lot.name}: you bought it back for ${fmt$(res.hammer)} (${fmt$(cost)} with the fee). It's in your stock.`;}}
+    else{if(s)s.resoldWk=c.wk;line=`${lot.name} (yours, sold for ${fmt$(lot.was)}) made ${fmt$(res.hammer)} to ${res.buyer}.`;
+      if(res.hammer>lot.was){addRep(REP_GAIN.resaleUp,lines);line+=" More than you sold it for: the collectors notice.";}}}
+  sl.results.push(line);if(lines)lines.push(line);}
+/* every lot not yet run, with no bids from you (Close week, if the saleroom was never opened or left half way) */
+function saleAuto(lines){const c=car(),sl=c.sale;if(!sl||sl.done||sl.wk!==c.wk)return;const L=saleLots();
+  if(L.length)lines.push(`The ${sl.name} at ${CALENDAR.house}:`);
+  while(sl.i<L.length){const lot=L[sl.i++];lotSettle(lot,lotRun(lot,0),lines);}sl.done=true;}
+/* a sold-pieces row (resale and returns read it); a bought-back piece goes into stock from one */
+function soldRow(pc,price,to,how){return{id:pc.id,no:pc.no,name:pc.name,cfg:pc.cfg,seed:pc.seed,adjust:pc.adjust,cert:pc.cert,caseId:pc.caseId,
+  thick:pc.thick,r:pc.r,value:pc.value,price,wk:car().wk,to:to||"a buyer",how:how||"retail"};}
+function stockFromSold(s){const c=car(),cs=CASES[s.caseId]||CASES["steel-dress"],r=SIM.simulate(s.cfg,skillLvls(),null,{seed:s.seed,adjust:s.adjust});
+  const value=SIM.pieceValue(r,s.cert,cs);
+  return{id:nextId(),no:s.no||0,name:s.name,cfg:s.cfg,seed:s.seed||"bb"+s.id,adjust:s.adjust||{reg:0,beat:0,poise:0},cert:s.cert,caseId:CASES[s.caseId]?s.caseId:"steel-dress",
+    value,price:value,since:c.wk,thick:s.thick||+(r.thickness+cs.thick).toFixed(1),r:s.r||{reserveH:r.reserveH,prestige:r.prestige,amp24:r.amp24,cost:r.cost},back:true};}
+
+/* ---- service returns ---- */
+function returnWhy(s){const r=SIM.simulate(s.cfg,{},null,{seed:s.seed,adjust:s.adjust}),K=SIM.K.ret;
+  s.risk=r.returnRisk;s.why={shock:(1-r.shock)*K.shock,magnet:(1-r.magnetResist)*K.magnet,oil:K.oil*10*(r.cfg.escapement==="detent"?1.5:1)};}
+function serviceReturns(lines,R){const c=car();
+  for(const s of c.sold){if(s.ret!=null||s.how==="dealer"||c.wk-s.wk>CALENDAR.warranty||c.wk===s.wk)continue;
+    if(s.risk==null||!s.why)returnWhy(s);if(R()>=s.risk/52)continue;
+    const w=s.why,tot=w.shock+w.magnet+w.oil;let u=R()*tot,k="oil";if((u-=w.shock)<0)k="shock";else if((u-=w.magnet)<0)k="magnet";
+    const X=RETURNS[k],cost=X.parts+RETURNS.courier;s.ret=c.wk;
+    c.cash-=cost;book("out",cost,`warranty parts and courier: ${s.name}`);
+    c.jobs.push({id:nextId(),kind:"warranty",ref:s.id,h:X.hours,label:`Warranty: ${s.name} for ${s.to}`,staff:true});
+    addRep(REP_GAIN.ret,lines);
+    lines.push(`Back under warranty: ${s.name} ${X.text}. ${fmt$(cost)} in parts and courier, ${fmtN(X.hours,1)} h of work, and ${s.to} is telling people.`);
+    calFx.crack=true;}}
+
+/* ---- news ---- */
+function newsDue(lines){const c=car();while(c.newsN<NEWS.length&&newsWk(NEWS[c.newsN])<=c.wk){const n=NEWS[c.newsN];
+  if(newsWk(n)>=0){c.news.push({i:c.newsN,wk:c.wk});if(c.news.length>20)c.news.shift();lines.push(`News: ${n.title}${/[.?!]$/.test(n.title)?"":"."}`);}c.newsN++;}}
+function newsSkip(c){let n=0;while(n<NEWS.length&&(NEWS[n].y-c.start)*52+NEWS[n].w-1<c.wk)n++;return n;}
+
+/* ---- the hooks closeWeek() calls ---- */
+function calClose(lines){const c=car(),R=weekRng("cal");
+  fairClose(lines,R);trialClose(lines);if(c.sale&&c.sale.wk===c.wk&&!c.sale.done)saleAuto(lines);
+  serviceReturns(lines,R);}
+function calWeekStart(lines){const c=car(),F=CALENDAR.fair,T=CALENDAR.trial;
+  for(const k in REP_TRACKS)c.rep[k]=repOf(k)*(1-REP_GAIN.decay);
+  newsDue(lines);saleOpen(lines);
+  if(c.week===F.week-F.ahead)lines.push(`The ${F.name} is in ${F.ahead} weeks: book a stand on the Career tab.`);
+  if(c.week===T.open)lines.push(`Entries for the ${T.name} are open until week ${T.close}.`);
+  if(c.year===2019&&c.week===1&&c.start<=2015&&c.staff.length&&!c.slumpLetGo)goal("survive",lines);
+  checkGoals(lines);}
 /* ===================== app/shop.js: the Shop tab =====================
    Everything you sell and buy in a career (the engine is app/business.js): this week (cash, hours, Close week), the work
    in hand, repairs, your stock, commissions and trade, upgrades, staff and the books. In the Sandbox it offers a career.
@@ -2612,6 +2963,7 @@ function goBroke(){const c=car();c.over=true;save();}
 const capWord=s=>s[0].toUpperCase()+s.slice(1);
 const dealerPrice=x=>Math.round(x.value*BIZ.dealer/10)*10;
 const PRICE_STEPS=[[-.2,"−20%"],[0,"Value"],[.2,"+20%"],[.5,"+50%"]];
+const RESERVES=[[0,"No reserve"],[.8,"Reserve 80% of value"],[1,"Reserve at full value"]];
 function weekCard(){const c=car();
   return `<div class="card shwk"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursLeft(),1)} of ${benchHours()} h left</span></h3>
 <div class="kv"><span>Cash</span><b>${fmt$(c.cash)}</b><span>Costs a week</span><b>${fmt$(weeklyCosts())}</b><span>Staff</span><b>${c.staff.length} of ${staffCap()}</b></div>
@@ -2631,14 +2983,17 @@ function benchCard(){const c=car(),p=c.bench;let t;
   else{const j=pieceJob();t=`<p><b>${pieceName(p.cfg,p.no)}</b><br>${!p.made?`Being assembled: ${fmtN(j?j.h:0,0)} h left.`:p.trial?`At the ${SIM.CERT[p.trial.tier].body}, back ${whenTxt(p.trial.back-1)}.`:p.cert?`${SIM.CERT[p.cert].name}. Ready to case.`:"Assembled: adjust it and give it a Bench check on the Test tab."}</p>
 ${p.made&&!p.trial?`<div class="row">${p.cert?`<button class="btn pri" data-sh="case">Case it…</button>`:""}<button class="btn" data-sh="test">Test tab</button></div>`:""}`;}
   return `<div class="card"><h3>On your bench</h3>${t}</div>`;}
-function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand();
+function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand(),sn=saleNext(),cc=canConsign();
   return `<div class="card"><h3>In stock<span class="cnt">${c.stock.length}</span></h3><ul class="shlist stk">${c.stock.map(x=>{const pr=x.price/x.value-1;
     const odds=SIM.buyChance(x.value,x.price)*Math.min(1,d);
+    const state=x.away?`<small class="lockt">At the ${CALENDAR.trial.name} until week ${CALENDAR.trial.back}.</small>`
+      :x.lot?`<small class="lockt">Consigned to the ${sn.name} (${sn.now?"this week":"week "+sn.week}), ${RESERVES.find(r=>r[0]===x.lot.reserve)[1].toLowerCase()}. Walk-in buyers don't see it.</small>`
+      :`<div class="seg sm" data-stk="${x.id}">${PRICE_STEPS.map(([f,l])=>`<button type="button" data-pf="${f}" class="${Math.abs(pr-f)<.01?"on":""}">${l}</button>`).join("")}</div>
+<small>Asking ${fmt$(x.price)} · ${odds>.3?"likely to sell soon":odds>.1?"may take a few weeks":"slow at this price"}</small>`;
     return `<li><div><b>${x.name}</b><br><small>${x.cert&&x.cert!=="bench"?SIM.CERT[x.cert].name+" · ":""}${CASES[x.caseId].name.split(",")[0]} · ${x.thick} mm · value ${fmt$(x.value)}</small>
-<div class="seg sm" data-stk="${x.id}">${PRICE_STEPS.map(([f,l])=>`<button type="button" data-pf="${f}" class="${Math.abs(pr-f)<.01?"on":""}">${l}</button>`).join("")}</div>
-<small>Asking ${fmt$(x.price)} · ${odds>.3?"likely to sell soon":odds>.1?"may take a few weeks":"slow at this price"}</small></div>
-<div class="acts"><button class="btn sm" data-sh="dealer" data-id="${x.id}">Dealer ${fmt$(dealerPrice(x))}</button></div></li>`;}).join("")}</ul>
-<p class="hint">${upOwned("shop")?"Walk-in buyers":"Buyers who find a shared bench"} see your stock each week and take the best value for its price. The dealer in town pays at once, but only ${Math.round(BIZ.dealer*100)}%.</p></div>`;}
+${state}</div>
+<div class="acts">${x.away?"":x.lot?(!(c.sale&&c.sale.wk===c.wk&&c.sale.opened)?`<button class="btn sm" data-sh="unlot" data-id="${x.id}">Withdraw</button>`:""):`<button class="btn sm" data-sh="dealer" data-id="${x.id}">Dealer ${fmt$(dealerPrice(x))}</button>${cc?`<button class="btn sm" data-sh="lot" data-id="${x.id}">Auction…</button>`:""}`}</div></li>`;}).join("")}</ul>
+<p class="hint">${upOwned("shop")?"Walk-in buyers":"Buyers who find a shared bench"} see your stock each week and take the best value for its price. The dealer in town pays at once, but only ${Math.round(BIZ.dealer*100)}%.${cc?` The ${sn.name} at ${CALENDAR.house} (${sn.now?"this week":"week "+sn.week}) takes consignments now.`:""}</p></div>`;}
 function ordersCard(){const c=car();if(!c.orders.length&&!c.offers.length)return "";
   const specLine=(t,pc)=>specChecks(t.spec,pc||{cfg:{complications:[],finish:[]},r:{reserveH:0},thick:99,cert:null});
   const specTxt=t=>specLine(t).map(x=>x.label).join(" · ");
@@ -2682,8 +3037,10 @@ $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]"
   if(k==="fix")fixSheet(+id);
   if(k==="case")caseSheet();
   if(k==="test")showTab("test");
-  if(k==="dealer"){const x=stockBy(id);if(x)confirmSheet(`Sell ${x.name} to the dealer?`,`He pays ${fmt$(dealerPrice(x))} now. In stock it's worth ${fmt$(x.value)}.`,"Sell it",()=>{sellPiece(x,dealerPrice(x),"the dealer");save();shopChanged();});}
+  if(k==="dealer"){const x=stockBy(id);if(x)confirmSheet(`Sell ${x.name} to the dealer?`,`He pays ${fmt$(dealerPrice(x))} now. In stock it's worth ${fmt$(x.value)}.`,"Sell it",()=>{sellPiece(x,dealerPrice(x),"the dealer","dealer");save();shopChanged();});}
   if(k==="deliver")deliver(id,b.dataset.pc);
+  if(k==="lot")lotSheet(+id);
+  if(k==="unlot"){consign(id,null);toast("Withdrawn from the sale.");}
   if(k==="cancel")confirmSheet("Cancel this commission?","The customer goes elsewhere. Nothing is paid either way.","Cancel it",()=>{cancelOrder(id);shopChanged();});
   if(k==="accept")acceptOffer(id);
   if(k==="trade")acceptTrade();
@@ -2706,19 +3063,28 @@ function fixSheet(id){const r=repairBy(id);if(!r)return;
     if(S.tgOn&&S.tgOn.id===id)S.tgOn=null;save();closeSheet();toast(`${FAULTS[b.dataset.fix].fix}: in the work in hand.`);shopChanged();});}
 /* case a finished piece: the cases that take this movement, the value in each */
 function caseSheet(){const c=car(),p=c.bench;if(!p)return;const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});
-  const ok=c.orders.map(o=>tplOf(o.tpl));
+  const ok=c.orders.map(o=>tplOf(o.tpl)),fin=SIM.eraMult(c.year,"finish");
   openSheet(`Case No. ${p.no}`,`<p>${pieceName(p.cfg,p.no)} · ${SIM.CERT[p.cert].name} · movement ${r.thickness.toFixed(1)} mm</p>
-<ul class="shlist fixes">${Object.keys(CASES).map(id=>{const cs=CASES[id],fits=r.thickness<=cs.maxMove,lock=cs.needs&&!upOwned(cs.needs),v=SIM.pieceValue(r,p.cert,cs);
+<ul class="shlist fixes">${Object.keys(CASES).map(id=>{const cs=CASES[id],fits=r.thickness<=cs.maxMove,lock=cs.needs&&!upOwned(cs.needs),v=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
   const forO=ok.filter(t=>specOk(t.spec,{cfg:p.cfg,r,cert:p.cert,caseId:id,thick:r.thickness+cs.thick}));
   return `<li class="${fits&&!lock?"":"own"}"><div><b>${cs.name}</b><br><small>${fmt$(cs.cost)} · ${(r.thickness+cs.thick).toFixed(1)} mm cased · value ${fmt$(v)}${!fits?` · too thick: takes ${cs.maxMove} mm at most`:lock?" · needs your own shop":""}</small>${forO.length?`<br><small class="good">Fits: ${forO.map(t=>t.title.toLowerCase()).join(", ")}</small>`:""}</div>
 <div class="acts"><button class="btn sm" data-case="${id}"${!fits||lock||c.cash<cs.cost?" disabled":""}>Case</button></div></li>`;}).join("")}</ul>`);
   $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-case]");if(!b)return;if(casePiece(b.dataset.case)){closeSheet();shopChanged();}});}
+/* consign a stock piece to the next auction night, with a reserve */
+function lotSheet(id){const x=stockBy(id),sn=saleNext();if(!x||!sn)return;
+  const est=lotEst(x);
+  openSheet(`The ${sn.name} at ${CALENDAR.house}`,`<p><b>${x.name}</b> · value ${fmt$(x.value)}</p>
+<p>The catalogue would estimate it around <b>${fmt$(est)}</b>. Collectors bid it up from there: the better your name with them, the keener they are. ${CALENDAR.house} keep ${Math.round(CALENDAR.fee*100)}% of the hammer price.</p>
+<ul class="shlist fixes">${RESERVES.map(([f,l])=>`<li><div><b>${l}</b><br><small>${f?`Unsold below ${fmt$(x.value*f)}: it comes back to stock.`:"It sells, whatever the bidding."}</small></div><div class="acts"><button class="btn sm" data-res="${f}">Consign</button></div></li>`).join("")}</ul>
+<p class="hint">Sale ${sn.now?"this week":`in week ${sn.week}`}. Until then it's held for the sale: walk-in buyers and the dealer don't see it.</p>`);
+  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-res]");if(!b)return;consign(id,+b.dataset.res);closeSheet();toast(`Consigned to the ${sn.name}.`);shopChanged();});}
 $("exportSave").addEventListener("click",buBackupOpen);
 $("importSave").addEventListener("click",buRestoreOpen);
 /* ===================== app/career.js: the Career tab =====================
    The week (Close week and its report), New game (Repair bench 2000, Skip ahead 2008, or the Sandbox), the bank's loan
    and the end of a career, and the three save slots ("esc-slot1" .. "esc-slot3": a whole game each; loading one keeps
-   this device's settings). PR 6 adds the calendar of events, reputation and goals; PR 7 R&D. */
+   this device's settings). The calendar, reputation, news, goals and rivals cards and the event sheets are in app/events.js
+   (PR 6); PR 7 adds R&D. */
 function renderCareer(){const el=$("careerBody"),c=car();let h="";
   if(!c)h=`<div class="card"><h3>Start a career</h3><p>You're in the Sandbox: every part, no money. A career starts with a bench, a little cash and the rent to pay.</p><div class="row"><button class="btn pri" data-cr="new">New game</button></div></div>`;
   else if(c.over)h=`<div class="card"><h3>The workshop is closed</h3><p>It ran from ${c.start} to ${c.year}: ${c.made} piece${c.made===1?"":"s"} made, ${c.sold.length} sold. The bank wouldn't lend twice.</p><div class="row"><button class="btn pri" data-cr="new">Start again</button></div></div>`;
@@ -2727,12 +3093,15 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
 <p>${c.kind==="shop"?"Your shop on the Haldis high street":upOwned("shop")?"Your shop on the high street":"A shared bench in a rented corner of a workshop"}, since ${c.start}. ${fmt$(c.cash)} in the till; ${fmt$(weeklyCosts())} a week goes out.</p>
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
 <div class="row"><button class="btn pri" data-cr="close">Close week</button></div>
-<p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;}
+<p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;
+    h+=calendarCard()+repCard()+newsCard()+goalsCard()+rivalsCard();}
   h+=slotsCard();
   if(c)h+=`<div class="row"><button class="btn ghost" data-cr="new">New game…</button></div>`;
   el.innerHTML=h;}
 TAB_RENDER.career=renderCareer;
-$("careerBody").addEventListener("click",e=>{const b=e.target.closest("[data-cr]");if(!b)return;const k=b.dataset.cr,i=+b.dataset.i;
+$("careerBody").addEventListener("click",e=>{const v=e.target.closest("[data-ev]");
+  if(v){const k=v.dataset.ev;if(k==="fair")fairSheet();if(k==="trial")trialEntrySheet();if(k==="race")raceSheet();if(k==="sale")saleroomSheet();return;}
+  const b=e.target.closest("[data-cr]");if(!b)return;const k=b.dataset.cr,i=+b.dataset.i;
   if(k==="close")doCloseWeek();
   if(k==="new")newGameSheet();
   if(k==="ssave"){const m=slotMeta(i);if(m)confirmSheet(`Save over slot ${i}?`,`It holds ${m.what}.`,"Save here",()=>slotSave(i));else slotSave(i);}
@@ -2760,6 +3129,11 @@ function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
 <ul class="wklines">${res.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}<li class="dim">Rent ${fmt$(rent())} · your keep ${fmt$(BIZ.keep)}${wages()?` · wages ${fmt$(wages())}`:""}${c.loan?` · loan ${fmt$(c.loan.pay)}`:""}</li></ul>
 <div class="row"><button class="btn pri" id="wkOk">Week ${c.week}, ${c.year}</button></div>`);
   $("wkOk").addEventListener("click",closeSheet);
+  const fx=calFx;if(fx.crack)crackFx();
+  if(fx.trial){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkRace">Watch the ${CALENDAR.trial.name}</button>`;
+    $("sheetBody").appendChild(row);$("wkRace").addEventListener("click",raceSheet);}
+  if(c.sale&&c.sale.wk===c.wk&&!c.sale.done){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkSale">Go to the ${c.sale.name}</button>`;
+    $("sheetBody").appendChild(row);$("wkSale").addEventListener("click",saleroomSheet);}
   const p=c.bench;if(p&&p.lastTrial&&!p.seen){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkTrial">See the trial result</button>`;
     $("sheetBody").appendChild(row);$("wkTrial").addEventListener("click",()=>{p.seen=true;save();trialSheet(p.lastTrial.t,p.lastTrial.tier);});}}
 function loanSheet(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=Math.round(amt*(1+L.rate));
@@ -2787,6 +3161,123 @@ function slotsCard(){let h=`<div class="card"><h3>Save slots</h3><ul class="shli
     h+=`<li><div><b>Slot ${i}</b><br><small>${m?`${capWord(m.what)}${when?" · saved "+when:""}`:"Empty"}</small></div>
 <div class="acts h"><button class="btn sm" data-cr="ssave" data-i="${i}">Save</button>${m?`<button class="btn sm" data-cr="sload" data-i="${i}">Load</button><button class="btn sm ghost" data-cr="sdel" data-i="${i}" aria-label="Empty slot ${i}">✕</button>`:""}</div></li>`;}
   return h+`</ul><p class="hint">Slots live on this phone. A backup code (Shop tab) carries them all to another one.</p></div>`;}
+/* ===================== app/events.js: the calendar on the Career tab, and the event sheets =====================
+   Cards (renderCareer in app/career.js strings them together): calendarCard (the fair, the trial, the next auction night,
+   with their buttons), repCard, newsCard, goalsCard, rivalsCard. Sheets: fairSheet (book a stand), trialEntrySheet,
+   raceSheet (the Kessel Peak Trial day by day, like a race), saleroomSheet (auction night, lot by lot, live bidding),
+   crackFx (the cracked crystal over the screen when a piece comes back). The engine is app/calendar.js. Reduced motion:
+   the race and the bidding jump to the end, the crack appears without the flash. */
+const evMs=ms=>reduced()?0:ms;
+let evTimer=null;
+function evStop(){clearTimeout(evTimer);evTimer=null;}
+function evRow(title,text,btn){return `<li><div><b>${title}</b><br><small>${text}</small></div>${btn?`<div class="acts">${btn}</div>`:""}</li>`;}
+function calendarCard(){const c=car(),F=CALENDAR.fair,T=CALENDAR.trial,fs=fairState(),ts=trialState(),sn=saleNext(),rows=[];
+  const free=c.stock.filter(pieceFree).length;
+  { const lots=c.stock.filter(x=>x.lot).length;let t,b="";
+    if(sn.now){t=`This week at ${CALENDAR.house}. ${lots?`${lots} of your pieces in the catalogue`:"None of your pieces consigned"}${c.sale.resale.length?`; ${c.sale.resale.length} of your old pieces come up again`:""}.`;b=`<button class="btn pri sm" data-ev="sale">Open the saleroom</button>`;}
+    else{t=`${CALENDAR.house}, week ${sn.week} (${whenTxt(sn.at)}). ${canConsign()?`Consign pieces from stock on the Shop tab${lots?`: ${lots} consigned`:""}.`:`Consignments open ${CALENDAR.ahead} weeks before.`}`;
+}
+    rows.push({at:sn.at,h:evRow(`Auction night: the ${sn.name}`,t,b)});
+    if(c.sale&&c.sale.done&&c.sale.wk===c.wk)rows.push({at:c.wk-.5,h:evRow(`Tonight: the ${c.sale.name}`,`${c.sale.results.length} lot${c.sale.results.length===1?"":"s"} of yours went under the hammer.`,`<button class="btn sm" data-ev="sale">Results</button>`)});}
+  { let t,b="",at;const e=ts.entry;
+    if(e&&e.res){t=`No. ${e.no} placed ${ordinal(e.res.place)} of ${e.res.field.length} with ${e.res.points} points${e.res.prize?`: ${fmt$(e.res.prize)}`:""}.`;b=`<button class="btn sm${e.seen?"":" pri"}" data-ev="race">Watch the trial</button>`;at=c.wk;}
+    else if(e){t=`No. ${e.no} is up at Kessel Peak. Results in week ${T.back} (${whenTxt(wkAt(c.year,T.back))}).`;at=wkAt(c.year,T.back);}
+    else if(ts.open){t=`Entries open until week ${T.close}: ${fmt$(T.fee)} to enter one piece from stock against the valley's best. Prizes ${T.prizes.map(fmt$).join(", ")}.`;
+      b=`<button class="btn sm" data-ev="trial"${free?"":" disabled"}>Enter a piece…</button>`;if(!free)t+=" Case a piece first.";at=c.wk;}
+    else{at=c.wk+ts.opensIn;t=`Entries open in week ${T.open} (${whenTxt(at)}). Thirty days at the Observatory against five rival shops.`;}
+    rows.push({at,h:evRow(`The ${T.name}`,t,b)});}
+  { let t,b="";
+    if(fs.entered)t=`Your stand: ${c.fair.ids.map(id=>{const x=stockBy(id);return x?"No. "+x.no:"";}).filter(Boolean).join(", ")||"empty"}. Week ${F.week} (${whenTxt(fs.at)}).`;
+    else if(fs.open){t=`Week ${F.week} (${whenTxt(fs.at)}). A stand costs ${fmt$(F.fee)}: show up to ${F.show} pieces from stock to visitors, collectors and trade buyers.`;b=`<button class="btn sm" data-ev="fair"${free?"":" disabled"}>Book a stand…</button>`;if(!free)t+=" You need a piece in stock.";}
+    else t=`Week ${F.week} (${whenTxt(fs.at)}). Stands can be booked ${F.ahead} weeks before.`;
+    rows.push({at:fs.at,h:evRow(`The ${F.name}`,t,b)});}
+  rows.sort((a,b)=>a.at-b.at);
+  return `<div class="card"><h3>Coming up</h3><ul class="shlist ev">${rows.map(r=>r.h).join("")}</ul></div>`;}
+function repCard(){
+  return `<div class="card"><h3>Reputation</h3><ul class="shlist rep3">${Object.keys(REP_TRACKS).map(k=>{const R=REP_TRACKS[k],p=repOf(k),t=repTier(k),nx=REP_TIERS[t+1];
+    const pct=nx?Math.round(100*(p-REP_TIERS[t].at)/(nx.at-REP_TIERS[t].at)):100;
+    return `<li><div><b>${R.name}</b> <span class="tier">${REP_TIERS[t].name}</span><div class="bar" role="img" aria-label="${R.name}: ${Math.round(p)} points${nx?`, ${Math.round(nx.at-p)} to ${nx.name}`:""}"><i style="width:${pct}%"></i></div><small>${R.blurb}${nx?` ${Math.ceil(nx.at-p)} more to ${nx.name.toLowerCase()}.`:""}</small></div></li>`;}).join("")}</ul></div>`;}
+function newsCard(){const c=car(),L=c.news.slice().reverse();if(!L.length)return "";
+  const one=n=>{const N=NEWS[n.i];return `<div class="news${N.era?" era":""}"><small>${N.y} · week ${N.w}${n.wk===c.wk?' <span class="new">New</span>':""}</small><b>${N.title}</b><p>${N.text}</p></div>`;};
+  return `<div class="card"><h3>News from the valley</h3>${L.slice(0,2).map(one).join("")}${L.length>2?`<details class="more"><summary>Older news (${L.length-2})</summary>${L.slice(2).map(one).join("")}</details>`:""}</div>`;}
+function goalsCard(){const c=car(),ids=Object.keys(GOALS),n=ids.filter(id=>c.goals[id]!=null).length;
+  return `<details class="card"><summary><h3>Goals<span class="cnt">${n} of ${ids.length}</span></h3></summary><ul class="shlist goals">${ids.map(id=>{const G=GOALS[id],w=c.goals[id];
+    let when="";if(w!=null){const d=dateOf(w);when=` · ${d.year}, week ${d.week}`;}
+    return `<li class="${w!=null?"got":""}"><span class="gtick" aria-hidden="true">${w!=null?"✓":""}</span><div><b>${G.name}</b><br><small>${G.blurb}${when}</small></div></li>`;}).join("")}</ul></details>`;}
+function rivalsCard(){const c=car(),last=c.contests[c.contests.length-1];
+  const placeOf=id=>{if(!last||!last.field)return "";const i=last.field.findIndex(f=>f[0]===id);return i<0?"":` · ${ordinal(i+1)} at Kessel Peak in ${last.year}`;};
+  return `<details class="card"><summary><h3>Rival shops<span class="cnt">${RIVALS.length}</span></h3></summary><ul class="shlist">${RIVALS.map(rv=>`<li><div><b>${rv.name}</b><br><small>${rv.style}${placeOf(rv.id)}</small></div></li>`).join("")}</ul>
+${c.contests.length?`<p class="hint">Your trials: ${c.contests.map(t=>`${t.year} No. ${t.no}, ${ordinal(t.place)} of ${t.of}`).join(" · ")}</p>`:`<p class="hint">They enter the ${CALENDAR.trial.name} every spring and bid against each other at auction nights.</p>`}</details>`;}
+
+/* ---- book a stand at the fair ---- */
+function fairSheet(){const c=car(),F=CALENDAR.fair,L=c.stock.filter(pieceFree);
+  openSheet(`The ${F.name}`,`<p>Week ${F.week}. Choose up to ${F.show} pieces for your stand. They stay in stock (sell them in the meantime and they leave the stand). Visitors buy at your asking price more readily than walk-ins; collectors and trade buyers stop to talk.</p>
+<ul class="shlist fixes">${L.map(x=>`<li><label class="chk"><input type="checkbox" value="${x.id}"><span><b>${x.name}</b><br><small>${x.cert&&x.cert!=="bench"?SIM.CERT[x.cert].name+" · ":""}asking ${fmt$(x.price)}</small></span></label></li>`).join("")}</ul>
+<div class="row"><button class="btn pri" id="frGo" disabled>Book the stand: ${fmt$(F.fee)}</button></div>`);
+  const box=$("sheetBody"),sel=()=>[...box.querySelectorAll("input:checked")].map(i=>+i.value);
+  box.addEventListener("change",()=>{const s=sel();box.querySelectorAll("input:not(:checked)").forEach(i=>i.disabled=s.length>=F.show);$("frGo").disabled=!s.length;});
+  $("frGo").addEventListener("click",()=>{if(enterFair(sel())){closeSheet();shopChanged();}});}
+/* ---- enter the trial ---- */
+function trialEntrySheet(){const c=car(),T=CALENDAR.trial,L=c.stock.filter(pieceFree);
+  openSheet(`The ${T.name}`,`<p>Thirty days at the Kessel Peak Observatory: four days in each of five positions, then cold, room and warm, then four days dial up. Every competitor scores points: the steadier and closer to zero, the more. What costs points: a mean rate away from zero, changes from day to day, differences between positions and, most of all, temperature.</p>
+<ul class="shlist fixes">${L.map(x=>`<li><div><b>${x.name}</b><br><small>${x.cert?SIM.CERT[x.cert].name:"Unchecked"} · away from stock until week ${T.back}</small></div><div class="acts"><button class="btn sm" data-ent="${x.id}">Enter</button></div></li>`).join("")}</ul>
+<p class="hint">Entry ${fmt$(T.fee)}. Regulate it close to zero on the timegrapher before you case it: the Observatory doesn't touch the regulator.</p>`);
+  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-ent]");if(!b)return;if(enterTrial(+b.dataset.ent)){closeSheet();shopChanged();}});}
+
+/* ---- the trial, day by day ---- */
+const POS_WORD={DU:"dial up",DD:"dial down",PU:"crown up",PD:"crown down",PL:"crown left",PR:"crown right"};
+function raceSheet(){const c=car(),e=c.contest;if(!e||!e.res)return;const res=e.res,D=res.days.length;e.seen=true;save();
+  const rows=res.field.map(f=>{const R=SIM.rng(res.seed+f.id),run=[];
+    for(let d=1;d<=D;d++)run.push(f.id==="me"?res.running[d-1]:Math.round(f.points+(R()-.5)*260*Math.pow(1-d/D,.8)));return{f,run};});
+  openSheet(`${CALENDAR.trial.name}, ${e.year}`,`<p class="race-day" id="rcDay">Day 0 of ${D}</p>
+<div class="race" id="rcBoard" style="height:${rows.length*46}px">${rows.map((r,i)=>`<div class="rrow${r.f.id==="me"?" me":""}" data-i="${i}"><span class="rpl"></span><span class="rnm">${r.f.name}</span><span class="rpt">0</span><i class="rbar"></i></div>`).join("")}</div>
+<div id="rcEnd"></div><div class="row"><button class="btn" id="rcSkip">Skip to the end</button></div>`);
+  const els=[...$("rcBoard").children];
+  const show=d=>{const pts=rows.map(r=>d?r.run[d-1]:0),ord=pts.map((p,i)=>i).sort((a,b)=>pts[b]-pts[a]);
+    ord.forEach((i,rank)=>{const el=els[i];el.style.transform=`translateY(${rank*46}px)`;el.querySelector(".rpl").textContent=d?rank+1:"";el.querySelector(".rpt").textContent=pts[i];
+      el.querySelector(".rbar").style.width=Math.max(0,Math.min(100,pts[i]/10))+"%";});
+    const day=res.days[Math.max(0,d-1)];$("rcDay").textContent=d?`Day ${d} of ${D} · ${POS_WORD[day[0]]}, ${day[1]} °C`:`Day 0 of ${D}`;};
+  const end=()=>{evStop();show(D);$("rcSkip").remove();const P=res.parts,W=SIM.CONTEST.w,cost={mean:W.mean*P.mean,vari:W.vari*P.vari,pos:W.pos*P.pos,thermal:W.thermal*P.thermal};
+    const worst=Object.keys(cost).sort((a,b)=>cost[b]-cost[a])[0];
+    const tip={mean:`Its average rate was ${P.mean.toFixed(1)} s/day off zero: regulate closer before you case it.`,vari:`It changed by ${P.vari.toFixed(1)} s/day from one day to the next: a steadier regulator and a faster beat help.`,
+      pos:`It differed by ${P.pos.toFixed(1)} s/day between positions: poise it more.`,thermal:`Temperature moved it ${P.thermal.toFixed(2)} s/day per °C: a self-compensating alloy or silicon hairspring is the cure.`}[worst];
+    $("rcEnd").innerHTML=`<p class="race-res"><b>${ordinal(res.place)} of ${res.field.length}</b> with ${res.points} points${res.prize?` · prize ${fmt$(res.prize)}`:""}.</p><p class="hint">${res.place===1?"The valley will be talking about this one. ":""}Where it lost most: ${tip}</p>`;};
+  $("rcSkip").addEventListener("click",end);
+  show(0);if(reduced()){end();return;}
+  let d=0;const step=()=>{d++;show(d);if(d>=D){end();return;}evTimer=setTimeout(step,d<3?420:200);};evTimer=setTimeout(step,500);}
+
+/* ---- auction night ---- */
+function saleroomSheet(){const c=car(),sl=c.sale;if(!sl||sl.wk!==c.wk)return;const L=saleLots();save();
+  const head=`<p class="hint" style="margin-top:0">${CALENDAR.house} keep ${Math.round(CALENDAR.fee*100)}% from the seller and add ${Math.round(CALENDAR.fee*100)}% for the buyer.</p>`;
+  if(sl.i>=L.length){sl.done=true;save();
+    openSheet(`The ${sl.name}`,`${L.length?`<ul class="wklines">${sl.results.map(r=>`<li>${r}</li>`).join("")}</ul>`:`<p>Nothing of yours in the catalogue tonight: you watch from the back and take notes on what the collectors chase.</p>`}<div class="row"><button class="btn pri" id="slOk">Done</button></div>`);
+    $("slOk").addEventListener("click",()=>{closeSheet();shopChanged();});return;}
+  const lot=L[sl.i],n=sl.i+1,F=CALENDAR.fee;
+  const intro=lot.kind==="mine"?`Yours: value ${fmt$(lot.value)}, ${RESERVES.find(r=>r[0]===lot.reserve)[1].toLowerCase()}.`:`Your old piece: you sold it for ${fmt$(lot.was)} in ${dateOf(lot.swk).year}. Bid to buy it back, or watch what it makes.`;
+  const bids=lot.kind==="resale"?[[0,"Just watch"],[1,"Bid to"],[1.25,"Bid to"],[1.5,"Bid to"]]:[[0,"Start the bidding"]];
+  openSheet(`The ${sl.name}`,`${head}<div class="lot"><small>Lot ${n} of ${L.length}</small><b>${lot.name}</b><p>${lot.cert&&lot.cert!=="bench"?SIM.CERT[lot.cert].name+" · ":""}estimate ${fmt$(lot.est)}</p><p class="hint">${intro}</p></div>
+<div class="row${bids.length>1?" bids4":""}" id="slBids">${bids.map(([f,l])=>{const max=Math.round(lot.est*f/50)*50,cost=Math.round(max*(1+F));return `<button class="btn${f?"":" pri"} sm" data-bid="${f}"${f&&cost>c.cash?" disabled":""}>${l}${f?` ${fmt$(max)}${f>1?`<small>+${Math.round((f-1)*100)}%</small>`:"<small>the estimate</small>"}`:""}</button>`;}).join("")}</div>
+<div class="gavel" id="slRoom" aria-live="polite"></div><div class="row" id="slNext"></div>`);
+  $("slBids").addEventListener("click",e=>{const b=e.target.closest("[data-bid]");if(!b)return;$("slBids").remove();
+    const mine=Math.round(lot.est*+b.dataset.bid/50)*50,res=lotRun(lot,mine);sl.i++;const more=[];lotSettle(lot,res,more);save();
+    const line=sl.results[sl.results.length-1],room=$("slRoom");let k=0;
+    const fin=()=>{evStop();const last=res.steps[res.steps.length-1];
+      room.innerHTML=`<p class="bidnow"><b>${fmt$(res.hammer)}</b> ${last[1]}</p><p class="hammer">${lot.kind==="mine"&&!res.sold?"Bought in.":`Sold to ${res.buyer}!`}</p><p>${line}</p>`;
+      hud();const news=more.filter(m=>m!==line);if(news.length)toast(news.join(" "));
+      $("slNext").innerHTML=`<button class="btn pri" id="slGo">${sl.i<L.length?"Next lot":"The night's results"}</button>`;$("slGo").addEventListener("click",saleroomSheet);};
+    if(reduced()){fin();return;}
+    const tick=()=>{if(!$("slRoom")){evStop();return;}if(k<res.steps.length){const [amt,who]=res.steps[k++];room.innerHTML=`<p class="bidnow"><b>${fmt$(amt)}</b> ${who}</p>`;evTimer=setTimeout(tick,k<2?600:380);return;}
+      const say=["Going once…","Going twice…"],j=k++-res.steps.length;if(j<2){room.insertAdjacentHTML("beforeend",`<p class="going">${say[j]}</p>`);evTimer=setTimeout(tick,650);return;}fin();};
+    tick();});}
+
+/* ---- a piece comes back: a cracked crystal over the screen for a moment (an SVG, no images) ---- */
+function crackFx(){let el=$("crack");if(!el){el=document.createElement("div");el.id="crack";el.setAttribute("aria-hidden","true");document.body.appendChild(el);}
+  const R=SIM.rng(String(Date.now())),cx=50+(R()-.5)*30,cy=36+(R()-.5)*20,lines=[];
+  for(let i=0;i<11;i++){let a=i/11*Math.PI*2+R()*.4,x=cx,y=cy,pts=[`${x.toFixed(1)},${y.toFixed(1)}`];
+    for(let s=0;s<6;s++){a+=(R()-.5)*.6;const l=6+R()*12;x+=Math.cos(a)*l;y+=Math.sin(a)*l;pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);}lines.push(`<polyline points="${pts.join(" ")}"/>`);}
+  for(let i=0;i<5;i++){const r=5+R()*9,a0=R()*6.28,a1=a0+.5+R()*.8;lines.push(`<path d="M${(cx+r*Math.cos(a0)).toFixed(1)},${(cy+r*Math.sin(a0)).toFixed(1)} A${r.toFixed(1)},${r.toFixed(1)} 0 0 1 ${(cx+r*Math.cos(a1)).toFixed(1)},${(cy+r*Math.sin(a1)).toFixed(1)}"/>`);}
+  el.innerHTML=`<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><g>${lines.join("")}</g></svg>`;
+  el.classList.remove("on");void el.offsetWidth;el.classList.add("on");clearTimeout(crackFx.t);crackFx.t=setTimeout(()=>el.classList.remove("on"),1900);}
 /* ===================== app/help.js: help and the tutorial =====================
    The first-run tutorial through the repair bench (PEW's help card pattern), glossary and tap-to-explain. Arrives in
    PR 8 (plan section 11). Last file of the app script block. */

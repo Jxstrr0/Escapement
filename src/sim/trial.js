@@ -12,7 +12,9 @@
    ADJ / adjustPiece(kind, adjust, cfg, skills, n, seed) -> the new adjust after one Regulate (n notches, + = faster),
                  Adjust beat or Poise, with the skill's noise. hoursFor(kind) is the bench time each one costs.
    certOdds(cfg, skills, tools) -> share of pieces of this build a careful watchmaker at these skills gets through
-                 each grade (the Build tab's capsule). ---- */
+                 each grade (the Build tab's capsule).
+   CONTEST / runContest(cfg, skills, tools, opts) / contestIndex(days): the yearly Kessel Peak Trial against rival
+                 shops (PR 6): 30 days, an index (lower is better) and points. ---- */
 const CERT={
   bench:{name:"Bench pass",body:"your own bench",stamp:"",fee:0,weeks:0,
     mean:[-30,30],maxVar:null,posSpread:null,thermal:null,beat:2.0,amp24:180},
@@ -103,3 +105,29 @@ function certOdds(cfg,skills,tools,n){
     for(const id of CERT_ORDER)if(t.tiers[id].pass)out[id]++;}
   for(const id of CERT_ORDER)out[id]/=n;
   return out;}
+
+/* the Kessel Peak Trial (PR 6): a yearly contest, not a certificate. 30 days: four days in each of five positions, then
+   two each at 8, 23 and 38 C, then four recovery days dial up. The index adds up what an observatory frowns on (lower
+   is better): the mean rate away from zero, the day-to-day changes, the spread between positions and the temperature
+   error (per C, weighted). points = 1000 * e^(-index / scale): a chronometer near 500, an Observatory piece 600+. */
+const CONTEST={
+  days:[].concat(...["DU","DD","PU","PL","PD"].map(p=>[[p,23],[p,23],[p,23],[p,23]]),
+    [["DU",8],["DU",8],["DU",23],["DU",23],["DU",38],["DU",38],["DU",23],["DU",23],["DU",23],["DU",23]]),
+  w:{mean:1,vari:2,pos:.5,thermal:10},scale:10};
+function contestIndex(days){
+  const n=days.length,mean=a=>a.reduce((x,y)=>x+y,0)/(a.length||1),rt=days.map(d=>d.rate);
+  const mAbs=Math.abs(mean(rt)),vari=n>1?mean(rt.slice(1).map((r,i)=>Math.abs(r-rt[i]))):0;
+  const byPos={};days.forEach(d=>{if(d.temp===23)(byPos[d.pos]=byPos[d.pos]||[]).push(d.rate);});
+  const pm=Object.values(byPos).map(mean),pos=pm.length>1?Math.max(...pm)-Math.min(...pm):0;
+  const c8=days.filter(d=>d.temp===8),c38=days.filter(d=>d.temp===38);
+  const thermal=c8.length&&c38.length?Math.abs(mean(c38.map(d=>d.rate))-mean(c8.map(d=>d.rate)))/30:0;
+  const W=CONTEST.w,index=W.mean*mAbs+W.vari*vari+W.pos*pos+W.thermal*thermal;
+  return{index,points:Math.round(1000*Math.exp(-index/CONTEST.scale)),parts:{mean:mAbs,vari,pos,thermal}};}
+/* -> {days, final:{index, points, parts}, running:[points after day 1, 2, ... 30]} */
+function runContest(cfg,skills,tools,opts){
+  opts=opts||{};
+  const {P,m}=prepModel(cfg,skills,tools,opts),R=rng(opts.trialSeed!=null?opts.trialSeed:"contest");
+  const sd=TRIAL.noise*(1+P.regulator.drift*TRIAL.noiseDrift)*m.wrist/P.bph.rateStability;
+  const days=CONTEST.days.map(([pos,temp])=>({pos,temp,rate:rateAt(m,pos,TRIAL.windT,temp)+gauss(R)*sd*(temp===23?1:TRIAL.thermalNoise)}));
+  const running=days.map((d,i)=>contestIndex(days.slice(0,i+1)).points);
+  return{days,final:contestIndex(days),running};}

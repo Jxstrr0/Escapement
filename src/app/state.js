@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.6.0.0";
+const VERSION="0.7.0.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -82,7 +82,7 @@ const CASES={
   platinum:{name:"Platinum case, guilloché dial",cost:3800,thick:3.6,maxMove:7,mult:1.4,metal:"platinum",needs:"shop"}};
 /* commissions. spec: cert (lowest grade), maxThick (whole watch, mm), comps (must have), finishN (at least that many
    finishes), winding, bph, reserveH (at least), shock (at least basic), metal. budget [lo, hi]; weeks to deliver;
-   tier: 1 from the start, 2 after 20 weeks, 3 after 60. seg is who asks (PR 6 adds reputation by segment) */
+   tier: 1 from the start; 2 and 3 need reputation with the segment's track (REP_SEG, app/calendar.js). seg is who asks */
 const COMMISSION_TEMPLATES=[
   {id:"retire",title:"A retirement watch",seg:"private",tier:1,spec:{cert:"bench",maxThick:8.5},budget:[2300,3100],weeks:6,
     text:"Plain, slim and honest. Something to wear on Sundays."},
@@ -104,7 +104,68 @@ const COMMISSION_TEMPLATES=[
     text:"Ten beats a second, and certified. I collect fast movements."},
   {id:"obs",title:"An Observatory piece",seg:"collector",tier:3,spec:{cert:"observatory",finishN:2},budget:[24000,31000],weeks:16,
     text:"Kessel Peak grade, finished to show. Money is not the question."}];
-const REP_TRACKS={},REP_TIERS=[],RIVALS=[],GOALS={};   // (PR 6)
+/* reputation (PR 6): three tracks, points from 0 up. Who earns it and what it brings is in app/calendar.js (REP_GAIN).
+   Each track's tier (REP_TIERS) opens commissions for its segment (tier 2 commissions need tier 1, tier 3 need tier 3)
+   and scales: press -> walk-in buyers; collectors -> auction bids and resale prices; trade -> batch sizes and prices */
+const REP_TRACKS={
+  collectors:{name:"Collectors",blurb:"Finishing, complications and certificates. Brings auction bids and collectors' commissions."},
+  trade:{name:"Trade",blurb:"Batches on time at a fair price. Brings bigger and better-paid trade batches."},
+  press:{name:"Press",blurb:"Newspapers and word of mouth: repairs done right, certificates, trial podiums. Brings walk-in buyers."}};
+const REP_TIERS=[{at:0,name:"Unknown"},{at:10,name:"Local name"},{at:25,name:"Known in the valley"},{at:50,name:"Respected"},
+  {at:80,name:"Renowned"},{at:120,name:"Legendary"}];
+/* rival shops: they enter the Kessel Peak Trial (trial = their index in 2000, lower is better; it improves by
+   CALENDAR.trial.rivalGain a year) and bid at auctions (bid = how keen, 1 = an average collector) */
+const RIVALS=[
+  {id:"varn",name:"Varn & Söhne",style:"The old trade house down the valley: plain, solid, never late.",trial:9,bid:.85},
+  {id:"halvard",name:"Halvard",style:"Racing chronographs and loud advertising.",trial:6.5,bid:.95},
+  {id:"amsel",name:"Atelier Amsel",style:"Two sisters and a lathe above the bakery. Finishing you can lose an afternoon in.",trial:5.8,bid:1.15},
+  {id:"kessler",name:"Kessler",style:"The valley's big manufacture: a new building every few years.",trial:4.8,bid:1},
+  {id:"ostrander",name:"Ostrander Frères",style:"Observatory chasers since 1921. Precision before anything.",trial:3.6,bid:1.05}];
+/* the dated events. fair: the Haldis Valley Fair (a stand, up to `show` pieces from stock, visitors who buy at the asking
+   price with `buy` times the usual chance, enquiries). trial: the Kessel Peak Trial (entries open to close, the piece is
+   away until back; prizes for the podium). sales: the auction nights at Brugg & Lell (seller's and buyer's fee `fee`;
+   your old pieces can come up for resale once `resaleAfter` weeks have passed, and again `resaleGap` weeks after that). Weeks are 1-52 of each year */
+const CALENDAR={
+  fair:{name:"Haldis Valley Fair",week:37,fee:450,show:3,buy:1.6,ahead:5},
+  trial:{name:"Kessel Peak Trial",open:8,close:18,back:24,fee:250,prizes:[6000,3000,1500],rivalGain:.013,rivalVar:.15},
+  sales:[{week:16,name:"Spring sale"},{week:46,name:"Winter sale"}],
+  house:"Brugg & Lell",fee:.12,ahead:6,resaleAfter:26,resaleGap:104,resaleChance:.3,resaleMax:2,
+  warranty:104};
+/* service returns: a sold piece comes back under warranty (CALENDAR.warranty weeks) on its yearly returnRisk (sim). The
+   cause is drawn from what made the risk (shock, magnetism, oil drift). hours of your or your staff's work, parts and the
+   courier both ways are yours to pay; the customer pays nothing */
+const RETURNS={courier:40,
+  shock:{name:"Dropped",text:"was dropped: a cracked crystal and a bent balance staff",hours:4,parts:120},
+  magnet:{name:"Magnetised",text:"was magnetised by a phone case and gains minutes a day",hours:.5,parts:0},
+  oil:{name:"Oil drift",text:"has its oil drifting away: it loses time and stops at night",hours:6,parts:25}};
+/* news cards on the Career tab, by date. era: the card that starts a MARKET_ERA period (sim/market.js) */
+const NEWS=[
+  {y:2000,w:2,title:"A new century at the bench",text:"The valley school takes its biggest class in twenty years. Mechanical watches are back in the windows of Velm."},
+  {y:2003,w:20,title:"Kessler opens a new building",text:"Glass, steel and three hundred benches. The small workshops wonder where the apprentices will go."},
+  {y:2006,w:30,title:"Silicon in the laboratory",text:"A research group in the capital etches a hairspring from a silicon wafer: no magnetism, no temperature error. The old hands shrug."},
+  {y:2009,w:8,title:"Hard times abroad",text:"Banks wobble across the border. Valley orders slip a little, but the repairs keep coming."},
+  {y:2012,w:26,title:"Ostrander sweep Kessel Peak",text:"First, second and fourth at the Kessel Peak Trial. 'We have been doing this since 1921,' says the younger brother."},
+  {y:2014,w:37,title:"A watch that is a phone",text:"Over the ocean a phone maker shows a watch with a screen. The valley laughs. The trade magazines don't."},
+  {y:2015,w:1,era:true,title:"The smartwatch arrives",text:"Smartwatches are in every Velm department store. Trade houses cut their orders by a third, fewer people buy a mechanical watch, and fewer bring old ones in. (Until 2018: trade −35%, retail −20%, repairs −40%.)"},
+  {y:2015,w:30,title:"'Who needs a chronometer?'",text:"A Velm newspaper asks why anyone pays for accuracy a phone gives away free. Certificates and trial podiums impress the press less for now."},
+  {y:2016,w:20,title:"Two valley workshops close",text:"Staff are being let go up and down the valley. Keeping your people on through the slump is hard, and it is remembered."},
+  {y:2017,w:45,title:"The young want something real",text:"A magazine finds students wearing their grandfathers' watches. The auction houses notice."},
+  {y:2018,w:48,title:"The bottom of the slump?",text:"Trade orders are steadying. Collectors are asking about hand finishing again."},
+  {y:2019,w:1,era:true,title:"The collectors are back",text:"A mechanical watch is a luxury again, and proud of it. Collector demand is up 40% and good finishing pays more. (From 2019: auction bids and collectors' commissions +40%, finished pieces worth up to 25% more.)"},
+  {y:2021,w:15,title:"A record night at Brugg & Lell",text:"An independent's minute repeater makes six figures. Small valley workshops are on magazine covers."},
+  {y:2025,w:10,title:"The valley's quiet centenary",text:"A hundred years of the Haldis Chronometry Bureau. The open day queue goes round the square twice."},
+  {y:2030,w:50,title:"Thirty years",text:"The valley is busier than it has been in a generation. Whatever comes next, it will still need someone who can true a hairspring."}];
+/* goals: first time each happens (checked in app/calendar.js, kept in S.career.goals as {id: week reached}) */
+const GOALS={
+  chronometer:{name:"First Chronometer",blurb:"A BCH certificate from the Haldis Chronometry Bureau."},
+  commission:{name:"First commission",blurb:"Deliver a commissioned piece."},
+  shop:{name:"Your own shop",blurb:"A door of your own on the high street."},
+  podium:{name:"Trial podium",blurb:"Top three at the Kessel Peak Trial."},
+  auction:{name:"Under the hammer",blurb:"Sell a piece at an auction night."},
+  calibre:{name:"Your own calibre",blurb:"Research a calibre of your own (R&D, coming next)."},
+  observatory:{name:"Observatory grade",blurb:"A certificate from the Kessel Peak Observatory."},
+  perpetual:{name:"A perpetual calendar",blurb:"Case and stock a perpetual calendar of your own making."},
+  survive:{name:"Through the slump",blurb:"Reach 2019 with staff on the payroll and nobody let go since 2015."}};
 const RND={};          // R&D projects (PR 7)
 
 /* the business: rent on the shared bench, your own keep (food and the room upstairs), your own bench hours a week, the loan the bank offers once, starting cash,

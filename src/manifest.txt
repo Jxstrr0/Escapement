@@ -4,6 +4,7 @@ css/style.css
 css/build.css
 css/test.css
 css/shop.css
+css/events.css
 html/body.html
 html/ld-libs.html
 sim/parts.js
@@ -27,7 +28,9 @@ app/build.js
 app/test.js
 app/bench.js
 app/business.js
+app/calendar.js
 app/shop.js
 app/career.js
+app/events.js
 app/help.js
 html/tail.html

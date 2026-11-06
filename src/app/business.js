@@ -9,7 +9,8 @@
    - Pieces: Make (Build tab) pays for the parts and queues the assembly. Once made it goes on the timegrapher (c.bench),
      you adjust it, check or certify it (a Bureau or Observatory trial takes weeks and a fee), then case it (CASES) and it
      goes into stock (c.stock) at a price, or to a commission that fits.
-   - closeWeek(): jobs, sales, wages and rent, new repairs and offers, trials coming back, deadlines; then the week report.
+   - closeWeek(): jobs, sales, trials coming back, deadlines, the calendar's events and service returns (app/calendar.js),
+     wages and rent, new repairs and offers, news; then the week report.
      Below zero cash: the bank offers one loan (BIZ.loan). Below zero again: the workshop closes (a restart offer). */
 const car=()=>S.career;
 const inCareer=()=>!!(S.career&&!S.career.over);
@@ -24,19 +25,27 @@ function newCareer(kind){
   const st=BIZ.starts[kind]||BIZ.starts.bench,seed=Math.random().toString(36).slice(2,8);
   const c={kind,seed,start:st.year,year:st.year,week:1,wk:0,cash:st.cash,used:0,up:{},unlocks:{},xp:{},seq:0,
     loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
-    staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop"};
+    staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",
+    rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
+  if(kind==="shop")c.rep={collectors:6,trade:10,press:12};
   for(const id of st.up){c.up[id]=true;c.unlocks["shop:"+id]=true;}
   if(st.xp)for(const k in SKILLS)c.xp[k]=st.xp;
-  S.career=c;S.bAll=false;S.piece=null;S.tgOn=null;
+  S.career=c;S.bAll=false;S.piece=null;S.tgOn=null;c.newsN=newsSkip(c);checkGoals();
   const R=weekRng("start");for(let i=0;i<2;i++)addRepair(R);addOffer(R);refreshCands(R);
   save();}
 
 /* a loaded career: fill in anything missing (older saves, hand-edited codes) so the rest of the game can trust its shape */
 function normCareer(c){if(!buObjS(c))return null;
-  const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false};
+  const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false,
+    sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
   for(const k in d)if(!(k in c))c[k]=d[k];
-  for(const k of ["up","unlocks","xp","certs"])if(!buObjS(c[k]))c[k]={};
-  for(const k of ["jobs","repairs","stock","orders","offers","staff","cands","sold","books"])if(!Array.isArray(c[k]))c[k]=[];
+  for(const k of ["up","unlocks","xp","certs","goals"])if(!buObjS(c[k]))c[k]={};
+  for(const k of ["jobs","repairs","stock","orders","offers","staff","cands","sold","books","news","contests"])if(!Array.isArray(c[k]))c[k]=[];
+  if(!buObjS(c.rep))c.rep={};for(const k in REP_TRACKS)c.rep[k]=Math.max(0,+c.rep[k]||0);
+  for(const k of ["sale","fair","contest"])if(c[k]!=null&&!buObjS(c[k]))c[k]=null;
+  if(c.sale&&!Array.isArray(c.sale.resale))c.sale=null;if(c.fair&&!Array.isArray(c.fair.ids))c.fair=null;
+  c.sold=c.sold.filter(x=>buObjS(x)&&buObjS(x.cfg));c.news=c.news.filter(n=>buObjS(n)&&NEWS[n.i]);
+  if(!("newsN" in c)||!(+c.newsN>=0))c.newsN=newsSkip(c);c.newsN=Math.min(NEWS.length,+c.newsN||0);
   for(const k of ["cash","year","week","wk","used","seq","made"])c[k]=+c[k]||0;
   if(!c.year)c.year=c.start||START_YEAR;if(!c.week)c.week=1;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
@@ -59,7 +68,7 @@ function rent(){let r=BIZ.benchRent;for(const id in UPGRADES)if(upOwned(id)&&UPG
 function wages(){return car().staff.reduce((a,s)=>a+STAFF[s.kind].wage,0);}
 function weeklyCosts(){const c=car();return rent()+BIZ.keep+wages()+(c.loan?c.loan.pay:0);}
 function staffCap(){let n=0;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].staff)n+=UPGRADES[id].staff;return n;}
-function demand(){let d=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].demand)d*=UPGRADES[id].demand;return .2*d*SIM.eraMult(car().year,"retail");}
+function demand(){let d=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].demand)d*=UPGRADES[id].demand;return .2*d*(1+.12*repTier("press"))*SIM.eraMult(car().year,"retail");}
 function fixMult(cls){let f=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].fix&&UPGRADES[id].fix[cls])f*=UPGRADES[id].fix[cls];return f;}
 function batchMult(){let f=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].batch)f*=UPGRADES[id].batch;return f;}
 const dateOf=wk=>{const c=car(),y=c.start+Math.floor(wk/52);return{year:y,week:wk%52+1};};
@@ -68,14 +77,15 @@ const whenTxt=wk=>{const d=wk-car().wk;return d<=0?"this week":d===1?"next week"
 /* ---- upgrades and staff ---- */
 function upNeeds(id){const U=UPGRADES[id];return(U.needs||[]).filter(n=>!upOwned(n));}
 function buyUpgrade(id){const U=UPGRADES[id],c=car();if(!U||upOwned(id)||upNeeds(id).length)return false;
-  if(!pay(U.cost,U.name))return false;c.up[id]=true;c.unlocks["shop:"+id]=true;save();toast(`${U.name}: yours.`);return true;}
+  if(!pay(U.cost,U.name))return false;c.up[id]=true;c.unlocks["shop:"+id]=true;toast(`${U.name}: yours.`);checkGoals();save();return true;}
 function refreshCands(R){const c=car(),kinds=Object.keys(STAFF).filter(k=>!STAFF[k].needs||upOwned(STAFF[k].needs));
   const taken=new Set(c.staff.map(s=>s.name));c.cands=[];
   for(let i=0;i<3;i++){let n=pick(R,STAFF_NAMES);for(let j=0;j<6&&taken.has(n);j++)n=pick(R,STAFF_NAMES);taken.add(n);c.cands.push({name:n,kind:kinds[i%kinds.length]});}}
 function hire(i){const c=car(),x=c.cands[i];if(!x)return;if(c.staff.length>=staffCap()){toast(staffCap()?"No room for more staff: a second bench or a clean room makes room.":"A shared bench has no room for staff: get your own shop first.");return;}
   const K=STAFF[x.kind];if(K.hire&&!pay(K.hire,"signing "+x.name))return;
   c.staff.push({name:x.name,kind:x.kind,since:c.wk});c.cands.splice(i,1);save();toast(`${x.name} starts on Monday.`);}
-function letGo(i){const c=car(),s=c.staff[i];if(!s)return;if(!pay(STAFF[s.kind].wage,"a week's notice for "+s.name))return;c.staff.splice(i,1);save();toast(`${s.name} has left.`);}
+function letGo(i){const c=car(),s=c.staff[i];if(!s)return;if(!pay(STAFF[s.kind].wage,"a week's notice for "+s.name))return;c.staff.splice(i,1);
+  if(c.year>=2015&&c.year<=2018)c.slumpLetGo=true;save();toast(`${s.name} has left.`);}
 
 /* ---- repairs ---- */
 /* a customer's watch: a trade movement with a fault, its own seed */
@@ -90,9 +100,11 @@ function startFix(id,f){const r=repairBy(id),F=FAULTS[f];if(!r||r.state!=="in")r
   r.state="fixing";r.trying=f;car().jobs.push({id:nextId(),kind:"repair",ref:r.id,h:fixHours(f),label:`${F.fix}: ${r.watch}`,staff:true});save();}
 
 /* ---- commissions and trade ---- */
-function addOffer(R){const c=car(),tier=c.wk>=60?3:c.wk>=20?2:1,ok=COMMISSION_TEMPLATES.filter(t=>t.tier<=tier&&!c.offers.some(o=>o.tpl===t.id)&&!c.orders.some(o=>o.tpl===t.id));
-  if(!ok.length||c.offers.length>=3)return;const t=pick(R,ok),[lo,hi]=t.budget;
-  c.offers.push({id:nextId(),tpl:t.id,cust:pick(R,CUSTOMERS),budget:Math.round((lo+(hi-lo)*R())/50)*50,weeks:t.weeks,until:c.wk+BIZ.offerKeep});}
+/* commissions open by reputation: tier 2 needs the segment's track at "Local name", tier 3 at "Respected" */
+const tplOpen=t=>t.tier===1||repTier(REP_SEG[t.seg]||"press")>=(t.tier===2?1:3);
+function addOffer(R,max){const c=car(),ok=COMMISSION_TEMPLATES.filter(t=>tplOpen(t)&&!c.offers.some(o=>o.tpl===t.id)&&!c.orders.some(o=>o.tpl===t.id));
+  if(!ok.length||c.offers.length>=(max||3))return;const t=pick(R,ok),[lo,hi]=t.budget,era=t.seg==="collector"?SIM.eraMult(c.year,"collector"):1;
+  c.offers.push({id:nextId(),tpl:t.id,cust:pick(R,CUSTOMERS),budget:Math.round((lo+(hi-lo)*R())*era/50)*50,weeks:t.weeks,until:c.wk+BIZ.offerKeep});}
 const tplOf=id=>COMMISSION_TEMPLATES.find(t=>t.id===id);
 function acceptOffer(id){const c=car(),i=c.offers.findIndex(o=>o.id===+id);if(i<0)return;const o=c.offers.splice(i,1)[0];
   c.orders.push(Object.assign(o,{due:c.wk+o.weeks}));save();toast(`Accepted: due ${whenTxt(c.wk+o.weeks)}.`);}
@@ -112,16 +124,18 @@ function specChecks(spec,pc){const r=pc.r,cs=CASES[pc.caseId],out=[],cert=pc.cer
 const specOk=(spec,pc)=>specChecks(spec,pc).every(x=>x.ok);
 function orderPay(o){const late=Math.max(0,car().wk-o.due);return Math.round(o.budget*Math.max(.4,1-BIZ.late*late));}
 function deliver(orderId,stockId){const c=car(),o=c.orders.find(x=>x.id===+orderId),i=c.stock.findIndex(x=>x.id===+stockId);if(!o||i<0)return;
-  const pc=c.stock[i];if(!specOk(tplOf(o.tpl).spec,pc))return;const amt=orderPay(o);
-  c.stock.splice(i,1);c.orders=c.orders.filter(x=>x!==o);earn(amt,`${tplOf(o.tpl).title} for ${o.cust}`);
-  c.sold.push({id:pc.id,name:pc.name,cfg:pc.cfg,cert:pc.cert,caseId:pc.caseId,price:amt,wk:c.wk,to:o.cust});
+  const pc=c.stock[i],t=tplOf(o.tpl);if(pc.away||!specOk(t.spec,pc))return;const amt=orderPay(o),late=Math.max(0,c.wk-o.due);
+  c.stock.splice(i,1);c.orders=c.orders.filter(x=>x!==o);earn(amt,`${t.title} for ${o.cust}`);
+  c.sold.push(soldRow(pc,amt,o.cust,"commission"));if(c.sold.length>60)c.sold.shift();
+  const tr=REP_SEG[t.seg]||"press";addRep({[tr]:REP_GAIN.commission-REP_GAIN.commissionLate*late});goal("commission");
   save();toast(`Delivered to ${o.cust}: ${fmt$(amt)}.`);}
 /* trade: batches of plain movements for other brands. One contract at a time, parts paid up front, paid on completion */
 const TRADE_BRANDS=["Varn & Söhne","Ostmark","Tavan","Kessler","Brenner","Lindqvist"];
 const TRADE_CFGS=[{},{winding:"automatic",complications:["date"]},{bph:"21600",jewels:"17",shock:"basic"}];
 function addTradeOffer(R){const c=car();if(c.trade||c.tradeOffer)return;
   const cfg=SIM.normCfg(Object.assign({},SIM.DEFAULT_CFG,pick(R,TRADE_CFGS))).cfg,r=SIM.simulate(cfg,{},null,{seed:"trade"}),T=SIM.tradeTerms(r,1);
-  const qty=[8,12,16,20][Math.floor(R()*4)],price=Math.round(T.price*SIM.eraMult(c.year,"trade")*(.95+.1*R())/5)*5;
+  const tt=repTier("trade"),Q=[8,12,16,20,24,30,40],qty=Q[Math.min(Q.length-1,Math.floor(R()*4)+Math.floor(tt/2)+(tt>=4?1:0))];
+  const price=Math.round(T.price*(1+.03*tt)*SIM.eraMult(c.year,"trade")*(.95+.1*R())/5)*5;
   c.tradeOffer={id:nextId(),brand:pick(R,TRADE_BRANDS),cfg,qty,price,parts:T.parts,hoursEach:T.hours,weeks:Math.ceil(qty*T.hours/BIZ.hoursWeek)+3,until:c.wk+BIZ.offerKeep};}
 function tradeLine(t){const r=SIM.simulate(t.cfg,{},null,{seed:"trade"});return `${t.qty} × ${r.cfg.winding==="automatic"?"automatic":"hand-wound"}${r.cfg.complications.length?" date":""} at ${(+r.cfg.bph).toLocaleString("en-GB")} bph`;}
 function acceptTrade(){const c=car(),t=c.tradeOffer;if(!t)return;if(!pay(t.qty*t.parts,`parts for ${t.qty} movements (${t.brand})`))return;
@@ -152,17 +166,17 @@ function sendTrial(tier){const c=car(),p=c.bench,C=SIM.CERT[tier];if(!p||!p.made
 function casePiece(caseId){const c=car(),p=c.bench,cs=CASES[caseId];if(!p||!p.cert||!cs)return false;
   const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});if(r.thickness>cs.maxMove){toast("The movement is too thick for that case.");return false;}
   if(!pay(cs.cost,`${cs.name.split(",")[0].toLowerCase()} for No. ${p.no}`))return false;
-  const value=SIM.pieceValue(r,p.cert,cs);
+  const fin=SIM.eraMult(c.year,"finish"),value=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
   c.stock.push({id:p.id,no:p.no,name:pieceName(p.cfg,p.no),cfg:p.cfg,seed:p.seed,adjust:p.adjust,cert:p.cert,caseId,value,price:value,since:c.wk,
     thick:+(r.thickness+cs.thick).toFixed(1),r:{reserveH:r.reserveH,prestige:r.prestige,amp24:r.amp24,cost:r.cost}});
-  c.bench=null;S.tgOn=null;save();toast(`No. ${p.no} is cased and in stock at ${fmt$(value)}.`);return true;}
+  c.bench=null;S.tgOn=null;checkGoals();save();toast(`No. ${p.no} is cased and in stock at ${fmt$(value)}.`);return true;}
 function stockBy(id){return car().stock.find(x=>x.id===+id);}
-function sellPiece(pc,price,to){const c=car();c.stock=c.stock.filter(x=>x!==pc);earn(price,`${pc.name} sold${to?" to "+to:""}`);
-  c.sold.push({id:pc.id,name:pc.name,cfg:pc.cfg,cert:pc.cert,caseId:pc.caseId,price,wk:c.wk,to:to||"a buyer"});if(c.sold.length>60)c.sold.shift();}
+function sellPiece(pc,price,to,how){const c=car();c.stock=c.stock.filter(x=>x!==pc);earn(price,`${pc.name} sold${to?" to "+to:""}`);
+  c.sold.push(soldRow(pc,price,to,how));if(c.sold.length>60)c.sold.shift();}
 
 /* ---- Close week ---- */
 function closeWeek(){
-  const c=car();if(!c||c.over)return null;const rep=[],R=weekRng("close");
+  const c=car();if(!c||c.over)return null;const rep=[],R=weekRng("close");calFx={};
   /* 1. the work: staff on repairs and trade, then your hours on everything in order */
   let staffH=c.staff.reduce((a,s)=>a+BIZ.staffHours*STAFF[s.kind].eff,0),mine=hoursLeft(),myRepair=false;
   for(const j of c.jobs){if(j.staff&&staffH>0){const d=Math.min(staffH,j.h);j.h-=d;staffH-=d;}}
@@ -174,17 +188,19 @@ function closeWeek(){
         if(r.complexity)levelToast("complications",gainXp("complications",r.complexity));if(r.cfg.finish.length)levelToast("finishing",gainXp("finishing",2*r.cfg.finish.length));}}
     if(j.kind==="repair"){const r=repairBy(j.ref);if(!r)continue;
       if(r.trying===r.fault){const F=FAULTS[r.fault],amt=Math.round(F.pay*SIM.eraMult(c.year,"repairs"));earn(amt,`${F.fix.toLowerCase()} for ${r.cust}`);
-        rep.push(`Repaired ${r.watch} for ${r.cust}: ${fmt$(amt)}.`);c.repairs=c.repairs.filter(x=>x!==r);if(myRepair)levelToast("assembly",gainXp("assembly",1));}
-      else{r.tried.push(r.trying);r.state="in";rep.push(`${r.watch[0].toUpperCase()+r.watch.slice(1)} (${r.cust}) still runs badly: it wasn't ${FAULTS[r.trying].name.toLowerCase()}. Back on the timegrapher.`);r.trying=null;}}
+        rep.push(`Repaired ${r.watch} for ${r.cust}: ${fmt$(amt)}.`);c.repairs=c.repairs.filter(x=>x!==r);if(myRepair)levelToast("assembly",gainXp("assembly",1));addRep(REP_GAIN.repair,rep);}
+      else{r.tried.push(r.trying);addRep(REP_GAIN.repairWrong,rep);r.state="in";rep.push(`${r.watch[0].toUpperCase()+r.watch.slice(1)} (${r.cust}) still runs badly: it wasn't ${FAULTS[r.trying].name.toLowerCase()}. Back on the timegrapher.`);r.trying=null;}}
     if(j.kind==="trade"&&c.trade&&c.trade.id===j.ref){const t=c.trade,late=Math.max(0,c.wk-t.due),amt=Math.round(t.qty*t.price*Math.max(.4,1-BIZ.tradeLate*late));
-      earn(amt,`${t.qty} movements for ${t.brand}`);rep.push(`${t.brand} took delivery of ${t.qty} movements: ${fmt$(amt)}${late?` (${late} week${late>1?"s":""} late)`:""}.`);c.trade=null;}}
+      earn(amt,`${t.qty} movements for ${t.brand}`);rep.push(`${t.brand} took delivery of ${t.qty} movements: ${fmt$(amt)}${late?` (${late} week${late>1?"s":""} late)`:""}.`);c.trade=null;
+      addRep({trade:REP_GAIN.trade.trade-REP_GAIN.tradeLate*late},rep);}
+    if(j.kind==="warranty"){const s=c.sold.find(x=>x.id===j.ref);if(s)rep.push(`${s.name} went back to ${s.to}, put right.`);}}
   /* 2. retail: this week's buyers each look at the stock and may buy the best value for its price */
   const buyers=poisson(R,demand());
-  for(let b=0;b<buyers&&c.stock.length;b++){let best=null,bv=0;for(const pc of c.stock){const v=pc.value/pc.price;if(v>bv){bv=v;best=pc;}}
-    if(best&&R()<SIM.buyChance(best.value,best.price)){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
+  for(let b=0;b<buyers;b++){let best=null,bv=0;for(const pc of c.stock){if(!pieceFree(pc))continue;const v=pc.value/pc.price;if(v>bv){bv=v;best=pc;}}
+    if(best&&R()<SIM.buyChance(best.value,best.price)){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);addRep(saleGain(best),rep);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
   /* 3. trials coming back */
   const p=c.bench;if(p&&p.trial&&c.wk+1>=p.trial.back){const T=p.trial,C=SIM.CERT[T.tier];
-    if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;}
+    if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;addRep(REP_GAIN.cert[T.tier],rep);}
     rep.push(T.best?`No. ${p.no} is back from the ${C.body}: certified ${C.name}.`:`No. ${p.no} is back from the ${C.body}: refused. See the Test tab.`);
     p.lastTrial=T;p.trial=null;p.seen=false;}
   /* 4. deadlines */
@@ -193,6 +209,8 @@ function closeWeek(){
   for(const o of c.orders.filter(o=>c.wk+1-o.due>BIZ.lateCancel)){rep.push(`${o.cust} cancelled: ${tplOf(o.tpl).title.toLowerCase()} is too late.`);}
   c.orders=c.orders.filter(o=>c.wk+1-o.due<=BIZ.lateCancel);
   c.offers=c.offers.filter(o=>o.until>c.wk+1);if(c.tradeOffer&&c.tradeOffer.until<=c.wk+1)c.tradeOffer=null;
+  /* 4b. the calendar: the fair, the trial's results, an auction night nobody opened, service returns */
+  calClose(rep);
   /* 5. the costs */
   const rt=rent(),wg=wages();c.cash-=rt;book("out",rt,"rent");c.cash-=BIZ.keep;book("out",BIZ.keep,"your keep");
   if(wg){c.cash-=wg;book("out",wg,"wages");}
@@ -202,9 +220,10 @@ function closeWeek(){
   const R2=weekRng("arrive"),nr=poisson(R2,BIZ.repairsWeek*(upOwned("shop")?BIZ.repairsShop:1)*SIM.eraMult(c.year,"repairs"));
   for(let i=0;i<nr;i++)addRepair(R2);if(nr)rep.push(`${nr} watch${nr>1?"es":""} in for repair.`);
   if(R2()<1/BIZ.offerEvery){const n=c.offers.length;addOffer(R2);if(c.offers.length>n)rep.push("A commission enquiry: see the Shop tab.");}
-  if(R2()<1/BIZ.tradeEvery){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep)rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);}
+  if(R2()<(1+.2*repTier("trade"))/BIZ.tradeEvery){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep)rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);}
   if(c.wk%8===0)refreshCands(R2);
   if(newYear)rep.push(`Happy new year: ${c.year}.`);
+  calWeekStart(rep);
   save();
   return{lines:rep,cash:c.cash,broke:c.cash<0};}
 /* below zero: the bank, once; then the end */
