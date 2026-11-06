@@ -2,6 +2,18 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 0.9.0.0: help, the tour, cards and photo mode (PR 8)
+
+- **First screen:** the intro offers **Start at the repair bench** (a Repair bench career, with the tour) or **Just look around** (the Sandbox, as before).
+- **The tour** (`src/app/help.js`, `TUT`): seven coach cards over the bottom of the 3D view, so they never cover the panel; a brass ring marks what to tap. A customer's watch onto the timegrapher, reading the trace, choosing a fix, Close week, then the result: paid, or "not that one", which loops back to try another fix. Then the Build tab and the Settings cog. Steps move on by themselves when you do the thing (`tutKick` runs after every `save()`); a step on another tab offers **Show me**. **Skip tour** any time; Settings → Help → Take the tour replays it in any career. It starts on every new Repair bench career (not Skip ahead). The backup reminder and the camera button wait while it runs. Saved in the career: `tut` (done), `tutStep`, `tutRep` (the watch it follows).
+- **Help** (Settings → Help and glossary): 27 short entries in three groups (Timegrapher, Movement, Business) in `GLOSS`. **Tap to explain:** the timegrapher readouts, the Build capsule's totals and the Test tab's Position, Temperature, Wind and Lift angle labels (dotted underline) open their entry.
+- **Certificates and trophies** (`src/app/cards.js`): each Chronometer or Observatory pass is logged when it comes back (`S.career.certsLog`, last 40) and shown on the Career tab's Certificates card; the trial sheet has a Certificate button after a pass. A certificate is a cream bulletin with a serial (`BCH 2008/001`, `KPO …`), the piece, its four key numbers, every check against its limit, a signature and the stamp. Each reached goal has a **Trophy** card: felt and brass, an escape-wheel medal, the goal, when, and the piece or number behind it. Both are 1080 × 1350 pictures to Save or Share. Passes from before 0.9 weren't logged.
+- **Photo mode** (`src/app/photo.js`, `src/vis/photo.js`): the camera button at the bottom right of the 3D view. The view fills the screen (drag, pinch and the loupe still work), with three backdrops (Workshop, Black velvet, White studio) and a caption strip (piece name with its calibre, certificate, beat and jewels). **Save photo** renders a sharp PNG at 2-4× the screen; **Share** where the phone can share files. Leaving puts the camera and view back exactly. Auto-adjust doesn't lower the tier while photo mode is open. Choices in `S.photo`.
+- **One share path** (`src/app/share.js`, `shareCanvas`): the phone's share sheet when asked and it can take files, else a download. Used by photos and cards.
+- **Bench tab:** a This week card (repairs waiting, your piece, stock, buttons to each tab and Close week) replaces the old placeholder.
+- **Contrast and layout pass** (both themes, measured): a phone on its side gets a side-by-side layout (movement left, tab right); the HUD line and the movement tag stand on a shadow over the gilt plate; toasts lift above the update and backup bars; 44 px tap targets for folded card headers and small steps; darker good / warn / crit text in the light theme and a lighter red on dark-theme delta chips; locked positions, owned upgrades and disabled buttons are no longer faded by opacity.
+- Saved inside `esc-save` (no new keys): `S.career.tut`, `tutStep`, `tutRep`, `certsLog`; `S.photo`.
+
 ## 0.8.0.0: R&D, in-house parts and your own calibre (PR 7)
 
 - **R&D** (Career tab, the R&D card): 17 projects in `RND` (`src/app/state.js`). Pay the cost up front; the project is ready at the Close week its weeks run out, and it teaches you (skill XP). One runs at a time; the clean room or a master watchmaker on the staff gives a second R&D bench. Each project can need a skill level, a Shop upgrade or another project first, and the card says which. Stop a project and the money is gone.
@@ -181,3 +193,4 @@ The Test tab prints these numbers for the movement on the bench until the timegr
 
 ## Known loose ends
 
+- Ultra tone-maps twice (ACES in the RenderPass, then again in the bloom pass's final copy), which is why Ultra looks paler than Full. Photo mode's white studio switches the second one off while it is on; fixing it for good would change Ultra's look everywhere.
