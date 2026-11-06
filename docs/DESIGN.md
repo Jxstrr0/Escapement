@@ -2,6 +2,13 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.0.0.2: speed pass
+
+- Measured on Full and Ultra in the heaviest scene (a grand complication in the manufacture): about 70 draw calls and 20,000 to 35,000 triangles on screen, a 768 px reflection map, 512 px prop textures and no per-frame texture uploads. The draw side was already lean, so the pass removes wasted frames instead of cutting detail.
+- The 3D view draws at most **60 times a second** (`FRAME` in `src/vis/bench.js`). Phones with 90 or 120 Hz screens drew the bench up to twice as often for nothing; a 90 Hz screen still averages 60, not 45.
+- The lamp's **shadow is redrawn every other frame** (30 times a second; `shadowMap.autoUpdate` off). The lamp never moves, only the small swinging parts do. On Ultra the depth-of-field pass used to draw the shadow a second time each frame; now it is drawn once. A photo always gets a fresh shadow.
+- Nothing looks different: Full and Ultra screenshots match the 1.0.0.1 ones (mean difference under 0.5 of 255, only where the balance has swung). Lite is untouched.
+
 ## 1.0.0.1: Ultra's colours
 
 - Ultra tone-mapped the picture twice: once going into the effects buffer, then again in the bloom pass's last copy to the screen (three.js r128 tone-maps every material). The copy no longer tone-maps (`V.bloom.basic.toneMapped=false`), so Ultra shows Full's colours plus its bloom and depth of field; the brass plate no longer greys out. The background's clear colour goes into the composer's linear buffer converted (`sRGB()`), so the workshop, velvet and white backdrops match Full too. Photo mode's white-studio exception is gone (it is no longer needed).

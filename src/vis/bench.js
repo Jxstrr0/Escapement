@@ -24,7 +24,7 @@ function rebuild(){
   makeMats(V.tier);
   V.lamp=buildLights();V.move=buildMovement(V.cfg);
   V.scene.add(V.lamp,V.move);moveModels(V.move);rebuildRoom();rebuildWatch();
-  V.r.shadowMap.enabled=V.tier!=="lite";V.r.shadowMap.type=THREE.PCFSoftShadowMap;
+  V.r.shadowMap.enabled=V.tier!=="lite";V.r.shadowMap.type=THREE.PCFSoftShadowMap;V.r.shadowMap.autoUpdate=false;V.r.shadowMap.needsUpdate=true;
   /* Lite bakes its tone curve into the light (vis/studio.js); Full / Ultra tone-map the HDR reflections on the GPU */
   V.r.toneMapping=V.tier==="lite"?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;V.r.toneMappingExposure=ENV.full.exp;
   V.r.setPixelRatio(V.tier==="lite"?1:Math.min(window.devicePixelRatio||1,2));
@@ -103,9 +103,17 @@ function bindOrbit(el){
 function glide(dt){const g=V.goal;if(!g)return;const o=V.orbit,k=V.reduce?1:Math.min(1,dt*4.5);
   let done=true;for(const key of ["tx","ty","tz","dist","pitch"]){if(g[key]==null)continue;const d=g[key]-o[key];o[key]+=d*k;if(Math.abs(d)>.002)done=false;else o[key]=g[key];}
   if(done)V.goal=null;}
+/* the view draws at most 60 times a second: a 90 or 120 Hz phone would otherwise draw the bench twice as often for no gain
+   (heat, battery, stutter). drawAt steps by whole 60 Hz intervals so a 90 Hz screen still averages 60, not 45 */
+const FRAME={iv:1000/60,slack:4};
 function frame(now){
   requestAnimationFrame(frame);
   if(document.hidden||!V.r)return;
+  if(V.drawAt&&now-V.drawAt<FRAME.iv-FRAME.slack)return;
+  V.drawAt=!V.drawAt||now-V.drawAt>FRAME.iv*2?now:V.drawAt+FRAME.iv;
+  /* the lamp's shadow (Full / Ultra) is drawn every other frame, 30 times a second: the lamp never moves, only the small
+     swinging parts do, and it takes the shadow pass out of half the frames */
+  V.r.shadowMap.needsUpdate=!(V.frameN=(V.frameN||0)+1&1);
   resize(false);
   const t=(now-V.t0)/1000,dt=Math.min(.1,(now-(V.last||now))/1000),u=V.move&&V.move.userData;V.last=now;
   if(u&&u.wheels&&V.move.visible)animateMovement(u,t,dt);
