@@ -93,7 +93,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: the Velmark **thaler** (`Th 4,850`; 100 pfennig to a thaler), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (1.0.0.0)
+## Current status (1.0.0.1)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
@@ -112,7 +112,8 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - PR 8 done (0.9.0.0): `src/app/help.js` (the coach-card tour `TUT`, run by `tutKick` after every `save()`; `GLOSS` glossary, `helpSheet`, tap-to-explain via `data-g` / `gA(key)`), `src/app/cards.js` (certificate and trophy cards, `S.career.certsLog`), `src/app/photo.js` + `src/vis/photo.js` (photo mode, backdrops via `WATCH_VIS.setBackdrop`, `photoGrab`; `S.photo`), `src/app/share.js` (`shareCanvas`, the one save-or-share path). The intro offers a Repair bench career with the tour or the Sandbox. Landscape phones get a side-by-side layout (`style.css`). Tour state in the career: `tut`, `tutStep`, `tutRep`.
 - PR 9 done (0.10.0.0): the Bench's Dial side view (`src/vis/watch.js`: `CASE_GEO`, `WATCH`, `watchLayout`, `dialCanvas`, `buildWatch`; app side `watchSpec()` and `S.dialCase` in `src/app/bench.js`). Each case brings its own dial (cosmetic only). Blender props scripted in `tools/blender/` (`common.py`, `case.py`, `dials.py`, `tourbillon.py`, `machines.py`, `all.py`): three case sizes, four applied-marker dials, the tourbillon cage (`moveModels` in `vis/movement.js`), the timing machine, cleaning machine and display window (`ROOM_MODELS`). Materials are named by role and swapped for the game's own; Lite draws everything in code.
 - 0.10.1.0: balance (R&D 40% cheaper, see Known balance point). 0.10.2.0: polish (upright Roman numerals, the chrono counter kept on a full dial, the display window moved into view, certificate wording).
-- **1.0.0.0: the release.** The plan is built; Settings shows the version. Next: fixes and features from phone testing, one PR each. Still open: the Ultra double tone-map (Ultra looks paler than Full), share and Full performance not yet tried on a real phone. The Kelbo.Website game card is Kelbo's own change in that repo.
+- **1.0.0.0: the release.** The plan is built; Settings shows the version. Next: fixes and features from phone testing, one PR each. Still open: share and Full performance not yet tried on a real phone. The Kelbo.Website game card is Kelbo's own change in that repo.
+- 1.0.0.1: Ultra tone-maps once (the bloom's copy to the screen no longer tone-maps again), so it shows Full's colours.
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)

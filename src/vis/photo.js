@@ -44,15 +44,13 @@ function backGroup(kind){
 /* show the backdrop V.back says. Called on a change, after every room rebuild, and when the tier (or Ultra's composer) changes */
 function backApply(){
   if(!V.r||!V.scene)return;const B=BACK[V.back];
-  /* Ultra's last pass (the bloom, drawn to the screen) tone-maps the already tone-mapped frame a second time, which greys a
-     white studio to about #d5; on the white backdrop it passes the frame through as Full would show it */
-  if(V.bloom&&V.bloom.basic){const tm=V.back!=="white";if(V.bloom.basic.toneMapped!==tm){V.bloom.basic.toneMapped=tm;V.bloom.basic.needsUpdate=true;}}
+  /* Ultra draws into the composer's linear buffer, which the last pass encodes to sRGB: the clear colour goes in linear so
+     the background matches Full (the fog colour mixes in the shader, the same on every tier) */
   if(!B){if(V.room)V.room.visible=true;if(V.backG)V.backG.visible=false;
-    V.r.setClearColor(ROOM.fog.col,1);V.scene.fog.color.set(ROOM.fog.col);return;}
+    V.r.setClearColor(V.comp?sRGB(ROOM.fog.col):ROOM.fog.col,1);V.scene.fog.color.set(ROOM.fog.col);return;}
   if(V.room)V.room.visible=false;
   backGroup(V.back).visible=true;
-  const c=V.comp?sRGB(B.bg):new THREE.Color(B.bg);
-  V.r.setClearColor(c,1);V.scene.fog.color.copy(c);}
+  V.r.setClearColor(V.comp?sRGB(B.bg):new THREE.Color(B.bg),1);V.scene.fog.color.set(B.bg);}
 function backSet(kind){V.back=BACK[kind]?kind:"workshop";backApply();}
 /* photo mode remembers the camera (where it is gliding to, if it is on the way), the view and the backdrop, and puts them back */
 function photoKeep(){const o=V.orbit,g=V.goal||{},at=k=>g[k]!=null?g[k]:o[k];

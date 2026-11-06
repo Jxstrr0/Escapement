@@ -2,6 +2,10 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.0.0.1: Ultra's colours
+
+- Ultra tone-mapped the picture twice: once going into the effects buffer, then again in the bloom pass's last copy to the screen (three.js r128 tone-maps every material). The copy no longer tone-maps (`V.bloom.basic.toneMapped=false`), so Ultra shows Full's colours plus its bloom and depth of field; the brass plate no longer greys out. The background's clear colour goes into the composer's linear buffer converted (`sRGB()`), so the workshop, velvet and white backdrops match Full too. Photo mode's white-studio exception is gone (it is no longer needed).
+
 ## 1.0.0.0: the release
 
 - The plan (`docs/ESCAPEMENT-PLAN.md`) is built: PRs 0 to 9, the balance pass (0.10.1.0) and the polish pass (0.10.2.0). No game changes in 1.0 itself; the version shows at the bottom of Settings and under the intro ("Escapement 1.0.0.0"), and installed copies get the "New version ready" bar as usual.
@@ -236,4 +240,5 @@ The Test tab prints these numbers for the movement on the bench until the timegr
 
 ## Known loose ends
 
-- Ultra tone-maps twice (ACES in the RenderPass, then again in the bloom pass's final copy), which is why Ultra looks paler than Full. Photo mode's white studio switches the second one off while it is on; fixing it for good would change Ultra's look everywhere.
+- None known. Share and the Full tier's frame rate have not yet been tried on a real phone.
+
