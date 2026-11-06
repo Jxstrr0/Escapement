@@ -26,6 +26,7 @@ app/state.js
 app/perf.js
 app/savecode.js
 app/pwa.js
+app/share.js
 app/boot.js
 app/build.js
 app/test.js

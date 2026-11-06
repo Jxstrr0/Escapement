@@ -60,6 +60,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/perf.js` | auto-adjust graphics (`PERF`, `perfPoll`, `perfManual`), `?fps=1` meter |
 | `app/savecode.js` | Back up / Restore: `buCode`, `buRead`, `buWrite`, the two sheets; save safety: backup files, `buPersist`, the storage line, the reminder bar |
 | `app/pwa.js` | service worker registration, the "New version ready" bar, `PWA.canInstall` / `install` / `iosTip` |
+| `app/share.js` | `shareCanvas(canvas, file name, title, share)`: a PNG out through the share sheet or a download link (PEW's `phoSave`); `shareSlug`, `shareStamp`, `canShareFiles` |
 | `app/boot.js` | `TABS`, `TAB_RENDER`, `showTab`, the Settings sheet, intro, `start()` (scheduled with `__ldGo`) |
 | `app/build.js` | the Build tab: `BUILD_SECS`, `UNLOCK_NAME` / `hasUnlock`, `withOpt` (fit or toggle an option with its partners), `bSim` (cached simulate), the delta line, capsule, stress report |
 | `app/test.js` | the Test tab: the piece on the machine (`S.piece` in the Sandbox, `S.career.bench` in a career; `curPiece`, `pieceCfg`, `pieceSim`, `tgMode`, a repair's faulty trace), the career card (`#tgCar`), `ownedTool`, the scrolling trace (`TG`, `tgStart` / `tgStop`), readouts, adjust and certify handlers, the trial sheet |
