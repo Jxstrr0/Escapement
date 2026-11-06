@@ -93,7 +93,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: the Velmark **thaler** (`Th 4,850`; 100 pfennig to a thaler), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (1.0.0.1)
+## Current status (1.0.0.2)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
@@ -114,6 +114,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - 0.10.1.0: balance (R&D 40% cheaper, see Known balance point). 0.10.2.0: polish (upright Roman numerals, the chrono counter kept on a full dial, the display window moved into view, certificate wording).
 - **1.0.0.0: the release.** The plan is built; Settings shows the version. Next: fixes and features from phone testing, one PR each. Still open: share and Full performance not yet tried on a real phone. The Kelbo.Website game card is Kelbo's own change in that repo.
 - 1.0.0.1: Ultra tone-maps once (the bloom's copy to the screen no longer tone-maps again), so it shows Full's colours.
+- 1.0.0.2: speed pass. The 3D view draws at most 60 times a second (`FRAME` in `vis/bench.js`) and the shadow every other frame (`shadowMap.autoUpdate` off; set `needsUpdate` before any extra render that needs a fresh one, as `photoGrab` does).
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)
