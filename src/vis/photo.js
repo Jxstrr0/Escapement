@@ -68,7 +68,7 @@ function photoGrab(scale){
   try{
     V.r.setPixelRatio(pr);V.r.setSize(w,h,false);
     if(V.comp){if(V.comp.setPixelRatio)V.comp.setPixelRatio(pr);V.comp.setSize(w,h);}
-    placeCam();roomCull();
+    placeCam();roomCull();V.r.shadowMap.needsUpdate=true;   // the frame loop draws the shadow every other frame; a photo gets a fresh one
     if(V.dof){const u=V.dof.uniforms;u.focus.value=V.orbit.dist;u.aperture.value=ROOM.dof/V.orbit.dist;}
     if(V.comp)V.comp.render();else V.r.render(V.scene,V.cam);
     out=document.createElement("canvas");out.width=V.canvas.width;out.height=V.canvas.height;out.getContext("2d").drawImage(V.canvas,0,0);
