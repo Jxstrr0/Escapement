@@ -16,7 +16,7 @@ const GLOSS={
   beat:{t:"Beat error",g:"Timegrapher",d:"The difference between the tick and the tock, in milliseconds. On the trace it is the gap between the two lines. Under 0.5 ms is good; over 2 ms sounds limping. Adjust beat brings it down."},
   bph:{t:"Beat (bph)",g:"Timegrapher",d:"Beats per hour: how fast the balance ticks. 28,800 bph is eight ticks a second; 21,600 is six. Faster is steadier against knocks but wears the escapement more and uses more power."},
   lift:{t:"Lift angle",g:"Timegrapher",d:"The part of each swing where the pallet fork pushes the balance. The timegrapher needs it to work out amplitude. Most movements are 52°; set the wrong one and amplitude reads wrong (the rate does not change)."},
-  positions:{t:"Positions",g:"Timegrapher",d:"A watch runs differently lying flat and standing up, because gravity pulls on the balance. DU dial up, DD dial down, and the four crown positions (CU, CD, CL, CR). The trial tests five; a basic timing machine only reads dial up."},
+  positions:{t:"Positions",g:"Timegrapher",d:"A watch runs differently lying flat and standing up, because gravity pulls on the balance. DU dial up, DD dial down, and the four crown positions (PU, PD, PL, PR). The trial tests five; a basic timing machine only reads dial up."},
   temperature:{t:"Temperature",g:"Timegrapher",d:"Warm springs go soft and the watch slows. A steel hairspring drifts about 0.7 s/day per °C; an alloy or silicon spring far less. The BCH trial allows 0.6, the Observatory 0.3."},
   wind:{t:"Wind",g:"Timegrapher",d:"A full mainspring pushes harder than one that has run 24 hours. Checking both shows how well the watch holds its rate as it runs down (isochronism)."},
   iso:{t:"Isochronism",g:"Movement",d:"Keeping the same rate whether the balance swings wide or narrow. A good hairspring (an overcoil, silicon) and a steady mainspring keep the rate flat from full wind to empty."},
@@ -36,6 +36,7 @@ const GLOSS={
   certodds:{t:"Cert odds",g:"Business",d:"The chance a carefully adjusted piece of this build passes each grade (regulated to the middle of the window, beat set, poised). Your skills raise it; the parts set its ceiling."},
   cert:{t:"Certificates",g:"Business",d:"The Haldis Chronometry Bureau (stamp BCH) tests a movement for fifteen days in five positions and three temperatures and grants Chronometer. The Kessel Peak Observatory grants the stricter Observatory grade. Both multiply a piece's value."},
   week:{t:"Close week",g:"Business",d:"Nothing moves until you close the week: you act first (repairs, adjusting, buying), then Close week does the work, brings customers and pays the rent."},
+  bank:{t:"The bank",g:"Business",d:"Each week the rent, your keep and any wages come out of the till. If it drops below zero, the Haldis Savings Bank lends once: enough to cover it, paid back with 8% over a year. Below zero a second time and the workshop closes. The Career card warns you when two weeks of costs or less are left."},
   rep:{t:"Reputation",g:"Business",d:"Three names to make: with collectors, with the trade, and in the press. Good work, sales and prizes raise them; they fade a little each week. Better commissions open as they grow."},
   stress:{t:"Stress report",g:"Business",d:"Parts that fight each other: a heavy balance on a weak spring, a thin movement with a big rotor. Serious ones (✖) hurt the timekeeping or the life of the watch."},
 };
@@ -63,7 +64,7 @@ function tutResult(){const c=car(),r=repairBy(c.tutRep);return !r?"paid":r.state
 /* one step: tab it belongs to, sel (a selector, or {tab: selector}) for the ring, go() the tab "Show me" opens,
    done() moves on by itself, next (a button label) for steps you only read */
 const TUT=[
-  {tab:"shop",sel:'[data-sh="tg"]',title:"Your first repair",
+  {tab:"shop",sel:'[data-sh="tg"]',alt:'[data-sh="close"]',title:"Your first repair",
     text:()=>tutIn()?"A customer has left a watch that isn't running right. Tap <b>Timegrapher</b> to put it on the machine.":"No watches are in just now. Close week and customers bring some in.",
     done:()=>(S.tgOn&&S.tgOn.kind==="repair")||!!tutFixing()},
   {tab:"test",sel:"#tgRead",title:"Read the trace",next:"Got it",
@@ -123,7 +124,7 @@ function tutDom(){if(tutEl)return;
   addEventListener("resize",()=>{if(tutOn())tutPlace();});}
 const tutVal=v=>typeof v==="function"?v():v;
 const tutIdx=id=>TUT.findIndex(T=>T.id===id);   // steps are found by id, so cards can be added without renumbering
-function tutSel(T){if(!T.sel)return null;if(typeof T.sel==="string")return T.sel;return T.sel[curTab]||null;}
+function tutSel(T){if(!T.sel)return null;if(typeof T.sel==="string")return T.alt&&!document.querySelector(T.sel)&&curTab===T.tab?T.alt:T.sel;return T.sel[curTab]||null;}   // alt: where to point when the target isn't there (no repairs in yet)
 function tutTarget(T){const s=tutSel(T);if(!s)return null;const el=document.querySelector(s);if(!el||!el.getClientRects().length)return null;
   if(el.closest(".tabpage")&&!el.closest(".tabpage.on"))return null;return el;}
 function tutStart(again){const c=car();if(!c||c.over)return;c.tut=false;if(again||c.tutStep==null){c.tutStep=0;c.tutRep=null;}tutScrolled=-1;save();tutShow();}
@@ -150,7 +151,7 @@ function tutShow(){if(!tutOn())return tutHide();tutDom();const c=car(),T=TUT[c.t
 function tutPlace(){if(!tutEl||tutEl.hidden)return;const T=TUT[car().tutStep],el=tutTarget(T),sp=tutSpotEl;
   if(!el||sheetOn()){sp.hidden=true;return;}
   const pan=$("panel"),inPanel=pan.contains(el),A=$("app").getBoundingClientRect();let r=el.getBoundingClientRect();
-  if(inPanel&&tutScrolled!==car().tutStep){tutScrolled=car().tutStep;const P=pan.getBoundingClientRect(),room=P.height-(parseFloat(getComputedStyle(pan).paddingBottom)||0);
+  const sk=car().tutStep+"|"+tutSel(T);if(inPanel&&tutScrolled!==sk){tutScrolled=sk;const P=pan.getBoundingClientRect(),room=P.height-(parseFloat(getComputedStyle(pan).paddingBottom)||0);
     const top=r.top-P.top,want=Math.max(12,(room-r.height)/3);if(top<12||top+r.height>room-8){pan.scrollTo({top:pan.scrollTop+top-want,behavior:reduced()?"auto":"smooth"});setTimeout(tutPlace,reduced()?0:420);}
     r=el.getBoundingClientRect();}
   if(inPanel){const P=pan.getBoundingClientRect(),tb=$("tabs").getBoundingClientRect().top;if(r.bottom<P.top+4||r.top>tb-4){sp.hidden=true;return;}}
