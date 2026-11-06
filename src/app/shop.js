@@ -6,6 +6,7 @@
 const capWord=s=>s[0].toUpperCase()+s.slice(1);
 const dealerPrice=x=>Math.round(x.value*BIZ.dealer/10)*10;
 const PRICE_STEPS=[[-.2,"−20%"],[0,"Value"],[.2,"+20%"],[.5,"+50%"]];
+const RESERVES=[[0,"No reserve"],[.8,"Reserve 80% of value"],[1,"Reserve at full value"]];
 function weekCard(){const c=car();
   return `<div class="card shwk"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursLeft(),1)} of ${benchHours()} h left</span></h3>
 <div class="kv"><span>Cash</span><b>${fmt$(c.cash)}</b><span>Costs a week</span><b>${fmt$(weeklyCosts())}</b><span>Staff</span><b>${c.staff.length} of ${staffCap()}</b></div>
@@ -25,14 +26,17 @@ function benchCard(){const c=car(),p=c.bench;let t;
   else{const j=pieceJob();t=`<p><b>${pieceName(p.cfg,p.no)}</b><br>${!p.made?`Being assembled: ${fmtN(j?j.h:0,0)} h left.`:p.trial?`At the ${SIM.CERT[p.trial.tier].body}, back ${whenTxt(p.trial.back-1)}.`:p.cert?`${SIM.CERT[p.cert].name}. Ready to case.`:"Assembled: adjust it and give it a Bench check on the Test tab."}</p>
 ${p.made&&!p.trial?`<div class="row">${p.cert?`<button class="btn pri" data-sh="case">Case it…</button>`:""}<button class="btn" data-sh="test">Test tab</button></div>`:""}`;}
   return `<div class="card"><h3>On your bench</h3>${t}</div>`;}
-function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand();
+function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand(),sn=saleNext(),cc=canConsign();
   return `<div class="card"><h3>In stock<span class="cnt">${c.stock.length}</span></h3><ul class="shlist stk">${c.stock.map(x=>{const pr=x.price/x.value-1;
     const odds=SIM.buyChance(x.value,x.price)*Math.min(1,d);
+    const state=x.away?`<small class="lockt">At the ${CALENDAR.trial.name} until week ${CALENDAR.trial.back}.</small>`
+      :x.lot?`<small class="lockt">Consigned to the ${sn.name} (${sn.now?"this week":"week "+sn.week}), ${RESERVES.find(r=>r[0]===x.lot.reserve)[1].toLowerCase()}. Walk-in buyers don't see it.</small>`
+      :`<div class="seg sm" data-stk="${x.id}">${PRICE_STEPS.map(([f,l])=>`<button type="button" data-pf="${f}" class="${Math.abs(pr-f)<.01?"on":""}">${l}</button>`).join("")}</div>
+<small>Asking ${fmt$(x.price)} · ${odds>.3?"likely to sell soon":odds>.1?"may take a few weeks":"slow at this price"}</small>`;
     return `<li><div><b>${x.name}</b><br><small>${x.cert&&x.cert!=="bench"?SIM.CERT[x.cert].name+" · ":""}${CASES[x.caseId].name.split(",")[0]} · ${x.thick} mm · value ${fmt$(x.value)}</small>
-<div class="seg sm" data-stk="${x.id}">${PRICE_STEPS.map(([f,l])=>`<button type="button" data-pf="${f}" class="${Math.abs(pr-f)<.01?"on":""}">${l}</button>`).join("")}</div>
-<small>Asking ${fmt$(x.price)} · ${odds>.3?"likely to sell soon":odds>.1?"may take a few weeks":"slow at this price"}</small></div>
-<div class="acts"><button class="btn sm" data-sh="dealer" data-id="${x.id}">Dealer ${fmt$(dealerPrice(x))}</button></div></li>`;}).join("")}</ul>
-<p class="hint">${upOwned("shop")?"Walk-in buyers":"Buyers who find a shared bench"} see your stock each week and take the best value for its price. The dealer in town pays at once, but only ${Math.round(BIZ.dealer*100)}%.</p></div>`;}
+${state}</div>
+<div class="acts">${x.away?"":x.lot?(!(c.sale&&c.sale.wk===c.wk&&c.sale.opened)?`<button class="btn sm" data-sh="unlot" data-id="${x.id}">Withdraw</button>`:""):`<button class="btn sm" data-sh="dealer" data-id="${x.id}">Dealer ${fmt$(dealerPrice(x))}</button>${cc?`<button class="btn sm" data-sh="lot" data-id="${x.id}">Auction…</button>`:""}`}</div></li>`;}).join("")}</ul>
+<p class="hint">${upOwned("shop")?"Walk-in buyers":"Buyers who find a shared bench"} see your stock each week and take the best value for its price. The dealer in town pays at once, but only ${Math.round(BIZ.dealer*100)}%.${cc?` The ${sn.name} at ${CALENDAR.house} (${sn.now?"this week":"week "+sn.week}) takes consignments now.`:""}</p></div>`;}
 function ordersCard(){const c=car();if(!c.orders.length&&!c.offers.length)return "";
   const specLine=(t,pc)=>specChecks(t.spec,pc||{cfg:{complications:[],finish:[]},r:{reserveH:0},thick:99,cert:null});
   const specTxt=t=>specLine(t).map(x=>x.label).join(" · ");
@@ -76,8 +80,10 @@ $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]"
   if(k==="fix")fixSheet(+id);
   if(k==="case")caseSheet();
   if(k==="test")showTab("test");
-  if(k==="dealer"){const x=stockBy(id);if(x)confirmSheet(`Sell ${x.name} to the dealer?`,`He pays ${fmt$(dealerPrice(x))} now. In stock it's worth ${fmt$(x.value)}.`,"Sell it",()=>{sellPiece(x,dealerPrice(x),"the dealer");save();shopChanged();});}
+  if(k==="dealer"){const x=stockBy(id);if(x)confirmSheet(`Sell ${x.name} to the dealer?`,`He pays ${fmt$(dealerPrice(x))} now. In stock it's worth ${fmt$(x.value)}.`,"Sell it",()=>{sellPiece(x,dealerPrice(x),"the dealer","dealer");save();shopChanged();});}
   if(k==="deliver")deliver(id,b.dataset.pc);
+  if(k==="lot")lotSheet(+id);
+  if(k==="unlot"){consign(id,null);toast("Withdrawn from the sale.");}
   if(k==="cancel")confirmSheet("Cancel this commission?","The customer goes elsewhere. Nothing is paid either way.","Cancel it",()=>{cancelOrder(id);shopChanged();});
   if(k==="accept")acceptOffer(id);
   if(k==="trade")acceptTrade();
@@ -100,12 +106,20 @@ function fixSheet(id){const r=repairBy(id);if(!r)return;
     if(S.tgOn&&S.tgOn.id===id)S.tgOn=null;save();closeSheet();toast(`${FAULTS[b.dataset.fix].fix}: in the work in hand.`);shopChanged();});}
 /* case a finished piece: the cases that take this movement, the value in each */
 function caseSheet(){const c=car(),p=c.bench;if(!p)return;const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});
-  const ok=c.orders.map(o=>tplOf(o.tpl));
+  const ok=c.orders.map(o=>tplOf(o.tpl)),fin=SIM.eraMult(c.year,"finish");
   openSheet(`Case No. ${p.no}`,`<p>${pieceName(p.cfg,p.no)} · ${SIM.CERT[p.cert].name} · movement ${r.thickness.toFixed(1)} mm</p>
-<ul class="shlist fixes">${Object.keys(CASES).map(id=>{const cs=CASES[id],fits=r.thickness<=cs.maxMove,lock=cs.needs&&!upOwned(cs.needs),v=SIM.pieceValue(r,p.cert,cs);
+<ul class="shlist fixes">${Object.keys(CASES).map(id=>{const cs=CASES[id],fits=r.thickness<=cs.maxMove,lock=cs.needs&&!upOwned(cs.needs),v=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
   const forO=ok.filter(t=>specOk(t.spec,{cfg:p.cfg,r,cert:p.cert,caseId:id,thick:r.thickness+cs.thick}));
   return `<li class="${fits&&!lock?"":"own"}"><div><b>${cs.name}</b><br><small>${fmt$(cs.cost)} · ${(r.thickness+cs.thick).toFixed(1)} mm cased · value ${fmt$(v)}${!fits?` · too thick: takes ${cs.maxMove} mm at most`:lock?" · needs your own shop":""}</small>${forO.length?`<br><small class="good">Fits: ${forO.map(t=>t.title.toLowerCase()).join(", ")}</small>`:""}</div>
 <div class="acts"><button class="btn sm" data-case="${id}"${!fits||lock||c.cash<cs.cost?" disabled":""}>Case</button></div></li>`;}).join("")}</ul>`);
   $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-case]");if(!b)return;if(casePiece(b.dataset.case)){closeSheet();shopChanged();}});}
+/* consign a stock piece to the next auction night, with a reserve */
+function lotSheet(id){const x=stockBy(id),sn=saleNext();if(!x||!sn)return;
+  const est=lotEst(x);
+  openSheet(`The ${sn.name} at ${CALENDAR.house}`,`<p><b>${x.name}</b> · value ${fmt$(x.value)}</p>
+<p>The catalogue would estimate it around <b>${fmt$(est)}</b>. Collectors bid it up from there: the better your name with them, the keener they are. ${CALENDAR.house} keep ${Math.round(CALENDAR.fee*100)}% of the hammer price.</p>
+<ul class="shlist fixes">${RESERVES.map(([f,l])=>`<li><div><b>${l}</b><br><small>${f?`Unsold below ${fmt$(x.value*f)}: it comes back to stock.`:"It sells, whatever the bidding."}</small></div><div class="acts"><button class="btn sm" data-res="${f}">Consign</button></div></li>`).join("")}</ul>
+<p class="hint">Sale ${sn.now?"this week":`in week ${sn.week}`}. Until then it's held for the sale: walk-in buyers and the dealer don't see it.</p>`);
+  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-res]");if(!b)return;consign(id,+b.dataset.res);closeSheet();toast(`Consigned to the ${sn.name}.`);shopChanged();});}
 $("exportSave").addEventListener("click",buBackupOpen);
 $("importSave").addEventListener("click",buRestoreOpen);
