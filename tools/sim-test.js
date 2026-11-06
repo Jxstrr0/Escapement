@@ -2,7 +2,8 @@
 /* Escapement: run the watch sim in plain node and print a table (plan section 4d).
  *
  *   node tools/sim-test.js            DEFAULT_CFG and every TEST_BUILDS entry, one block each
- *   node tools/sim-test.js --brief    one line per build (for before/after numbers in commit messages)
+ *   node tools/sim-test.js --brief    one line per build (for before/after numbers in commit messages), ending with the
+ *                                     Chronometer / Observatory odds (SIM.certOdds, 20 pieces) at skill levels 1, 5 and 10
  *   node tools/sim-test.js --json     the raw result objects
  *
  * It cuts the WATCH_SIM <script> block out of the built index.html (run `node build.js` first), so it tests exactly what
@@ -40,9 +41,12 @@ const out = {};
 for (const [name, cfg] of Object.entries(TEST_BUILDS)) {
   const r = SIM.simulate(Object.assign({}, SIM.DEFAULT_CFG, cfg));
   out[name] = r;
+  const pc = x => Math.round(x * 100) + "%";
+  const odds = [1, 5, 10].map(l => { const o = SIM.certOdds(r.cfg, { assembly: l, regulating: l, poising: l, complications: l }, null, 20); return `L${l} ${pc(o.chronometer)}/${pc(o.observatory)}`; }).join(" ");
+  r.certOdds = odds;
   if (json) continue;
   if (brief) {
-    console.log(`${name.padEnd(38)} amp ${Math.round(r.amp0)}/${Math.round(r.amp24)}°  res ${Math.round(r.reserveH)}h  mean ${f1(r.rateMean24)}  spread ${r.posSpread24.toFixed(1)}  temp ${r.tempSpread.toFixed(1)}  beat ${r.beatErr.toFixed(2)}ms  ${r.thickness.toFixed(1)}mm  Th ${r.cost}  ${Math.round(r.hours)}h  P${r.prestige}`);
+    console.log(`${name.padEnd(38)} amp ${Math.round(r.amp0)}/${Math.round(r.amp24)}°  res ${Math.round(r.reserveH)}h  mean ${f1(r.rateMean24)}  spread ${r.posSpread24.toFixed(1)}  temp ${r.tempSpread.toFixed(1)}  beat ${r.beatErr.toFixed(2)}ms  ${r.thickness.toFixed(1)}mm  Th ${r.cost}  ${Math.round(r.hours)}h  P${r.prestige}  BCH/Obs ${odds}`);
     continue;
   }
   console.log(`\n== ${name}`);
@@ -51,6 +55,7 @@ for (const [name, cfg] of Object.entries(TEST_BUILDS)) {
   console.log(`   mean at 24 h ${f1(r.rateMean24)} s/d, position spread ${r.posSpread24.toFixed(1)} s/d, 8→38 °C ${r.tempSpread.toFixed(1)} s/d, beat error ${r.beatErr.toFixed(2)} ms`);
   console.log(`   shock ${r.shock.toFixed(2)}, magnetism resistance ${r.magnetResist.toFixed(2)}, return risk ${(r.returnRisk * 100).toFixed(0)}%/yr, service every ${r.serviceYears.toFixed(1)} y`);
   console.log(`   ${r.thickness.toFixed(1)} mm, ${r.parts} parts, Th ${r.cost} parts cost, ${Math.round(r.hours)} bench hours, prestige ${r.prestige}`);
+  console.log(`   certification odds (Chronometer / Observatory) at skill level 1, 5, 10: ${odds}`);
   for (const s of r.stress) console.log(`   [${s.sev}] ${s.text}`);
 }
 if (json) console.log(JSON.stringify(out, (k, v) => (k === "m" ? undefined : v), 2));
