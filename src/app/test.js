@@ -209,7 +209,7 @@ ${res.checks.map(c=>`<tr class="${c.ok?"ok":"no"}"><td>${c.label}</td><td>${c.va
 </tbody></table>
 <details class="raw"><summary>The fifteen days</summary><table class="checks days"><tbody>${days}</tbody></table></details>
 <div class="row" style="margin-top:14px"><button class="btn pri" id="certOk">Back to the bench</button></div>`);
-  $("certOk").addEventListener("click",closeSheet);}
+  $("certOk").addEventListener("click",closeSheet);certSheetBtn(t,id);}
 onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
   const id=b.dataset.cert,C=SIM.CERT[id],p=curPiece(),tool=ownedTool();
   if(inCareer()&&id!=="bench"){
