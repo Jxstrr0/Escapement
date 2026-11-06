@@ -22,7 +22,7 @@
         <div class="field"><span class="lbl">View</span><div class="seg" id="bView" role="group" aria-label="How the movement sits"></div></div>
         <button type="button" class="btn" id="bLoupe" aria-pressed="false">Loupe on the escapement</button>
         <p class="hint">Change parts on the Build tab and the movement here is rebuilt to match; regulate it on the Test tab and the balance swings at the new amplitude.</p></div>
-      <div class="card"><h3>Repair queue<span class="soon">PR 5</span></h3><p>Customer watches with a fault come in here. Diagnose them on the timegrapher, fix them and get paid.</p></div>
+      <div class="card" id="bTodo"></div>
     </section>
 
     <!-- BUILD: part-by-part movement design -->
@@ -47,8 +47,8 @@
         <canvas id="tgCv" aria-label="Timegrapher trace" role="img"></canvas>
         <div class="tgfoot"><span id="tgMach"></span><button class="btn sm ghost" id="tgSnd" aria-pressed="true"></button></div>
       </div>
-      <div class="field"><span class="lbl">Position</span><div class="seg tgpos" id="tgPos" role="group" aria-label="Position"></div><p class="hint" id="tgPosHint" hidden></p></div>
-      <div class="field" id="tgTempF" hidden><span class="lbl">Temperature</span><div class="seg" id="tgTemp" role="group" aria-label="Temperature"></div></div>
+      <div class="field"><span class="lbl" data-g="positions" role="button" tabindex="0">Position</span><div class="seg tgpos" id="tgPos" role="group" aria-label="Position"></div><p class="hint" id="tgPosHint" hidden></p></div>
+      <div class="field" id="tgTempF" hidden><span class="lbl" data-g="temperature" role="button" tabindex="0">Temperature</span><div class="seg" id="tgTemp" role="group" aria-label="Temperature"></div></div>
       <div class="card" id="adjCard"><h3>Adjust<span class="cnt" id="adjHrs"></span></h3>
         <div class="slot"><span class="lbl">Regulate <small id="regRes"></small></span><div class="seg" id="regBtns" role="group" aria-label="Regulate"></div></div>
         <div class="row adjrow"><button class="btn" id="adjBeat"></button><button class="btn" id="adjPoise"></button></div>
@@ -59,8 +59,8 @@
         <div class="certs" id="certBtns"></div>
       </div>
       <div class="card" id="tgSetCard"><h3>Timing machine</h3>
-        <div class="field"><span class="lbl">Wind</span><div class="seg" id="tgWind" role="group" aria-label="Wind"></div></div>
-        <div class="field"><span class="lbl">Lift angle</span><div class="seg" id="tgLift" role="group" aria-label="Lift angle"></div>
+        <div class="field"><span class="lbl" data-g="wind" role="button" tabindex="0">Wind</span><div class="seg" id="tgWind" role="group" aria-label="Wind"></div></div>
+        <div class="field"><span class="lbl" data-g="lift" role="button" tabindex="0">Lift angle</span><div class="seg" id="tgLift" role="group" aria-label="Lift angle"></div>
           <p class="hint">The machine works amplitude out from the lift angle you give it. Set it wrong and the amplitude reads wrong; the rate doesn't care.</p></div>
         <details class="raw"><summary>All the numbers</summary><pre class="mono simout" id="simOut"></pre></details>
       </div>
@@ -82,7 +82,6 @@
       <h2 id="h-career">Career</h2>
       <p class="lede">Weeks from 2000 to 2030: the valley fair, chronometry trials, auction nights, and the smartwatch years.</p>
       <div id="careerBody"></div>
-      <div class="card"><h3>R&amp;D<span class="soon">PR 7</span></h3><p>New escapements, hairsprings, complications, and one day your own calibre.</p></div>
     </section>
   </div>
 
@@ -103,7 +102,8 @@
       <h1>Escapement</h1>
       <p class="sub">A watchmaker's career · The Haldis, Velmark</p>
       <p>Build mechanical movements part by part. Put them on the timegrapher, chase chronometer certification, and grow a shared repair bench into a manufacture with its own calibres.</p>
-      <button class="btn pri" id="introGo">Open the bench</button>
+      <div class="introbtns"><button class="btn pri" id="introBench">Start at the repair bench</button><button class="btn" id="introGo">Just look around</button></div>
+      <p class="introhint">The repair bench is a career with a short tour. Looking around opens the Sandbox: every part, no money. A career can start any time from the Career tab.</p>
       <div class="credit">A game by Longlight Interactive · <span id="verLbl"></span></div>
     </div>
   </div>

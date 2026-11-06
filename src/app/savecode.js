@@ -219,6 +219,7 @@ function buBarHide(){if(buBar)buBar.classList.remove("on");}
 function buRemind(){
   if(buReminded||$("boot")||sheetOn()||!$("intro").hidden||!buHasProgress())return;
   const pb=$("pwaBar");if(pb&&pb.classList.contains("on"))return;   // not now: the next calm moment tries again
+  if(tutReady&&tutOn())return;   // nor during the tour (app/help.js)
   const last=buNum(S.lastBackup)?S.lastBackup:0,days=last?Math.floor((Date.now()-last)/864e5):Infinity;
   if(days<BU_REMIND_DAYS)return;
   buReminded=true;

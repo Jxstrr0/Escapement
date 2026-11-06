@@ -25,7 +25,7 @@ function newCareer(kind){
   const st=BIZ.starts[kind]||BIZ.starts.bench,seed=Math.random().toString(36).slice(2,8);
   const c={kind,seed,start:st.year,year:st.year,week:1,wk:0,cash:st.cash,used:0,up:{},unlocks:{},xp:{},seq:0,
     loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
-    staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",
+    staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",tutStep:kind==="shop"?null:0,tutRep:null,
     rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,
     rnd:{done:{},run:[]},calibres:[]};
   if(kind==="shop")c.rep={collectors:6,trade:10,press:12};
@@ -37,7 +37,7 @@ function newCareer(kind){
 
 /* a loaded career: fill in anything missing (older saves, hand-edited codes) so the rest of the game can trust its shape */
 function normCareer(c){if(!buObjS(c))return null;
-  const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false,
+  const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false,tutStep:null,tutRep:null,
     sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
   for(const k in d)if(!(k in c))c[k]=d[k];
   for(const k of ["up","unlocks","xp","certs","goals"])if(!buObjS(c[k]))c[k]={};
@@ -52,6 +52,7 @@ function normCareer(c){if(!buObjS(c))return null;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
   c.stock=c.stock.filter(x=>buObjS(x)&&buObjS(x.cfg)&&CASES[x.caseId]);c.jobs=c.jobs.filter(j=>buObjS(j)&&+j.h>0);
   if(c.bench&&!(buObjS(c.bench)&&buObjS(c.bench.cfg)))c.bench=null;
+  c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min(6,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
   c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
   for(const id in c.rnd.done)c.unlocks["rnd:"+id]=true;
   return c;}

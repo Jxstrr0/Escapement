@@ -345,6 +345,48 @@ html.reduce #crack.on g{animation:none;stroke-dasharray:none}
 html.reduce #crack.on::before{display:none}
 @keyframes crackOnR{0%{opacity:1}100%{opacity:0}}
 :root[data-theme=light] #crack g{stroke:rgba(40,46,50,.8);filter:none}
+/* ---- help.css: the tour's coach card and ring, the Help sheet's glossary, tap-to-explain hints (app/help.js), and the
+   intro's two buttons. The coach card sits over the bottom of the 3D view, which stays dark in both themes; the ring
+   pulses unless motion is reduced. ---- */
+#coach{position:absolute;left:10px;right:10px;bottom:10px;z-index:30;max-height:calc(100% - 64px);overflow-y:auto;padding:10px 12px 12px;
+  border-radius:12px;background:rgba(17,23,20,.94);border:1px solid rgba(201,164,92,.55);box-shadow:0 8px 24px rgba(0,0,0,.5);color:var(--chalk)}
+#view.coach #tag{visibility:hidden}
+#coach .cotop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-4px -4px 2px 0}
+#coStep{font-family:var(--mono);font-size:12px;color:var(--brass-t);letter-spacing:.04em}
+#coSkip{min-height:36px;padding:0 10px;font-size:13px;color:var(--muted)}
+#coTitle{display:block;font-size:16px;margin-bottom:2px}
+#coText{margin:0;font-size:14px;line-height:1.4;color:var(--muted)}
+#coText b{color:var(--chalk)}
+#coActs{margin-top:8px}
+#coActs[hidden]{display:none}
+#coSpot{position:absolute;z-index:30;pointer-events:none;border-radius:12px;border:2px solid var(--brass2);
+  box-shadow:0 0 0 3px rgba(224,192,126,.25),0 0 18px rgba(224,192,126,.45);animation:coPulse 1.6s ease-in-out infinite}
+@keyframes coPulse{50%{box-shadow:0 0 0 6px rgba(224,192,126,.12),0 0 24px rgba(224,192,126,.6)}}
+:root[data-theme=light] #coSpot{border-color:#9a7424;box-shadow:0 0 0 3px rgba(154,116,36,.25)}
+@media (max-height:560px) and (orientation:landscape){
+  #coach{display:grid;grid-template-columns:auto 1fr auto auto;grid-template-areas:"step title acts skip" "text text text text";align-items:center;column-gap:10px;padding:6px 10px 8px;bottom:6px}
+  #coach .cotop{display:contents}#coStep{grid-area:step}#coSkip{grid-area:skip}#coTitle{grid-area:title;font-size:14px;margin:0;min-width:0}
+  #coText{grid-area:text;font-size:13px;line-height:1.3}#coActs{grid-area:acts;margin:0;flex-wrap:nowrap}#coActs .btn{min-height:36px}}
+html.reduce #coSpot{animation:none}
+@media (prefers-reduced-motion:reduce){#coSpot{animation:none}}
+@media (prefers-reduced-transparency:reduce){#coach{background:#111714}}
+/* tap-to-explain: a dotted underline on the label says it opens help */
+[data-g]{cursor:help;-webkit-tap-highlight-color:transparent}
+[data-g]>span:first-child,.lbl[data-g]{text-decoration:underline dotted;text-decoration-color:var(--dim);text-underline-offset:3px}
+[data-g]:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:4px}
+/* the Help sheet */
+details.gl{border-bottom:1px solid var(--rule)}
+details.gl summary{cursor:pointer;padding:10px 0;font-weight:600;min-height:44px;box-sizing:border-box;display:flex;align-items:center}
+details.gl summary::after{content:"+";margin-left:auto;color:var(--brass-t);font-family:var(--mono)}
+details.gl[open] summary::after{content:"−"}
+details.gl p{margin:0 0 12px;color:var(--muted)}
+.glone{margin-top:0}
+/* the intro */
+#intro .introbtns{display:flex;flex-direction:column;gap:10px}
+#intro p.introhint{margin:12px 0 0;font-size:13px;color:var(--dim)}
+/* the Bench tab's week card (app/bench.js) */
+ul.todo{margin:0 0 4px;padding-left:18px;color:var(--muted)}
+ul.todo li{margin:2px 0}
 </style>
 
 <div id="app">
@@ -369,7 +411,7 @@ html.reduce #crack.on::before{display:none}
         <div class="field"><span class="lbl">View</span><div class="seg" id="bView" role="group" aria-label="How the movement sits"></div></div>
         <button type="button" class="btn" id="bLoupe" aria-pressed="false">Loupe on the escapement</button>
         <p class="hint">Change parts on the Build tab and the movement here is rebuilt to match; regulate it on the Test tab and the balance swings at the new amplitude.</p></div>
-      <div class="card"><h3>Repair queue<span class="soon">PR 5</span></h3><p>Customer watches with a fault come in here. Diagnose them on the timegrapher, fix them and get paid.</p></div>
+      <div class="card" id="bTodo"></div>
     </section>
 
     <!-- BUILD: part-by-part movement design -->
@@ -394,8 +436,8 @@ html.reduce #crack.on::before{display:none}
         <canvas id="tgCv" aria-label="Timegrapher trace" role="img"></canvas>
         <div class="tgfoot"><span id="tgMach"></span><button class="btn sm ghost" id="tgSnd" aria-pressed="true"></button></div>
       </div>
-      <div class="field"><span class="lbl">Position</span><div class="seg tgpos" id="tgPos" role="group" aria-label="Position"></div><p class="hint" id="tgPosHint" hidden></p></div>
-      <div class="field" id="tgTempF" hidden><span class="lbl">Temperature</span><div class="seg" id="tgTemp" role="group" aria-label="Temperature"></div></div>
+      <div class="field"><span class="lbl" data-g="positions" role="button" tabindex="0">Position</span><div class="seg tgpos" id="tgPos" role="group" aria-label="Position"></div><p class="hint" id="tgPosHint" hidden></p></div>
+      <div class="field" id="tgTempF" hidden><span class="lbl" data-g="temperature" role="button" tabindex="0">Temperature</span><div class="seg" id="tgTemp" role="group" aria-label="Temperature"></div></div>
       <div class="card" id="adjCard"><h3>Adjust<span class="cnt" id="adjHrs"></span></h3>
         <div class="slot"><span class="lbl">Regulate <small id="regRes"></small></span><div class="seg" id="regBtns" role="group" aria-label="Regulate"></div></div>
         <div class="row adjrow"><button class="btn" id="adjBeat"></button><button class="btn" id="adjPoise"></button></div>
@@ -406,8 +448,8 @@ html.reduce #crack.on::before{display:none}
         <div class="certs" id="certBtns"></div>
       </div>
       <div class="card" id="tgSetCard"><h3>Timing machine</h3>
-        <div class="field"><span class="lbl">Wind</span><div class="seg" id="tgWind" role="group" aria-label="Wind"></div></div>
-        <div class="field"><span class="lbl">Lift angle</span><div class="seg" id="tgLift" role="group" aria-label="Lift angle"></div>
+        <div class="field"><span class="lbl" data-g="wind" role="button" tabindex="0">Wind</span><div class="seg" id="tgWind" role="group" aria-label="Wind"></div></div>
+        <div class="field"><span class="lbl" data-g="lift" role="button" tabindex="0">Lift angle</span><div class="seg" id="tgLift" role="group" aria-label="Lift angle"></div>
           <p class="hint">The machine works amplitude out from the lift angle you give it. Set it wrong and the amplitude reads wrong; the rate doesn't care.</p></div>
         <details class="raw"><summary>All the numbers</summary><pre class="mono simout" id="simOut"></pre></details>
       </div>
@@ -429,7 +471,6 @@ html.reduce #crack.on::before{display:none}
       <h2 id="h-career">Career</h2>
       <p class="lede">Weeks from 2000 to 2030: the valley fair, chronometry trials, auction nights, and the smartwatch years.</p>
       <div id="careerBody"></div>
-      <div class="card"><h3>R&amp;D<span class="soon">PR 7</span></h3><p>New escapements, hairsprings, complications, and one day your own calibre.</p></div>
     </section>
   </div>
 
@@ -450,7 +491,8 @@ html.reduce #crack.on::before{display:none}
       <h1>Escapement</h1>
       <p class="sub">A watchmaker's career · The Haldis, Velmark</p>
       <p>Build mechanical movements part by part. Put them on the timegrapher, chase chronometer certification, and grow a shared repair bench into a manufacture with its own calibres.</p>
-      <button class="btn pri" id="introGo">Open the bench</button>
+      <div class="introbtns"><button class="btn pri" id="introBench">Start at the repair bench</button><button class="btn" id="introGo">Just look around</button></div>
+      <p class="introhint">The repair bench is a career with a short tour. Looking around opens the Sandbox: every part, no money. A career can start any time from the Career tab.</p>
       <div class="credit">A game by Longlight Interactive · <span id="verLbl"></span></div>
     </div>
   </div>
@@ -2189,7 +2231,7 @@ function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,
 let S=freshState();
 
 const buObjS=o=>!!o&&typeof o==="object"&&!Array.isArray(o);
-function save(){if(typeof roomSync==="function")roomSync();try{localStorage.setItem("esc-save",JSON.stringify(S));}catch(e){return;}buSaved();}   // buSaved: app/savecode.js (asks the browser to keep our storage); roomSync: app/bench.js (a bought machine shows up in the workshop)
+function save(){if(typeof roomSync==="function")roomSync();try{localStorage.setItem("esc-save",JSON.stringify(S));}catch(e){return;}buSaved();if(typeof tutKick==="function")tutKick();}   // buSaved: app/savecode.js (asks the browser to keep our storage); tutKick: app/help.js (the tour moves on); roomSync: app/bench.js (a bought machine shows up in the workshop)
 function snapshot(){return JSON.parse(JSON.stringify(S));}
 /* load a save object into S. false (and S untouched) if it isn't one of ours */
 function hydrate(o){if(!buObjS(o)||!buObjS(o.cfg))return false;
@@ -2496,6 +2538,7 @@ function buBarHide(){if(buBar)buBar.classList.remove("on");}
 function buRemind(){
   if(buReminded||$("boot")||sheetOn()||!$("intro").hidden||!buHasProgress())return;
   const pb=$("pwaBar");if(pb&&pb.classList.contains("on"))return;   // not now: the next calm moment tries again
+  if(tutReady&&tutOn())return;   // nor during the tour (app/help.js)
   const last=buNum(S.lastBackup)?S.lastBackup:0,days=last?Math.floor((Date.now()-last)/864e5):Infinity;
   if(days<BU_REMIND_DAYS)return;
   buReminded=true;
@@ -2561,7 +2604,7 @@ async function shareCanvas(c,fn,title,share){
   setTimeout(()=>URL.revokeObjectURL(a.href),8000);toast("Picture saved.");return true;}
 /* ===================== app/boot.js: tabs, Settings, intro, start-up =====================
    showTab(t) switches the five tabs (Bench, Build, Test, Shop, Career) and remembers the last one in S.tab.
-   openSettings() fills the bottom sheet: graphics tier, auto-adjust, theme, motion, saves, install, version.
+   openSettings() fills the bottom sheet: graphics tier, auto-adjust, theme, motion, sound, help and the tour, saves, install, version.
    start() runs once the whole app script has loaded (scheduled through __ldGo at the bottom of this file): it loads
    the save, starts the 3D view, draws the tabs and lifts the loading splash. */
 const TABS=["bench","build","test","shop","career"];
@@ -2592,6 +2635,7 @@ function openSettings(){
 <div class="field"><span class="lbl">Theme</span>${segHtml("themeSeg","theme",[["dark","Dark","felt"],["light","Light","workshop"],["auto","Auto","follow phone"]],S.theme||"dark")}</div>
 <div class="field"><span class="lbl">Motion</span>${segHtml("reduceSeg","reduce",[["auto","Auto","follow phone"],["1","Reduced"],["0","Full"]],S.reduce==null?"auto":S.reduce?"1":"0")}</div>
 <div class="field"><span class="lbl">Sound</span>${segHtml("sndSeg","snd",[["1","On","the tick on the Test tab"],["0","Off"]],S.sound===false?"0":"1")}</div>
+<div class="field"><span class="lbl">Help</span><div class="row"><button class="btn" id="setHelp">Help and glossary</button>${inCareer()&&!car().over?`<button class="btn" id="setTour">Take the tour</button>`:""}</div></div>
 <div class="field"><span class="lbl">Saves</span><div class="row"><button class="btn" id="setBackup">Back up</button><button class="btn" id="setRestore">Restore</button></div>
 <div class="row"><button class="btn" data-bu="file">Save backup file</button><button class="btn" data-bu="load">Load backup file</button></div><p class="hint" data-bu-store hidden></p></div>
 ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"><button class="btn" id="pwaInstall">Install app</button></div><p class="hint">Adds Escapement to your home screen. It works offline once installed.</p>`:`<p class="hint" style="margin-top:0">On iPhone or iPad: tap Share, then <b>Add to Home Screen</b>. It works offline once installed.</p>`}</div>`:""}
@@ -2603,6 +2647,7 @@ ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"
   pick("themeSeg","theme",v=>{S.theme=v;applyTheme();});
   pick("sndSeg","snd",v=>{S.sound=v==="1";if(curTab==="test"){WATCH_SOUND.unlock();TAB_RENDER.test();}});
   pick("reduceSeg","reduce",v=>{S.reduce=v==="auto"?null:v==="1";applyReduce();});
+  $("setHelp").addEventListener("click",()=>helpSheet());if($("setTour"))$("setTour").addEventListener("click",()=>{closeSheet();tutStart(true);});   // app/help.js
   $("setBackup").addEventListener("click",buBackupOpen);
   $("setRestore").addEventListener("click",buRestoreOpen);
   buStoreLine();
@@ -2759,8 +2804,9 @@ function certCell(){const tool=typeof ownedTool==="function"?ownedTool():TOOLS["
   if(o.observatory>0)return `Obs <small>${pc(o.observatory)}</small>`;
   if(o.chronometer>0)return `BCH <small>${pc(o.chronometer)}</small>`;
   return o.bench>0?`Bench <small>${pc(o.bench)}</small>`:`<small>none</small>`;}
+const CAP_G={Rate:"rate",Reserve:"reserve",Parts:"cost",Hours:"hours","Cert odds":"certodds"};   // tap a total: its help entry (app/help.js)
 function renderCap(){const r=bSim(S.cfg),f=x=>(x>=0?"+":"−")+Math.abs(Math.round(x));
-  const cell=(k,v,cls)=>`<div${cls?` class="${cls}"`:""}><span>${k}</span><b>${v}</b></div>`;
+  const cell=(k,v,cls)=>`<div${cls?` class="${cls}"`:""}${gA(CAP_G[k])}><span>${k}</span><b>${v}</b></div>`;
   $("bCap").innerHTML=cell("Rate",`${f(r.band[0])}…${f(r.band[1])}<small> s/d</small>`)+cell("Reserve",`${Math.round(r.reserveH)}<small> h</small>`)+
     cell("Parts",fmt$(r.cost))+cell("Hours",`${Math.round(r.hours)}<small> h</small>`)+cell("Cert odds",certCell());}
 
@@ -2927,8 +2973,8 @@ function renderTest(){
   $("adjCard").hidden=$("certCard").hidden=st.mode!=="piece";
   if(st.mode!=="piece"){
     const d=st.stopped?"—":null;
-    $("tgRead").innerHTML=`<div><span>Rate</span><b>${d||sgn(st.rate,0)}<small> s/d</small></b></div><div><span>Amplitude</span><b>${d||Math.round(st.amp)}<small>°</small></b></div>`+
-      `<div><span>Beat error</span><b>${d||st.beat.toFixed(1)}<small> ms</small></b></div><div><span>Beat</span><b>${live?(st.bph/1000).toFixed(1):"—"}<small>k bph</small></b></div>`;
+    $("tgRead").innerHTML=`<div${gA("rate")}><span>Rate</span><b>${d||sgn(st.rate,0)}<small> s/d</small></b></div><div${gA("amplitude")}><span>Amplitude</span><b>${d||Math.round(st.amp)}<small>°</small></b></div>`+
+      `<div${gA("beat")}><span>Beat error</span><b>${d||st.beat.toFixed(1)}<small> ms</small></b></div><div${gA("bph")}><span>Beat</span><b>${live?(st.bph/1000).toFixed(1):"—"}<small>k bph</small></b></div>`;
     $("tgMach").textContent=`${T.name} · ${POS_NAME[st.pos].toLowerCase()}${st.mode==="repair"?" · a customer's watch":" · nothing running"}`;
     $("tgSnd").textContent=S.sound?"Sound on":"Sound off";
     $("tgPos").innerHTML=segBtns(SIM.POSITIONS.map(k=>[k,k]),st.pos,"pos",v=>!T.positions.includes(v));$("tgPosHint").hidden=true;$("tgTempF").hidden=true;
@@ -2938,10 +2984,10 @@ function renderTest(){
   const p=curPiece();
   const certTxt=p.cert?`${SIM.CERT[p.cert].name}${SIM.CERT[p.cert].stamp?" · "+SIM.CERT[p.cert].stamp:""}`:"";
   $("tgRead").innerHTML=
-    `<div><span>Rate</span><b class="${Math.abs(st.rate)<=6?"ok":""}">${sgn(st.rate,T.timingRes>1?1:0)}<small> s/d</small></b></div>`+
-    `<div><span>Amplitude</span><b>${Math.round(st.amp)}<small>°</small></b></div>`+
-    `<div><span>Beat error</span><b>${st.beat.toFixed(T.timingRes>1?2:1)}<small> ms</small></b></div>`+
-    `<div><span>Beat</span><b>${(st.bph/1000).toFixed(1)}<small>k bph</small></b></div>`;
+    `<div${gA("rate")}><span>Rate</span><b class="${Math.abs(st.rate)<=6?"ok":""}">${sgn(st.rate,T.timingRes>1?1:0)}<small> s/d</small></b></div>`+
+    `<div${gA("amplitude")}><span>Amplitude</span><b>${Math.round(st.amp)}<small>°</small></b></div>`+
+    `<div${gA("beat")}><span>Beat error</span><b>${st.beat.toFixed(T.timingRes>1?2:1)}<small> ms</small></b></div>`+
+    `<div${gA("bph")}><span>Beat</span><b>${(st.bph/1000).toFixed(1)}<small>k bph</small></b></div>`;
   $("tgMach").textContent=`${T.name} · ${POS_NAME[st.pos].toLowerCase()} · ${st.temp} °C · ${st.t?"24 h after winding":"full wind"}`;
   $("tgSnd").textContent=S.sound?"Sound on":"Sound off";$("tgSnd").setAttribute("aria-pressed",!!S.sound);
   $("tgPos").innerHTML=segBtns(SIM.POSITIONS.map(k=>[k,k]),st.pos,"pos",v=>!T.positions.includes(v));
@@ -3048,7 +3094,8 @@ $("tgCar").addEventListener("click",e=>{const b=e.target.closest("[data-tc]");if
    The 3D movement on the bench: visSync() hands the vis the current build (setMovement) and how it is running right now
    (setRun: the amplitude, beat rate and beat error the timegrapher would show), and is called whenever any of those
    change. The tab card names the movement and switches the view: Assembled / Exploded, and the loupe on the escapement
-   (a double tap on the view does the same; the vis tells us through onView).
+   (a double tap on the view does the same; the vis tells us through onView). Under it, This week (renderBenchTodo):
+   repairs waiting, your piece, stock, and buttons to the tab for each and to Close week.
    roomSync() tells the vis what the workshop round the bench looks like (setRoom): the career stage and the machines
    owned. It runs from visSync and from every save(), and costs nothing when nothing changed (the vis compares). */
 function roomSpec(){const c=car();
@@ -3079,7 +3126,19 @@ function renderBench(){
   const lb=$("bLoupe");lb.classList.toggle("on",v==="loupe");lb.setAttribute("aria-pressed",String(v==="loupe"));
   lb.textContent=v==="loupe"?"Back to the whole movement":"Loupe on the escapement";
   const r=bSim(S.cfg),st=runState();
-  $("bNow").innerHTML=`<b>${benchLine()}</b><br>Swinging ${Math.round(st.amp)}° at ${(+st.bph).toLocaleString("en-GB")} beats an hour · beat error ${st.beat.toFixed(1)} ms · ${Math.round(r.reserveH)} h reserve`;}
+  $("bNow").innerHTML=`<b>${benchLine()}</b><br>Swinging ${Math.round(st.amp)}° at ${(+st.bph).toLocaleString("en-GB")} beats an hour · beat error ${st.beat.toFixed(1)} ms · ${Math.round(r.reserveH)} h reserve`;
+  renderBenchTodo();}
+/* the week at a glance: what is waiting, with a button to each tab that deals with it */
+function renderBenchTodo(){const el=$("bTodo"),c=car();
+  if(!c){el.innerHTML=`<h3>The Sandbox</h3><p>Every part on offer and nothing costs money. A career brings customers' repairs, the rent and the trials.</p><div class="row"><button class="btn" data-bt="career">Start a career</button></div>`;return;}
+  if(c.over){el.innerHTML=`<h3>The workshop is closed</h3><div class="row"><button class="btn pri" data-bt="career">Career tab</button></div>`;return;}
+  const rin=c.repairs.filter(r=>r.state==="in").length,p=c.bench,lines=[];
+  lines.push(rin?`${rin} repair${rin>1?"s":""} waiting for a diagnosis`:"No repairs waiting");
+  lines.push(!p?"Your bench is free for a piece of your own":!p.made?`No. ${p.no} is being assembled`:p.trial?`No. ${p.no} is away at a trial`:p.cert?`No. ${p.no} is ready to case`:`No. ${p.no} needs adjusting and a Bench check`);
+  if(c.stock.length)lines.push(`${c.stock.length} in stock`);
+  el.innerHTML=`<h3>This week<span class="cnt">${c.year} · week ${c.week}</span></h3><ul class="todo">${lines.map(l=>`<li>${l}</li>`).join("")}</ul>
+<div class="row">${rin?`<button class="btn" data-bt="shop">Repairs</button>`:""}<button class="btn" data-bt="${p?"test":"build"}">${p?"Test tab":"Build tab"}</button><button class="btn pri" data-bt="close">Close week</button></div>`;}
+$("bTodo").addEventListener("click",e=>{const b=e.target.closest("[data-bt]");if(!b)return;const k=b.dataset.bt;if(k==="close")doCloseWeek();else showTab(k);});
 TAB_RENDER.bench=renderBench;
 onTap("bView",e=>{const b=e.target.closest("[data-view]");if(!b||!window.WATCH_VIS)return;WATCH_VIS.setView(b.dataset.view);renderBench();});
 onTap("bLoupe",()=>{if(!window.WATCH_VIS)return;WATCH_VIS.setView(WATCH_VIS.view==="loupe"?"home":"loupe");renderBench();});
@@ -3111,7 +3170,7 @@ function newCareer(kind){
   const st=BIZ.starts[kind]||BIZ.starts.bench,seed=Math.random().toString(36).slice(2,8);
   const c={kind,seed,start:st.year,year:st.year,week:1,wk:0,cash:st.cash,used:0,up:{},unlocks:{},xp:{},seq:0,
     loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
-    staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",
+    staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",tutStep:kind==="shop"?null:0,tutRep:null,
     rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,
     rnd:{done:{},run:[]},calibres:[]};
   if(kind==="shop")c.rep={collectors:6,trade:10,press:12};
@@ -3123,7 +3182,7 @@ function newCareer(kind){
 
 /* a loaded career: fill in anything missing (older saves, hand-edited codes) so the rest of the game can trust its shape */
 function normCareer(c){if(!buObjS(c))return null;
-  const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false,
+  const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false,tutStep:null,tutRep:null,
     sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
   for(const k in d)if(!(k in c))c[k]=d[k];
   for(const k of ["up","unlocks","xp","certs","goals"])if(!buObjS(c[k]))c[k]={};
@@ -3138,6 +3197,7 @@ function normCareer(c){if(!buObjS(c))return null;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
   c.stock=c.stock.filter(x=>buObjS(x)&&buObjS(x.cfg)&&CASES[x.caseId]);c.jobs=c.jobs.filter(j=>buObjS(j)&&+j.h>0);
   if(c.bench&&!(buObjS(c.bench)&&buObjS(c.bench.cfg)))c.bench=null;
+  c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min(6,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
   c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
   for(const id in c.rnd.done)c.unlocks["rnd:"+id]=true;
   return c;}
@@ -3935,7 +3995,140 @@ function crackFx(){let el=$("crack");if(!el){el=document.createElement("div");el
   el.innerHTML=`<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice"><g>${lines.join("")}</g></svg>`;
   el.classList.remove("on");void el.offsetWidth;el.classList.add("on");clearTimeout(crackFx.t);crackFx.t=setTimeout(()=>el.classList.remove("on"),1900);}
 /* ===================== app/help.js: help and the tutorial =====================
-   The first-run tutorial through the repair bench (PEW's help card pattern), glossary and tap-to-explain. Arrives in
-   PR 8 (plan section 11). Last file of the app script block. */
+   Three things, last file of the app script block:
+   1. The coach-card tour (TUT): starts by itself on a new Repair bench career and walks one customer's watch through
+      the timegrapher, the diagnosis and Close week, then points at the Build tab and Settings. A small card sits over
+      the bottom of the 3D view (so it never covers the panel) and a brass ring marks what to tap. Most steps move on by
+      themselves when you do the thing (tutKick runs after every save()); Skip ends it at any time, Settings → Help
+      replays it. State lives in the career: c.tut (finished or skipped), c.tutStep, c.tutRep (the watch it follows).
+   2. The glossary (GLOSS) and the Help sheet (helpSheet, from Settings).
+   3. Tap-to-explain: anything carrying data-g="<key>" (the timegrapher readouts, the Build capsule, a few labels)
+      opens that entry. gA(key) writes the attributes. */
+
+/* ---- glossary: short and plain; grouped for the Help sheet ---- */
+const GLOSS={
+  rate:{t:"Rate",g:"Timegrapher",d:"How many seconds a day the watch gains (+) or loses (−). On the trace it is the slope: lines climbing to the right run fast, falling run slow. Regulate moves it in small notches."},
+  amplitude:{t:"Amplitude",g:"Timegrapher",d:"How far the balance swings each way, in degrees. A healthy watch swings 270° to 310° fully wound. Low amplitude means a tired mainspring, dirty oil or friction; very high can make it knock."},
+  beat:{t:"Beat error",g:"Timegrapher",d:"The difference between the tick and the tock, in milliseconds. On the trace it is the gap between the two lines. Under 0.5 ms is good; over 2 ms sounds limping. Adjust beat brings it down."},
+  bph:{t:"Beat (bph)",g:"Timegrapher",d:"Beats per hour: how fast the balance ticks. 28,800 bph is eight ticks a second; 21,600 is six. Faster is steadier against knocks but wears the escapement more and uses more power."},
+  lift:{t:"Lift angle",g:"Timegrapher",d:"The part of each swing where the pallet fork pushes the balance. The timegrapher needs it to work out amplitude. Most movements are 52°; set the wrong one and amplitude reads wrong (the rate does not change)."},
+  positions:{t:"Positions",g:"Timegrapher",d:"A watch runs differently lying flat and standing up, because gravity pulls on the balance. DU dial up, DD dial down, and the four crown positions (CU, CD, CL, CR). The trial tests five; a basic timing machine only reads dial up."},
+  temperature:{t:"Temperature",g:"Timegrapher",d:"Warm springs go soft and the watch slows. A steel hairspring drifts about 0.7 s/day per °C; an alloy or silicon spring far less. The BCH trial allows 0.6, the Observatory 0.3."},
+  wind:{t:"Wind",g:"Timegrapher",d:"A full mainspring pushes harder than one that has run 24 hours. Checking both shows how well the watch holds its rate as it runs down (isochronism)."},
+  iso:{t:"Isochronism",g:"Movement",d:"Keeping the same rate whether the balance swings wide or narrow. A good hairspring (an overcoil, silicon) and a steady mainspring keep the rate flat from full wind to empty."},
+  reserve:{t:"Power reserve",g:"Movement",d:"How long the watch runs on a full wind, in hours. A bigger barrel, or two, runs longer; a faster beat or heavy complications use it up quicker."},
+  hairspring:{t:"Hairspring",g:"Movement",d:"The fine coiled spring that brings the balance back each swing: the heart of the timekeeping. Its alloy decides how much the rate drifts with heat and magnets."},
+  balance:{t:"Balance",g:"Movement",d:"The wheel that swings to and fro and keeps the time, with the hairspring. Screws or weights on its rim let you poise it so it runs the same in every position."},
+  escapement:{t:"Escapement",g:"Movement",d:"The escape wheel and pallet fork: it lets the gear train move one tooth per tick and gives the balance a small push each time. Where most of the power is lost."},
+  regulate:{t:"Regulating",g:"Movement",d:"Moving the regulator (or turning the balance's weights on a free-sprung balance) to make the watch run a little faster or slower. Fixes the rate dial up; it doesn't fix the positions."},
+  poise:{t:"Poising",g:"Movement",d:"Taking weight off the heavy side of the balance so it is perfectly even. An unpoised balance runs at different rates standing up; poising narrows the spread between positions."},
+  jewels:{t:"Jewels",g:"Movement",d:"Synthetic rubies used as bearings where pivots turn, so they wear less and need less oil. More jewels where they matter means a longer life between services."},
+  shock:{t:"Shock protection",g:"Movement",d:"A spring setting around the balance jewels that lets the fragile pivots move and spring back when the watch is knocked, instead of snapping."},
+  magnetism:{t:"Magnetism",g:"Movement",d:"Magnets from phones, bags and speakers stick the hairspring's coils together and the watch races. Silicon and some alloys don't care."},
+  thickness:{t:"Thickness",g:"Movement",d:"How tall the movement is, in millimetres. Thin pieces fit dress cases and sell to collectors; a rotor, a tourbillon or a chronograph adds height."},
+  prestige:{t:"Prestige",g:"Movement",d:"How much a collector cares about what's inside: fine finishing, complications, in-house parts, your own calibre. It raises the price a buyer will pay."},
+  cost:{t:"Parts cost",g:"Business",d:"What the parts for one movement cost you, paid when you press Make. Your own in-house parts and calibre bring it down."},
+  hours:{t:"Bench hours",g:"Business",d:"The work to assemble one movement. You have so many hours a week; staff add theirs. Close week puts the hours into the work in hand, in order."},
+  certodds:{t:"Cert odds",g:"Business",d:"A rough chance of passing each certificate with this build, before any adjusting. Adjusting on the Test tab raises it a lot."},
+  cert:{t:"Certificates",g:"Business",d:"The Haldis Chronometry Bureau (stamp BCH) tests a movement for fifteen days in five positions and three temperatures and grants Chronometer. The Kessel Peak Observatory grants the stricter Observatory grade. Both multiply a piece's value."},
+  week:{t:"Close week",g:"Business",d:"Nothing moves until you close the week: you act first (repairs, adjusting, buying), then Close week does the work, brings customers and pays the rent."},
+  rep:{t:"Reputation",g:"Business",d:"Three names to make: with collectors, with the trade, and in the press. Good work, sales and prizes raise them; they fade a little each week. Better commissions open as they grow."},
+  stress:{t:"Stress report",g:"Business",d:"Parts that fight each other: a heavy balance on a weak spring, a thin movement with a big rotor. Serious ones (✖) hurt the timekeeping or the life of the watch."},
+};
+const gA=k=>` data-g="${k}" role="button" tabindex="0" title="What's this?"`;
+function glossHtml(k,open){const G=GLOSS[k];return `<details class="gl"${open?" open":""} id="gl-${k}"><summary>${G.t}</summary><p>${G.d}</p></details>`;}
+function glossSheet(k){if(!GLOSS[k])return;const G=GLOSS[k];
+  openSheet(G.t,`<p class="glone">${G.d}</p><div class="row"><button class="btn" id="glAll">All of help</button></div>`);
+  $("glAll").addEventListener("click",()=>helpSheet(k));}
+function helpSheet(at){const c=car(),groups={};for(const k in GLOSS)(groups[GLOSS[k].g]=groups[GLOSS[k].g]||[]).push(k);
+  const tour=c&&!c.over?`<div class="row"><button class="btn pri" id="tutAgain">${c.tutStep!=null?"Back to the tour":"Take the tour again"}</button></div><p class="hint">One customer's watch from the timegrapher to Close week, about two minutes.</p>`
+    :`<p class="hint" style="margin-top:0">The tour runs in a Repair bench career: start one from New game (Career tab).</p>`;
+  openSheet("Help",`<div class="field"><span class="lbl">The tour</span>${tour}</div>
+${Object.keys(groups).map(g=>`<div class="field"><span class="lbl">${g}</span>${groups[g].map(k=>glossHtml(k,k===at)).join("")}</div>`).join("")}
+<p class="hint">Tip: tap a readout on the Test tab, or a total on the Build tab, to open its entry.</p>`);
+  if($("tutAgain"))$("tutAgain").addEventListener("click",()=>{closeSheet();tutStart(true);});
+  if(at&&$("gl-"+at))$("gl-"+at).scrollIntoView({block:"center"});}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-g]");if(g&&!e.target.closest("button:not([data-g]),a,input"))glossSheet(g.dataset.g);});
+document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.matches&&e.target.matches("[data-g]")){e.preventDefault();glossSheet(e.target.dataset.g);}});
+
+/* ---- the tour ---- */
+var tutReady=false;   // save() calls tutKick from the first load on; nothing here may run before this file has
+const tutIn=()=>car().repairs.some(r=>r.state==="in");
+const tutFixing=()=>car().repairs.find(r=>r.state==="fixing");
+function tutResult(){const c=car(),r=repairBy(c.tutRep);return !r?"paid":r.state==="in"?"wrong":"fixing";}
+/* one step: tab it belongs to, sel (a selector, or {tab: selector}) for the ring, go() the tab "Show me" opens,
+   done() moves on by itself, next (a button label) for steps you only read */
+const TUT=[
+  {tab:"shop",sel:'[data-sh="tg"]',title:"Your first repair",
+    text:()=>tutIn()?"A customer has left a watch that isn't running right. Tap <b>Timegrapher</b> to put it on the machine.":"No watches are in just now. Close week and customers bring some in.",
+    done:()=>(S.tgOn&&S.tgOn.kind==="repair")||!!tutFixing()},
+  {tab:"test",sel:"#tgRead",title:"Read the trace",next:"Got it",
+    text:"Each dot is one tick. Lines climbing to the right run fast; falling, slow. Two lines far apart is beat error; a low amplitude means a tired spring or dirty oil. Tap a readout to learn more.",
+    done:()=>!!tutFixing()},
+  {tab:"test",sel:{test:'[data-tc="fix"]',shop:'[data-sh="fix"]'},go:()=>S.tgOn?"test":"shop",title:"Diagnose it",
+    text:"Match what you saw to a fault: tap <b>Diagnose and fix</b> and pick the one that fits. Each says how it shows on the trace.",
+    done:()=>!!tutFixing()},
+  {tab:"shop",sel:{shop:'[data-sh="close"]',career:'[data-cr="close"]'},title:"Close the week",
+    text:"The fix is in your work in hand. Tap <b>Close week</b> and your bench hours go into it. Nothing moves until you do.",
+    done:()=>car().tutRep!=null&&tutResult()!=="fixing"},
+  {tab:null,title:()=>tutResult()==="wrong"?"Not that one":"Paid",next:()=>tutResult()==="wrong"?"Try again":"Next",
+    text:()=>tutResult()==="wrong"?"It wasn't that fault, so the watch is back in Repairs, still wrong. You know one thing it isn't: put it on the timegrapher again and choose another fix.":"The watch went back working and the customer paid. Repairs pay the rent while you learn.",
+    then:()=>tutResult()==="wrong"?0:5},
+  {tab:"build",sel:"#bCap",title:"Make your own",next:"Next",
+    text:"Between repairs, design a movement here, part by part: every option shows what it would change. <b>Make this piece</b> puts it on your bench; adjust it on the Test tab and sell it from the Shop."},
+  {tab:null,sel:"#setOpen",title:"That's the bench",next:"Finish",
+    text:"Each week: repairs in, work on your piece, then Close week. Goals on the Career tab point the way. Help, a glossary and this tour are under the cog."},
+];
+let tutEl=null,tutSpotEl=null,tutTimer=0,tutScrolled=-1,tutTab="";
+const tutOn=()=>{const c=S.career;return !!c&&!c.over&&c.tutStep!=null&&!c.tut;};
+function tutDom(){if(tutEl)return;
+  tutEl=document.createElement("div");tutEl.id="coach";tutEl.hidden=true;tutEl.setAttribute("role","region");tutEl.setAttribute("aria-label","Tour");
+  tutEl.innerHTML=`<div class="cotop"><span id="coStep"></span><button type="button" class="btn sm ghost" id="coSkip">Skip tour</button></div><b id="coTitle"></b><p id="coText" aria-live="polite"></p><div class="row" id="coActs"></div>`;
+  tutSpotEl=document.createElement("div");tutSpotEl.id="coSpot";tutSpotEl.hidden=true;tutSpotEl.setAttribute("aria-hidden","true");
+  $("view").appendChild(tutEl);$("app").appendChild(tutSpotEl);
+  $("coSkip").addEventListener("click",()=>tutEnd(true));
+  $("coActs").addEventListener("click",e=>{const b=e.target.closest("[data-co]");if(!b)return;const c=car(),T=TUT[c.tutStep];
+    if(b.dataset.co==="go"){showTab(T.go?T.go():T.tab);tutScrolled=-1;tutShow();return;}
+    if(T.then){tutTo(T.then());return;}
+    if(c.tutStep>=TUT.length-1){tutEnd(false);return;}tutTo(c.tutStep+1);});
+  $("panel").addEventListener("scroll",()=>{if(tutOn())tutPlace();},{passive:true});
+  addEventListener("resize",()=>{if(tutOn())tutPlace();});}
+const tutVal=v=>typeof v==="function"?v():v;
+function tutSel(T){if(!T.sel)return null;if(typeof T.sel==="string")return T.sel;return T.sel[curTab]||null;}
+function tutTarget(T){const s=tutSel(T);if(!s)return null;const el=document.querySelector(s);if(!el||!el.getClientRects().length)return null;
+  if(el.closest(".tabpage")&&!el.closest(".tabpage.on"))return null;return el;}
+function tutStart(again){const c=car();if(!c||c.over)return;c.tut=false;if(again||c.tutStep==null){c.tutStep=0;c.tutRep=null;}tutScrolled=-1;save();tutShow();}
+function tutEnd(skipped){const c=car();if(c){c.tut=true;c.tutStep=null;save();}tutHide();if(skipped)toast("Tour skipped. It's in Settings → Help any time.");else toast("Have a good week at the bench.");}
+function tutTo(n){const c=car();c.tutStep=Math.max(0,Math.min(TUT.length-1,n));tutScrolled=-1;save();tutShow();}
+function tutHide(){if(tutEl){tutEl.hidden=true;tutSpotEl.hidden=true;$("view").classList.remove("coach");}clearInterval(tutTimer);tutTimer=0;}
+/* after any save(): move on while the current step's done() holds (a step can be done before you reach it) */
+function tutKick(){if(!tutReady)return;if(!tutOn())return tutHide();const c=car();
+  if(c.tutStep<3){const f=tutFixing();if(f)c.tutRep=f.id;}   // the watch whose fix the tour follows
+  let n=c.tutStep,g=0;while(n<TUT.length&&TUT[n].done&&TUT[n].done()&&g++<TUT.length)n++;
+  if(n!==c.tutStep){c.tutStep=Math.min(n,TUT.length-1);tutScrolled=-1;}
+  if(tutTab!==curTab){tutTab=curTab;tutScrolled=-1;}
+  requestAnimationFrame(tutShow);}
+function tutShow(){if(!tutOn())return tutHide();tutDom();const c=car(),T=TUT[c.tutStep];
+  $("coStep").textContent=`${c.tutStep+1} of ${TUT.length}`;$("coTitle").textContent=tutVal(T.title);$("coText").innerHTML=tutVal(T.text);
+  const want=T.go?T.go():T.tab,away=want&&curTab!==want&&!tutTarget(T),btns=[];
+  if(away)btns.push(`<button type="button" class="btn sm pri" data-co="go">Show me</button>`);
+  if(T.next)btns.push(`<button type="button" class="btn sm${away?"":" pri"}" data-co="next">${tutVal(T.next)}</button>`);
+  $("coActs").innerHTML=btns.join("");$("coActs").hidden=!btns.length;
+  tutEl.hidden=false;$("view").classList.add("coach");if(typeof buBarHide==="function")buBarHide();if(!tutTimer)tutTimer=setInterval(()=>{if(tutOn())tutPlace();else tutHide();},600);
+  tutPlace();}
+/* the ring: over the target while it is on screen inside the panel (or the HUD's cog); the first time a step's target
+   shows, scroll the panel so it sits in view */
+function tutPlace(){if(!tutEl||tutEl.hidden)return;const T=TUT[car().tutStep],el=tutTarget(T),sp=tutSpotEl;
+  if(!el||sheetOn()){sp.hidden=true;return;}
+  const pan=$("panel"),inPanel=pan.contains(el),A=$("app").getBoundingClientRect();let r=el.getBoundingClientRect();
+  if(inPanel&&tutScrolled!==car().tutStep){tutScrolled=car().tutStep;const P=pan.getBoundingClientRect(),room=P.height-(parseFloat(getComputedStyle(pan).paddingBottom)||0);
+    const top=r.top-P.top,want=Math.max(12,(room-r.height)/3);if(top<12||top+r.height>room-8){pan.scrollTo({top:pan.scrollTop+top-want,behavior:reduced()?"auto":"smooth"});setTimeout(tutPlace,reduced()?0:420);}
+    r=el.getBoundingClientRect();}
+  if(inPanel){const P=pan.getBoundingClientRect(),tb=$("tabs").getBoundingClientRect().top;if(r.bottom<P.top+4||r.top>tb-4){sp.hidden=true;return;}}
+  const pad=5;sp.style.left=(r.left-A.left-pad)+"px";sp.style.top=(r.top-A.top-pad)+"px";sp.style.width=(r.width+pad*2)+"px";sp.style.height=(r.height+pad*2)+"px";sp.hidden=false;}
+/* the intro's "Start at the repair bench" button: a Repair bench career and the tour */
+function introBench(){S.seen=true;newCareer("bench");$("intro").hidden=true;applyAll();showTab("shop");toast("2000: a shared bench in the Haldis.");}
+if($("introBench"))$("introBench").addEventListener("click",introBench);
+tutReady=true;
 </script>
 </body></html>

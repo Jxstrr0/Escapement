@@ -226,7 +226,7 @@ function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,
 let S=freshState();
 
 const buObjS=o=>!!o&&typeof o==="object"&&!Array.isArray(o);
-function save(){if(typeof roomSync==="function")roomSync();try{localStorage.setItem("esc-save",JSON.stringify(S));}catch(e){return;}buSaved();}   // buSaved: app/savecode.js (asks the browser to keep our storage); roomSync: app/bench.js (a bought machine shows up in the workshop)
+function save(){if(typeof roomSync==="function")roomSync();try{localStorage.setItem("esc-save",JSON.stringify(S));}catch(e){return;}buSaved();if(typeof tutKick==="function")tutKick();}   // buSaved: app/savecode.js (asks the browser to keep our storage); tutKick: app/help.js (the tour moves on); roomSync: app/bench.js (a bought machine shows up in the workshop)
 function snapshot(){return JSON.parse(JSON.stringify(S));}
 /* load a save object into S. false (and S untouched) if it isn't one of ours */
 function hydrate(o){if(!buObjS(o)||!buObjS(o.cfg))return false;
