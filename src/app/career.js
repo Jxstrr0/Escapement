@@ -39,7 +39,8 @@ function newGameSheet(){const has=inCareer();
 
 /* ---- Close week ---- */
 function doCloseWeek(){const c=car();if(!c||c.over)return;const was={year:c.year,week:c.week,cash:c.cash};
-  const res=closeWeek();if(!res)return;hud();
+  sfx("chime");if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.hold();   // sound/workshop.js: the bell and the till wait for the clock's strokes
+  let res;try{res=closeWeek();}finally{if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.release(2.9,1.6);}if(!res)return;hud();
   if(res.broke){if(!c.loanUsed){loanSheet();return;}goBroke();brokeSheet();return;}
   weekSheet(was,res);if(TAB_RENDER[curTab])TAB_RENDER[curTab]();}
 function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
@@ -66,7 +67,7 @@ function brokeSheet(){const c=car();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTa
   $("brNew").addEventListener("click",newGameSheet);$("brNo").addEventListener("click",closeSheet);}
 
 /* ---- save slots: a whole game each. Loading keeps this device's settings (theme, graphics, motion, sound) ---- */
-const KEEP_SETTINGS=["seen","theme","gfx","gfxAuto","reduce","sound","lastBackup"];
+const KEEP_SETTINGS=["seen","theme","gfx","gfxAuto","reduce","sound","wsound","lastBackup"];
 function slotRead(i){try{const j=localStorage.getItem(slotKey(i));if(!j)return null;const o=JSON.parse(j);return buObjS(o)&&buObjS(o.cfg)?o:null;}catch(e){return null;}}
 function slotMeta(i){const o=slotRead(i);if(!o)return null;const c=o.career;
   return{what:c?`${c.over?"a closed workshop":"a career"}, ${c.year||START_YEAR} week ${c.week||1}, ${fmt$(c.cash||0)}`:"the Sandbox",at:o.savedAt};}

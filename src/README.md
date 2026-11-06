@@ -14,7 +14,7 @@ node build.js --check    # exit 1 if index.html or sw.js != what src/ builds; na
 ## How the files fit together
 
 - The files are **slices of one page**. A `.js` file may open or close in the middle of an IIFE, so `node --check` on a single file is meaningless. Test the built `index.html`.
-- The first file of each `<script>` block starts with its `<script>` line and the last file of the block ends with `</script>`: `sim/parts.js` … `sim/market.js`, `sound/tick.js` on its own, `vis/core.js` … `vis/api.js`, and `app/state.js` … `app/help.js`.
+- The first file of each `<script>` block starts with its `<script>` line and the last file of the block ends with `</script>`: `sim/parts.js` … `sim/market.js`, `sound/tick.js` on its own, `sound/workshop.js` on its own, `vis/core.js` … `vis/api.js`, and `app/state.js` … `app/help.js`.
 - Every file except the last ends with a newline (`build.js` refuses otherwise). `html/tail.html` holds the page's last line, with no trailing newline. Empty files are refused: a stub needs at least its header comment.
 - A new file must be added to `manifest.txt` at the right position; `build.js` refuses to build if a file in `src/` is missing from it, and refuses leftover merge-conflict markers.
 - Scope is shared within each script block. `WATCH_SIM` is one IIFE over the sim files, `WATCH_VIS` one IIFE over the vis files, and the app is one top-level script over the app files. `start()` runs after the whole app block has loaded (`__ldGo` in `app/boot.js`), so later app files can add to tables and `TAB_RENDER` freely.
@@ -49,7 +49,8 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `sim/trial.js` | `CERT` (bench / chronometer / observatory), `CERT_ORDER`, `CERT_MULT`, `TRIAL` (the 15 days), `runTrial`, `verdict`, `ADJ` + `adjustPiece` + `hoursFor` (Regulate / Adjust beat / Poise), `certOdds`; `CONTEST`, `runContest`, `contestIndex` (the yearly Kessel Peak Trial: 30 days, points) |
 | `sim/market.js` | `ECON`, `pieceValue`, `buyChance`, `tradeTerms`; `MARKET_ERA` (the smartwatch years, the collectors' return) and `eraMult`; **the WATCH_SIM export object**, `module.exports`, `</script>` |
 | **WATCH_SOUND** | |
-| `sound/tick.js` | the whole block: `WATCH_SOUND` (`unlock`, `set({bph, beatMs, on})`, `stop`): two baked tick/tock buffers and a look-ahead scheduler |
+| `sound/tick.js` | the whole block: `WATCH_SOUND` (`unlock`, `set({bph, beatMs, on})`, `stop`, `context`): two baked tick/tock buffers and a look-ahead scheduler |
+| `sound/workshop.js` | the whole block: `WORKSHOP_SOUND` (`unlock`, `play`, `hold` / `release`, `set({on, amb, room})`): the recordings in `sounds/` (`SHOTS` door, sale, chime; `LOOPS` clock, valley, machine; `CYCLE`), on the tick's AudioContext. The app side is `wsSync()` and `sfx(name)` in `app/bench.js` |
 | **WATCH_VIS** (three.js) | |
 | `vis/core.js` | `<script>`, IIFE open, module state `V`, renderer, tiers, materials (`makeMats`) |
 | `vis/studio.js` | the studio light the metal reflects: `ENV`, the `.hdr` decoder, `lightAim` (swings the softbox overhead, adds the fill), the painted stand-in, `liteEnvs()` (three baked LDR reflections for Lite) and `fullEnv()` (PMREM for Full / Ultra); fetches `textures/studio_small_03.hdr` once (`studioStart`) |
