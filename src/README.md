@@ -47,9 +47,9 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `sound/tick.js` | the whole block: `WATCH_SOUND` (`unlock`, `set({bph, beatMs, on})`, `stop`): two baked tick/tock buffers and a look-ahead scheduler |
 | **WATCH_VIS** (three.js) | |
 | `vis/core.js` | `<script>`, IIFE open, module state `V`, renderer, tiers, the studio reflection, materials (`makeMats`) |
-| `vis/movement.js` | the movement mesh; now `buildPlaceholder()` (cock, screw balance, hairspring); PR 4 makes it parametric |
-| `vis/bench.js` | felt mat and bench top, lamp lights, `rebuild()` per tier, resize, orbit / pinch controls, the frame loop and the fps meter |
-| `vis/api.js` | **the WATCH_VIS public object** (`init`, `setQuality`, `setMovement`, `setRun`, `setView`, `fps`, `_state`), IIFE close, `</script>` |
+| `vis/movement.js` | the parametric movement: `GEO` (layout and sizes), gear / hull / ring shapes, finishing textures, `mergeStatic`, `buildMovement(cfg)` (layers for the exploded view), `animateMovement` (balance, escape wheel, train, fork, cage, rotor, explode) |
+| `vis/bench.js` | felt mat and bench top, lamp lights, `rebuild()` per tier and `rebuildMove()` per cfg, resize and `fitDist`, the views (`setGoal`, `setViewName`, `glide`), orbit / pinch / double-tap controls, the frame loop and the fps meter |
+| `vis/api.js` | **the WATCH_VIS public object** (`init`, `setQuality`, `setMovement`, `setRun`, `setView`, `view`, `onView`, `setMotion`, `fps`, `_state`), IIFE close, `</script>` |
 | **app** | |
 | `app/state.js` | `<script>`, VERSION, `$`, the career tables (named, filled by later PRs), `S` and `freshState`, `save` / `snapshot` / `hydrate` / slots / `applyLoaded`, theme, motion and tier helpers, `fmt$`, `hud`, `toast`, the sheet |
 | `app/perf.js` | auto-adjust graphics (`PERF`, `perfPoll`, `perfManual`), `?fps=1` meter |
@@ -58,6 +58,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/boot.js` | `TABS`, `TAB_RENDER`, `showTab`, the Settings sheet, intro, `start()` (scheduled with `__ldGo`) |
 | `app/build.js` | the Build tab: `BUILD_SECS`, `UNLOCK_NAME` / `hasUnlock`, `withOpt` (fit or toggle an option with its partners), `bSim` (cached simulate), the delta line, capsule, stress report |
 | `app/test.js` | the Test tab: the piece on the machine (`S.piece`, `curPiece`, `pieceSim`), `ownedTool`, the scrolling trace (`TG`, `tgStart` / `tgStop`), readouts, adjust and certify handlers, the trial sheet |
+| `app/bench.js` | the Bench tab: `visSync()` (the build and how it runs, to the 3D view), `benchLine()` (the movement in one line, also the view's tag), the Assembled / Exploded and loupe controls |
 | `app/shop.js` | the Shop tab (PR 5); now the Saves card buttons |
 | `app/career.js` | the Career tab (PR 6) |
 | `app/help.js` | tutorial and help (PR 8); last app file, `</script>` |

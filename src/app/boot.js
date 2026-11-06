@@ -59,7 +59,7 @@ $("introGo").addEventListener("click",()=>{S.seen=true;save();$("intro").hidden=
 function start(){
   loadSaved();
   applyAll();   // sets the tier before the 3D view builds, so it builds once
-  try{WATCH_VIS.init($("gl"));}catch(e){$("tag").textContent="3D view unavailable on this device";}
+  try{WATCH_VIS.init($("gl"));WATCH_VIS.setMotion(reduced());visSync();}catch(e){$("tag").textContent="3D view unavailable on this device";}
   $("verLbl").textContent="v"+VERSION;
   $("intro").hidden=!!S.seen;
   showTab(S.tab||"bench");

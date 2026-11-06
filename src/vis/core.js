@@ -2,7 +2,7 @@
 /* ===================== Escapement: 3D (WATCH_VIS) =====================
    three.js r128. One IIFE spread over vis/core.js, movement.js, bench.js and api.js; the public object is in api.js.
    The vis never reads game state: the app calls WATCH_VIS.setMovement(cfg), .setRun({amp,bph,beatErr,wound}),
-   .setView(name), .setQuality(tier) and reads .fps().
+   .setView(name), .setMotion(reduced), .setQuality(tier), .onView(fn) and reads .fps().
    This file: module state, the renderer, the three graphics tiers and the materials.
      lite   pixel ratio 1, Phong materials, no shadows, no post. The phone default; it must always look finished.
      full   device pixel ratio up to 2, PBR brass and steel with a generated studio reflection, soft lamp shadow.
@@ -11,7 +11,8 @@ const WATCH_VIS=(function(){
 "use strict";
 const V={r:null,scene:null,cam:null,canvas:null,tier:"lite",w:0,h:0,mats:null,env:null,comp:null,bloom:null,
   move:null,bench:null,lamp:null,run:{amp:280,bph:28800,beatErr:0,wound:true},t0:performance.now(),
-  frames:0,fpsAt:performance.now(),fpsObj:{fps:0,at:0},orbit:{yaw:-.5,pitch:.9,dist:9.5,tx:0,ty:0,tz:0}};
+  frames:0,fpsAt:performance.now(),fpsObj:{fps:0,at:0},orbit:{yaw:-.5,pitch:.9,dist:12,tx:0,ty:0,tz:0},
+  cfg:null,cfgKey:"",fit:0,goal:null,view:"home",explode:0,explodeT:0,reduce:false,viewCbs:[],last:0};
 const TAU=Math.PI*2;
 
 function initRenderer(canvas){

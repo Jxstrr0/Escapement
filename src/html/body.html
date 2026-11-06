@@ -8,7 +8,7 @@
       <div class="money"><b id="cashLbl">—</b><span id="repLbl"></span></div>
       <button class="hudbtn" id="setOpen" aria-label="Settings" title="Settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     </div>
-    <div id="tag">28,800 bph · placeholder balance</div>
+    <div id="tag">28,800 bph · 21 jewels · hand-wound</div>
     <div id="fpsHud" aria-hidden="true"></div>
   </div>
 
@@ -16,8 +16,12 @@
     <!-- BENCH: the 3D movement and what is on the bench right now -->
     <section class="tabpage on" id="tab-bench" aria-labelledby="h-bench">
       <h2 id="h-bench">Bench</h2>
-      <p class="lede">A shared bench in a rented corner of a workshop in the Haldis, high in the north of Velmark. Drag the view to turn the balance; pinch to zoom.</p>
-      <div class="card"><h3>On the bench<span class="soon">PR 4</span></h3><p>The movement you build will sit here in 3D and tick at the beat rate you chose. For now a plain balance wheel swings at 28,800 beats an hour.</p></div>
+      <p class="lede">A shared bench in a rented corner of a workshop in the Haldis, high in the north of Velmark. Drag the view to turn the movement, pinch to zoom, double-tap for the loupe.</p>
+      <div class="card" id="bCard"><h3>On the bench</h3>
+        <p id="bNow"></p>
+        <div class="field"><span class="lbl">View</span><div class="seg" id="bView" role="group" aria-label="How the movement sits"></div></div>
+        <button type="button" class="btn" id="bLoupe" aria-pressed="false">Loupe on the escapement</button>
+        <p class="hint">Change parts on the Build tab and the movement here is rebuilt to match; regulate it on the Test tab and the balance swings at the new amplitude.</p></div>
       <div class="card"><h3>Repair queue<span class="soon">PR 5</span></h3><p>Customer watches with a fault come in here. Diagnose them on the timegrapher, fix them and get paid.</p></div>
     </section>
 

@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.4.0.0";
+const VERSION="0.5.0.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -70,7 +70,7 @@ function applyTheme(){const t=S.theme||"dark",eff=t==="auto"?(mqLight&&mqLight.m
   document.documentElement.setAttribute("data-theme",eff);
   const m=document.querySelector("meta[name=theme-color]");if(m)m.content=eff==="light"?"#f3efe6":"#121815";}
 function reduced(){return S.reduce==null?!!(mqReduce&&mqReduce.matches):!!S.reduce;}
-function applyReduce(){document.documentElement.classList.toggle("reduce",reduced());}
+function applyReduce(){document.documentElement.classList.toggle("reduce",reduced());if(window.WATCH_VIS)WATCH_VIS.setMotion(reduced());}
 const isPhone=()=>/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 function gfxTier(){return S.gfx||(isPhone()?"lite":"full");}
 function applyGfx(){const q=gfxTier();if(window.WATCH_VIS)WATCH_VIS.setQuality(q);document.documentElement.dataset.gfx=q;}

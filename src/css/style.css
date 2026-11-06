@@ -46,7 +46,7 @@ h1,h2,h3{margin:0;font-weight:700;text-wrap:balance;letter-spacing:.005em}
 #hud .money span{display:block;font-size:11px;color:var(--muted)}
 .hudbtn{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:rgba(18,24,21,.6);border:1px solid rgba(255,255,255,.08);color:var(--chalk)}
 .hudbtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#tag{position:absolute;left:12px;bottom:10px;font-size:12px;color:var(--muted);font-family:var(--mono);pointer-events:none}
+#tag{position:absolute;left:12px;right:64px;bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:var(--muted);font-family:var(--mono);pointer-events:none}
 #fpsHud{position:absolute;right:10px;bottom:10px;font:11px var(--mono);color:var(--dim);pointer-events:none}
 
 #panel{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 14px calc(var(--tabh) + 24px + env(safe-area-inset-bottom,0px))}
