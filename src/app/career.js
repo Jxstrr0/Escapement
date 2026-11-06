@@ -43,7 +43,9 @@ function newGameGo(k){closeSheet();
     applyAll();showTab(k==="sandbox"?"build":"shop");}
 
 /* ---- Close week ---- */
-function doCloseWeek(){const c=car();if(!c||c.over)return;const was={year:c.year,week:c.week,cash:c.cash};
+function doCloseWeek(){const c=car();if(!c||c.over)return;
+  if(c.cash<0&&!c.loanUsed){loanSheet();return;}   // the bank sheet was closed without an answer: ask again before the week moves
+  const was={year:c.year,week:c.week,cash:c.cash};
   sfx("chime");if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.hold();   // sound/workshop.js: the bell and the till wait for the clock's strokes
   let res;try{res=closeWeek();}finally{if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.release(2.9,1.6);}if(!res)return;hud();
   c.lastWeek={week:was.week,year:was.year,d:c.cash-was.cash,cash:c.cash,lines:res.lines.slice(0,40)};   // "Last week" on the Career card shows it again

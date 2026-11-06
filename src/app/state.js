@@ -277,11 +277,12 @@ function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("on");c
 let sheetBack=null;
 /* each sheet gets a fresh body element, so click listeners a sheet adds to #sheetBody go away with it (they used to pile up and act on the last item) */
 function openSheet(title,html){sheetBack=sheetOn()?sheetBack:document.activeElement;$("sheetTitle").textContent=title;
-  const ob=$("sheetBody"),nb=ob.cloneNode(false);ob.replaceWith(nb);nb.innerHTML=html;sheetHist();
+  const ob=$("sheetBody"),nb=ob.cloneNode(false);ob.replaceWith(nb);nb.innerHTML=html;sheetHist();document.documentElement.classList.add("sheeton");
   $("sheet").classList.add("on");$("scrim").classList.add("on");$("sheetBody").scrollTop=0;$("sheetClose").focus({preventScroll:true});}
 function closeSheet(){$("sheet").classList.remove("on");$("scrim").classList.remove("on");if(sheetBack&&sheetBack.focus)sheetBack.focus({preventScroll:true});sheetBack=null;
-  setTimeout(()=>{if(sheetPushed&&!sheetOn()){sheetPushed=false;try{history.back();}catch(e){}}},0);}   // a sheet that opens straight after keeps the entry
-/* the phone's Back button closes an open sheet instead of leaving the game: one history entry while any sheet is up */
+  document.documentElement.classList.remove("sheeton");}
+/* the phone's Back button closes an open sheet instead of leaving the game. One history entry is pushed when a sheet opens and
+   left in place when it closes (going back from code races a sheet that opens straight after); the next sheet reuses it */
 let sheetPushed=false;
 function sheetHist(){if(sheetPushed)return;try{history.pushState({escSheet:1},"");sheetPushed=true;}catch(e){}}
 window.addEventListener("popstate",()=>{if(!sheetPushed)return;sheetPushed=false;if(sheetOn())closeSheet();});
