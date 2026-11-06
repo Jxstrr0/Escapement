@@ -113,6 +113,7 @@ textarea.code{width:100%;min-height:120px;resize:vertical;padding:10px;border-ra
 /* ---- "New version ready" bar (app/pwa.js) and the backup reminder bar (#buBar, app/savecode.js) ---- */
 #pwaBar,#buBar{position:absolute;left:50%;bottom:calc(var(--tabh) + 18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(16px);z-index:60;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100% - 24px);padding:8px 8px 8px 14px;border-radius:12px;background:#19201c;color:#f2efe6;border:1px solid var(--brass);box-shadow:var(--shadow);font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
 #pwaBar.on,#buBar.on{opacity:1;transform:translateX(-50%);pointer-events:auto}
+html.sheeton #buBar.on{opacity:0;pointer-events:none}
 #pwaBar .btn,#buBar .btn{flex:0 0 auto}
 #pwaBar .pwalater,#buBar .pwalater{min-height:44px;min-width:44px;padding:0 10px;border-radius:8px;color:#b3bab4;font-weight:500}
 

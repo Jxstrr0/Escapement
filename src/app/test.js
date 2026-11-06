@@ -240,7 +240,7 @@ onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
   const id=b.dataset.cert,C=SIM.CERT[id],p=curPiece(),tool=ownedTool();
   if(inCareer()&&id!=="bench"){
     openSheet(`Send No. ${p.no} for trial`,`<p>The ${C.body} keeps it for ${C.weeks} weeks: fifteen days of timing, then the paperwork. The fee is ${fmt$(C.fee)}, pass or fail.</p>
-<p class="hint">You have ${fmt$(car().cash)}. While it's away you can work on repairs and trade, or make the next piece.</p>
+<p class="hint">You have ${fmt$(car().cash)}. While it's away your bench waits for it: work on repairs, trade and R&D.</p>
 <div class="row"><button class="btn pri" id="trialGo">Send it (${fmt$(C.fee)})</button><button class="btn" id="trialNo">Not yet</button></div>`);
     $("trialNo").addEventListener("click",closeSheet);
     $("trialGo").addEventListener("click",()=>{if(sendTrial(id)){closeSheet();hud();renderTest();toast(`No. ${p.no} is on its way to the ${C.body}.`);}});

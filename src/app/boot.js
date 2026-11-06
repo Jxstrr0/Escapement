@@ -33,6 +33,7 @@ function openSettings(){
 <div class="field"><span class="lbl">Tick</span>${segHtml("sndSeg","snd",[["1","On","the watch on the Test tab"],["0","Off"]],S.sound===false?"0":"1")}</div>
 <div class="field"><span class="lbl">Workshop sounds</span>${segHtml("wsndSeg","wsnd",[["1","On","bell, till, clock, room"],["0","Off"]],S.wsound===false?"0":"1")}</div>
 <div class="field"><span class="lbl">Help</span><div class="row"><button class="btn" id="setHelp">Help and glossary</button>${inCareer()&&!car().over?`<button class="btn" id="setTour">Take the tour</button>`:""}</div></div>
+<div class="field"><span class="lbl">Game</span><div class="row"><button class="btn" id="setNew">New game…</button></div></div>
 <div class="field"><span class="lbl">Saves</span><div class="row"><button class="btn" id="setBackup">Back up</button><button class="btn" id="setRestore">Restore</button></div>
 <div class="row"><button class="btn" data-bu="file">Save backup file</button><button class="btn" data-bu="load">Load backup file</button></div><p class="hint" data-bu-store hidden></p></div>
 ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"><button class="btn" id="pwaInstall">Install app</button></div><p class="hint">Adds Escapement to your home screen. It works offline once installed.</p>`:`<p class="hint" style="margin-top:0">On iPhone or iPad: tap Share, then <b>Add to Home Screen</b>. It works offline once installed.</p>`}</div>`:""}
@@ -45,7 +46,7 @@ ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"
   pick("sndSeg","snd",v=>{S.sound=v==="1";if(curTab==="test"){WATCH_SOUND.unlock();TAB_RENDER.test();}wsSync();});
   pick("wsndSeg","wsnd",v=>{S.wsound=v==="1";wsSync();if(S.wsound){WORKSHOP_SOUND.unlock();sfx("door");}});   // a bell to show it works
   pick("reduceSeg","reduce",v=>{S.reduce=v==="auto"?null:v==="1";applyReduce();});
-  $("setHelp").addEventListener("click",()=>helpSheet());if($("setTour"))$("setTour").addEventListener("click",()=>{closeSheet();tutStart(true);});   // app/help.js
+  $("setHelp").addEventListener("click",()=>helpSheet());$("setNew").addEventListener("click",()=>newGameSheet());if($("setTour"))$("setTour").addEventListener("click",()=>{closeSheet();tutStart(true);});   // app/help.js
   $("setBackup").addEventListener("click",buBackupOpen);
   $("setRestore").addEventListener("click",buRestoreOpen);
   buStoreLine();
