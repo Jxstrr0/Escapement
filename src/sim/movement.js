@@ -29,6 +29,7 @@ const K={
   freeSprungPoise:.8,   // a free-sprung balance keeps its poise better
   regSpread:16,         // s/day: how far off a fresh assembly runs before regulation, at assembly level 1
   beatBase:2.6,         // ms: beat error out of the box at assembly level 1 with the basic timing machine
+  beatSkillFloor:.25,   // ms: the best beat error a regulating-level-1 hand reaches, on top of the regulator's own floor (0 at level 10)
   overComplexBeat:.22,  // ms of extra beat error per level of complexity above the complications skill
   wornT:8,              // h: an automatic on the wrist stays this close to full wind
   overBphFriction:1.15, // train friction multiplier when the beat is faster than the train is rated for
@@ -91,7 +92,7 @@ function model(cfg,skills,tools,opts){
     offset:(R()*2-1)*K.regSpread*Math.pow(1-K.skillStep.reg,L("assembly")-1)+(+adj.reg||0),
     ageDrift:-(P.escapement.oilDrift*(P.escapement.lubeFree?K.lubeFreeAge:1)+P.regulator.drift*.5)*age,
     wrist:1,               // combos can raise this (rate scatter on the wrist)
-    beat0:0,beatFloor:P.regulator.beatFloor,
+    beat0:0,beatFloor:P.regulator.beatFloor+K.beatSkillFloor*(10-L("regulating"))/9,
     draw,overCx,overBph,friction,age,adj
   };
   const be=K.beatBase*Math.pow(1-K.skillStep.beat,L("assembly")-1)/Math.max(.5,+(tools||{}).timingRes||1)+overCx*K.overComplexBeat;
@@ -111,11 +112,14 @@ function rateAt(m,pos,t,temp){
   const te=m.tempCoeff*((temp==null?23:temp)-23);
   return (iso+pe)*m.wrist+te+m.offset+m.ageDrift;}
 
+/* model() plus the COMBOS penalties that change the model; simulate() and runTrial() both start here */
+function prepModel(cfg,skills,tools,opts){
+  const x=model(cfg,skills,tools,opts||{}),fired=new Set();
+  COMBOS.forEach(r=>{if(r.pre&&r.when({c:x.c,P:x.P,m:x.m,opts:opts||{}})){r.pre(x.m,{c:x.c,P:x.P});fired.add(r);}});
+  x.fired=fired;return x;}
 function simulate(cfg,skills,tools,opts){
   opts=opts||{};
-  const {c,P,m,fixes,L}=model(cfg,skills,tools,opts);
-  const fired=new Set();
-  COMBOS.forEach(r=>{if(r.pre&&r.when({c,P,m,opts})){r.pre(m,{c,P});fired.add(r);}});   // penalties that change the model
+  const {c,P,m,fixes,L,fired}=prepModel(cfg,skills,tools,opts);
   const comps=P.complications,all=[];
   for(const s of SLOTS)if(MULTI[s])all.push(...P[s]);else all.push(P[s]);
   const sum=k=>all.reduce((a,o)=>a+(o[k]||0),0);

@@ -6,7 +6,7 @@
      do to amplitude, reserve, the accuracy band, thickness, prestige, cost and hours, plus any stress line it would add or
      clear. Worked out with a real simulate() call per option (cached; about 0.04 ms each), only for the open row.
    - The docked capsule (#bCap) sticks to the top of the panel: rate band, reserve, parts cost, bench hours, and the
-     certification estimate (PR 3).
+     certification odds (certCell: the best grade this build reaches at your skills, and how often).
    - The stress report card lists every COMBOS line for the build, worst first.
    - Locked options are dimmed and say what unlocks them: a Shop upgrade (PR 5) or an R&D project (PR 7). Unlock names
      live in UNLOCK_NAME until UPGRADES and RND carry their own. Before a career exists, a Parts switch offers
@@ -27,7 +27,7 @@ const SLOT_NAME={barrel:"Mainspring barrel",train:"Wheel train",jewels:"Jewels",
 /* what each unlock is called until PR 5 (UPGRADES) and PR 7 (RND) give the real entries a name */
 const UNLOCK_NAME={
   "shop:mill":"milling machine","shop:lathe":"watchmaker's lathe","shop:cnc":"CNC mill","shop:polishing":"polishing bench",
-  "shop:timing-six":"six-position timing machine","shop:spring-supplier":"alloy spring supplier","shop:jewel-supplier":"jewel and shock supplier",
+  "shop:timing-six":"six-position timing machine","shop:timing-lab":"laboratory timing machine","shop:spring-supplier":"alloy spring supplier","shop:jewel-supplier":"jewel and shock supplier",
   "rnd:coaxial":"Co-axial escapement","rnd:detent":"Detent escapement","rnd:free-sprung":"Free-sprung balance","rnd:silicon":"Silicon hairspring",
   "rnd:power-reserve":"Power reserve indicator","rnd:moonphase":"Moonphase","rnd:chrono":"Chronograph","rnd:annual-cal":"Annual calendar",
   "rnd:perp-cal":"Perpetual calendar","rnd:tourbillon":"Tourbillon","rnd:repeater":"Minute repeater","rnd:split-seconds":"Split-seconds"};
@@ -52,7 +52,7 @@ function withOpt(cfg,slot,id){
 
 /* simulate() on the bench, cached by cfg and skills. Same seed as the Test tab, so the numbers match */
 const bCache=new Map();
-function bSim(cfg){const sk=S.career&&S.career.skills,key=JSON.stringify(cfg)+"|"+JSON.stringify(sk||0);let r=bCache.get(key);
+function bSim(cfg){const sk=skillLvls(),key=JSON.stringify(cfg)+"|"+JSON.stringify(sk||0);let r=bCache.get(key);
   if(!r){if(bCache.size>600)bCache.clear();r=SIM.simulate(cfg,sk,null,{seed:"bench"});bCache.set(key,r);}return r;}
 const bandW=r=>r.band[1]-r.band[0];
 const sdn=(x,d)=>(x>0?"+":"−")+Math.abs(x).toFixed(d||0);
@@ -103,10 +103,20 @@ function renderBuildForm(){
     h+=`</div>`;}
   $("buildForm").innerHTML=h;}
 
+/* the capsule's certification cell: the best grade a careful hand gets this build through at least some of the time
+   (SIM.certOdds: eight pieces, regulated, beat set, poised four times, at your skills and with your timing machine) */
+const oddsCache=new Map();
+function certCell(){const tool=typeof ownedTool==="function"?ownedTool():TOOLS["timing-basic"],sk=skillLvls();
+  const key=JSON.stringify(S.cfg)+"|"+JSON.stringify(sk)+"|"+tool.timingRes;let o=oddsCache.get(key);
+  if(!o){if(oddsCache.size>200)oddsCache.clear();o=SIM.certOdds(S.cfg,sk,{timingRes:tool.timingRes});oddsCache.set(key,o);}
+  const pc=x=>Math.round(x*100)+"%";
+  if(o.observatory>0)return `Obs <small>${pc(o.observatory)}</small>`;
+  if(o.chronometer>0)return `BCH <small>${pc(o.chronometer)}</small>`;
+  return o.bench>0?`Bench <small>${pc(o.bench)}</small>`:`<small>none</small>`;}
 function renderCap(){const r=bSim(S.cfg),f=x=>(x>=0?"+":"−")+Math.abs(Math.round(x));
   const cell=(k,v,cls)=>`<div${cls?` class="${cls}"`:""}><span>${k}</span><b>${v}</b></div>`;
   $("bCap").innerHTML=cell("Rate",`${f(r.band[0])}…${f(r.band[1])}<small> s/d</small>`)+cell("Reserve",`${Math.round(r.reserveH)}<small> h</small>`)+
-    cell("Parts",fmt$(r.cost))+cell("Hours",`${Math.round(r.hours)}<small> h</small>`)+cell("Cert","<small>PR 3</small>","dim");}
+    cell("Parts",fmt$(r.cost))+cell("Hours",`${Math.round(r.hours)}<small> h</small>`)+cell("Cert odds",certCell());}
 
 function renderStress(){const r=bSim(S.cfg),L=r.stress;
   const ic={bad:"✖",warn:"▲",info:"·"};

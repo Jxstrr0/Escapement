@@ -5,10 +5,12 @@
    the save, starts the 3D view, draws the tabs and lifts the loading splash. */
 const TABS=["bench","build","test","shop","career"];
 const TAB_RENDER={};   // tab name -> render function; each tab file adds its own (app/build.js, test.js, shop.js, career.js)
+const TAB_LEAVE={};    // tab name -> called when you switch away from it (the Test tab stops its trace and tick)
 let curTab="bench";
 const tabScroll={};
 function showTab(t){
   if(!TABS.includes(t))t="bench";
+  if(curTab!==t&&TAB_LEAVE[curTab])TAB_LEAVE[curTab]();
   tabScroll[curTab]=$("panel").scrollTop;curTab=t;S.tab=t;
   document.documentElement.setAttribute("data-tab",t);
   document.querySelectorAll("#tabs button").forEach(b=>{const on=b.dataset.tab===t;b.classList.toggle("on",on);if(on)b.setAttribute("aria-current","page");else b.removeAttribute("aria-current");});
@@ -28,6 +30,7 @@ function openSettings(){
 <div class="field"><span class="lbl">Auto-adjust graphics</span>${segHtml("gfxAutoSeg","gauto",[["1","On","lowers it if it stutters"],["0","Off"]],S.gfxAuto===false?"0":"1")}</div>
 <div class="field"><span class="lbl">Theme</span>${segHtml("themeSeg","theme",[["dark","Dark","felt"],["light","Light","workshop"],["auto","Auto","follow phone"]],S.theme||"dark")}</div>
 <div class="field"><span class="lbl">Motion</span>${segHtml("reduceSeg","reduce",[["auto","Auto","follow phone"],["1","Reduced"],["0","Full"]],S.reduce==null?"auto":S.reduce?"1":"0")}</div>
+<div class="field"><span class="lbl">Sound</span>${segHtml("sndSeg","snd",[["1","On","the tick on the Test tab"],["0","Off"]],S.sound===false?"0":"1")}</div>
 <div class="field"><span class="lbl">Saves</span><div class="row"><button class="btn" id="setBackup">Back up</button><button class="btn" id="setRestore">Restore</button></div>
 <div class="row"><button class="btn" data-bu="file">Save backup file</button><button class="btn" data-bu="load">Load backup file</button></div><p class="hint" data-bu-store hidden></p></div>
 ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"><button class="btn" id="pwaInstall">Install app</button></div><p class="hint">Adds Escapement to your home screen. It works offline once installed.</p>`:`<p class="hint" style="margin-top:0">On iPhone or iPad: tap Share, then <b>Add to Home Screen</b>. It works offline once installed.</p>`}</div>`:""}
@@ -37,6 +40,7 @@ ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"
   pick("gfxSeg","gfx",v=>{S.gfx=v;perfManual();applyGfx();});
   pick("gfxAutoSeg","gauto",v=>{S.gfxAuto=v==="1";PERF.dropped=PERF.manual=false;perfReset(true);});
   pick("themeSeg","theme",v=>{S.theme=v;applyTheme();});
+  pick("sndSeg","snd",v=>{S.sound=v==="1";if(curTab==="test"){WATCH_SOUND.unlock();TAB_RENDER.test();}});
   pick("reduceSeg","reduce",v=>{S.reduce=v==="auto"?null:v==="1";applyReduce();});
   $("setBackup").addEventListener("click",buBackupOpen);
   $("setRestore").addEventListener("click",buRestoreOpen);
