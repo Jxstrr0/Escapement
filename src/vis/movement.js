@@ -9,7 +9,8 @@
    7 x bph / 1800 teeth so its 7-leaf escape pinion turns the escape wheel at the right speed), capped per tier for the
    mesh only (GEO.toothCap). The escape wheel steps half a tooth per beat, the train turns from it, the pallet fork
    flicks each beat and the balance swings at the amplitude the app sends (setRun).
-   Lite: every static part merged into one mesh per material, fewer curve segments, no bevels except for anglage. ---- */
+   Lite: every static part merged into one mesh per material, fewer curve segments, no bevels except for anglage.
+   Materials come from movementMats (finishes from vis/finish.js); a bridge is [face, edge] so anglage can polish the bevels. ---- */
 const GEO={
   plateR:4.3,plateY:.2,plateT:.28,
   wheelY:.6,wheelT:.06,balY:.8,bridgeY:1.12,bridgeT:.18,topY:1.32,rotorY:1.56,
@@ -67,51 +68,46 @@ function slab(shape,t,mat,y,o){o=o||{};
   const m=new THREE.Mesh(g,mat);m.rotation.x=-Math.PI/2;m.position.y=y;return m;}
 function cyl(r,h,mat,x,y,z,seg){const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg||12),mat);m.position.set(x,y+h/2,z);return m;}
 
-/* ---- finishing textures: grey patterns that multiply the brass colour (cheap on Lite too: a small canvas) ---- */
-function finishTex(kind,size){
-  const c=document.createElement("canvas");c.width=c.height=size;const g=c.getContext("2d");
-  g.fillStyle="#e6e6e6";g.fillRect(0,0,size,size);
-  if(kind==="stripes"){const w=size/3;for(let i=0;i<3;i++){const gr=g.createLinearGradient(i*w,0,(i+1)*w,0);
-      gr.addColorStop(0,"#b4b4b4");gr.addColorStop(.5,"#ffffff");gr.addColorStop(1,"#b4b4b4");g.fillStyle=gr;g.fillRect(i*w,0,w,size);}}
-  if(kind==="perlage"){const n=5,st=size/n;for(let y=-1;y<=n;y++)for(let x=-1;x<=n;x++){const cx=x*st+(y&1?st/2:0),cy=y*st;
-      const gr=g.createRadialGradient(cx,cy,1,cx,cy,st*.75);gr.addColorStop(0,"#ffffff");gr.addColorStop(.7,"#d0d0d0");gr.addColorStop(1,"#a8a8a8");
-      g.fillStyle=gr;g.beginPath();g.arc(cx,cy,st*.72,0,TAU);g.fill();}}
-  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;
-  t.repeat.set(kind==="stripes"?.8:2,kind==="stripes"?.8:2);
-  if(kind==="stripes"){t.center.set(.5,.5);t.rotation=-.55;}   // the ribbons run across the bridges at a slant
-  return t;}
-/* the movement's own materials (plate and bridge finish, polished steel, springs, dial-side parts); disposed on rebuild */
+/* the movement's own materials (plate and bridge finishes, anglage, wheels, polished steel, springs, dial-side parts);
+   disposed on rebuild. The finish textures themselves are shared and kept (vis/finish.js) */
 function movementMats(cfg){
-  const M=V.mats,lite=V.tier==="lite",C=h=>new THREE.Color(h).convertSRGBToLinear(),fin=new Set(cfg.finish||[]),own=[],texs=[];
-  const metal=(color,rough,map)=>{const m=lite?new THREE.MeshPhongMaterial({color:C(color),specular:C(0x6a6250),shininess:Math.round(80*(1-rough))+10,map:map||null})
-      :new THREE.MeshStandardMaterial({color:C(color),roughness:rough,metalness:1,envMap:V.env,envMapIntensity:1.1,map:map||null});own.push(m);return m;};
-  const sz=lite?64:256,tx=k=>{const t=finishTex(k,sz);texs.push(t);return t;};
-  const plate=metal(0xc9a45c,fin.has("perlage")?.38:.5,fin.has("perlage")?tx("perlage"):null);
-  const bridge=metal(0xcfac62,fin.has("stripes")?.3:.45,fin.has("stripes")?tx("stripes"):null);
-  const steel=fin.has("black-polish")?metal(0xd0d6da,.06):M.steel;
-  const pinion=GEO.train[cfg.train]&&GEO.train[cfg.train].polish?(fin.has("black-polish")?steel:metal(0xc8cfd4,.15)):M.steel;
+  const M=V.mats,fin=new Set(cfg.finish||[]),own=[],texs=[],lite=V.tier==="lite",C=sRGB;
+  const metal=o=>{const m=metalMat(o);own.push(m);return m;};
+  const plate=metal(fin.has("perlage")?{c:0xc9a45c,r:.34,fin:"perlage"}:{c:0xb99442,r:.5,fin:"frost"});
+  const bridge=metal(fin.has("stripes")?{c:0xcfac62,r:.26,fin:"stripes"}:{c:0xc29d4e,r:.42,fin:"frost"});
+  /* anglage: the bevelled edges (an extrusion's side faces) polished to a mirror */
+  const edge=fin.has("anglage")?metal({c:0xdcbc76,r:.05}):bridge;
+  const wheel=metal({c:0xd8b46a,r:.24,fin:"grain"});
+  const steel=fin.has("black-polish")?metal({c:0xd6dce0,r:.04}):M.steel;
+  const pinion=GEO.train[cfg.train]&&GEO.train[cfg.train].polish?(fin.has("black-polish")?steel:metal({c:0xcdd4d9,r:.1})):M.steel;
   const lineMat=col=>{const m=new THREE.LineBasicMaterial({color:C(col)});own.push(m);return m;};
-  const flat=(col,rough)=>{const m=lite?new THREE.MeshLambertMaterial({color:C(col)}):new THREE.MeshStandardMaterial({color:C(col),roughness:rough,metalness:0});own.push(m);return m;};
+  const flat=(col,rough)=>{const m=lite?new THREE.MeshLambertMaterial({color:C(col)}):new THREE.MeshStandardMaterial({color:C(col),roughness:rough,metalness:0,envMap:fullEnv(),envMapIntensity:.4});own.push(m);return m;};
   const S=GEO.spring[cfg.hairspring]||GEO.spring["steel-overcoil"];
-  return{plate,bridge,steel,pinion,wheel:M.gilt,blued:M.blued,ruby:M.ruby,gilt:M.gilt,
+  return{plate,bridge,bridgeSet:[bridge,edge],edge,steel,pinion,wheel,blued:M.blued,ruby:M.ruby,gilt:M.gilt,
     spring:lineMat(S.col),dial:flat(0xe9e4d6,.6),moon:flat(0x1d3570,.5),own,texs};}
 
 /* ---- merging: on every tier, the parts that never move become one mesh per material per layer ---- */
 function mergeStatic(layer){
   layer.updateMatrixWorld(true);
-  const by=new Map(),drop=[];
+  const by=new Map(),drop=[],add=(mat,g,start,count)=>{const L=by.get(mat)||[];L.push({g,start,count});by.set(mat,L);};
   layer.traverse(o=>{if(!o.isMesh||!o.userData.fixed)return;
     let g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();
     g.applyMatrix4(o.matrixWorld);
     if(!g.attributes.uv)g.setAttribute("uv",new THREE.BufferAttribute(new Float32Array(g.attributes.position.count*2),2));
-    const L=by.get(o.material)||[];L.push(g);by.set(o.material,L);drop.push(o);o.geometry.dispose();});
+    const n=g.attributes.position.count;
+    if(Array.isArray(o.material)){for(const gr of g.groups)add(o.material[gr.materialIndex],g,gr.start,Math.min(gr.count,n-gr.start));}
+    else add(o.material,g,0,n);
+    drop.push(o);o.geometry.dispose();});
   for(const o of drop)o.parent.remove(o);
+  const done=new Set();
   for(const [mat,L] of by){
-    let n=0;for(const g of L)n+=g.attributes.position.count;
+    let n=0;for(const e of L)n+=e.count;
     const pos=new Float32Array(n*3),nor=new Float32Array(n*3),uv=new Float32Array(n*2);let at=0;
-    for(const g of L){const c=g.attributes.position.count;pos.set(g.attributes.position.array,at*3);nor.set(g.attributes.normal.array,at*3);uv.set(g.attributes.uv.array,at*2);at+=c;g.dispose();}
+    for(const {g,start,count} of L){const A=g.attributes;
+      pos.set(A.position.array.subarray(start*3,(start+count)*3),at*3);nor.set(A.normal.array.subarray(start*3,(start+count)*3),at*3);uv.set(A.uv.array.subarray(start*2,(start+count)*2),at*2);at+=count;done.add(g);}
     const mg=new THREE.BufferGeometry();mg.setAttribute("position",new THREE.BufferAttribute(pos,3));mg.setAttribute("normal",new THREE.BufferAttribute(nor,3));mg.setAttribute("uv",new THREE.BufferAttribute(uv,2));
-    const m=new THREE.Mesh(mg,mat);m.matrixAutoUpdate=false;layer.add(m);}}
+    const m=new THREE.Mesh(mg,mat);m.matrixAutoUpdate=false;layer.add(m);}
+  for(const g of done)g.dispose();}
 
 /* ---- the movement ---- */
 function buildMovement(cfg){
@@ -201,7 +197,7 @@ function buildMovement(cfg){
   const B=layers.bridges,bseg=lite?10:18,by=GEO.bridgeY,bt=GEO.bridgeT,bev=anglage?(lite?1:2):(lite?0:1);
   const edge=(x,z,d)=>{const l=Math.hypot(x,z)||1;return[x/l*(R-d),z/l*(R-d)];};
   const bridgeList=[];
-  const bar_=(circles,screwAt)=>{B.add(fix(slab(hullShape(circles,bseg),bt,MM.bridge,by,{seg,bevel:bev})));bridgeList.push(screwAt);};
+  const bar_=(circles,screwAt)=>{B.add(fix(slab(hullShape(circles,bseg),bt,MM.bridgeSet,by,{seg,bevel:bev})));bridgeList.push(screwAt);};
   { const [ex,ez]=edge(barrels[0][0],barrels[0][1],.5);
     bar_(barrels.map(([x,z])=>({x,z,r:.62})).concat([{x:ex,z:ez,r:.42}]),[[ex,ez]]); }
   bar_([{x:cx,z:cz,r:.3},{x:tx,z:tz,r:.28}],[[ (cx+tx)/2,(cz+tz)/2 ]]);
@@ -211,7 +207,7 @@ function buildMovement(cfg){
     const [p1,p2]=edge(Pp[0],Pp[1],.4);
     bar_([{x:Pp[0],z:Pp[1],r:.2},{x:p1,z:p2,r:.24}],[[p1,p2]]);
     const [k1,k2]=edge(bx,bz,.45);
-    B.add(fix(slab(hullShape([{x:bx,z:bz,r:.36},{x:k1+(k2>0?.3:-.3)*.6,z:k2,r:.48},{x:k1,z:k2,r:.48}],bseg),bt,MM.bridge,by+.04,{seg,bevel:bev})));bridgeList.push([[k1,k2]]);
+    B.add(fix(slab(hullShape([{x:bx,z:bz,r:.36},{x:k1+(k2>0?.3:-.3)*.6,z:k2,r:.48},{x:k1,z:k2,r:.48}],bseg),bt,MM.bridgeSet,by+.04,{seg,bevel:bev})));bridgeList.push([[k1,k2]]);
     /* the regulator on the cock: an index lever, or a swan-neck micro-adjust; a free-sprung balance has none */
     if(cfg.regulator==="index"||cfg.regulator==="micro-adjust"){
       const a=Math.atan2(k2-bz,k1-bx)+.9,L=balR*.9,lv=fix(new THREE.Mesh(new THREE.BoxGeometry(L,.03,.07),MM.steel));
@@ -224,7 +220,7 @@ function buildMovement(cfg){
   }else{
     /* the tourbillon bridge: a ring over the cage, held at two points */
     const [k1,k2]=edge(bx,bz,.35);
-    put(B,fix(slab(ringShape(1.38,1.56,0,TAU),bt,MM.bridge,by+.06,{seg})),bx,bz);
+    put(B,fix(slab(ringShape(1.38,1.56,0,TAU),bt,MM.bridgeSet,by+.06,{seg,bevel:bev})),bx,bz);
     bar_([{x:bx+(k1-bx)*.75,z:bz+(k2-bz)*.75,r:.24},{x:k1,z:k2,r:.3}],[[k1,k2]]);
     const [e1,e2]=edge(fx-.4,fz,.45);bar_([{x:fx,z:fz,r:.28},{x:e1,z:e2,r:.3}],[[e1,e2]]);}
   /* jewels at the pivots (gold chatons round them from 25 jewels), blued screws at the bridge ends */
@@ -267,7 +263,7 @@ function buildMovement(cfg){
     if(comps.has("perp-cal"))put(D,fix(slab(gearShape(1.5,teeth(48),5,seg),.03,MM.gilt,dy+.02,{seg})),-.6,-1.6);}
   /* the automatic rotor: a heavy brass sector on a steel hub, over everything */
   if(cfg.winding==="automatic"){const rot=new THREE.Group();
-    rot.add(slab(ringShape(3.2,R-.05,-Math.PI*.45,Math.PI*.45),.11,MM.gilt,GEO.rotorY,{seg:lite?16:40,bevel:lite?0:1}));
+    rot.add(slab(ringShape(3.2,R-.05,-Math.PI*.45,Math.PI*.45),.11,MM.bridgeSet,GEO.rotorY,{seg:lite?16:40,bevel:anglage||!lite?1:0}));
     rot.add(slab(hullShape([{x:0,z:0,r:.3},{x:3.3,z:0,r:.22}],bseg),.07,MM.gilt,GEO.rotorY+.02,{seg}));
     rot.add(cyl(.32,.14,MM.steel,0,GEO.rotorY,0,lite?12:20));layers.rotor.add(rot);anim.rotor=rot;}
 
