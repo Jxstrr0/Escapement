@@ -2,6 +2,34 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 0.6.0.0: the shop and the career (PR 5)
+
+- **New game** (Career tab): **Repair bench, 2000** (a shared bench, the basic timing machine, Th 2,500), **Skip ahead to
+  2008** (your own shop, the six-position machine, a cleaning machine, Th 18,000, skills at level 3) or the **Sandbox**
+  (every part, no money, no calendar: what the game was before careers).
+- **Time.** Act, then **Close week**. You have 45 bench hours a week. Adjusting spends them at once; what is left at Close
+  week goes into the work in hand (assembling your piece, repairs, trade batches, first in first out). Staff take repairs
+  and trade work. Rent (Th 140 on the shared bench, Th 620 in your own shop), your keep (Th 260) and wages go out every week.
+- **Repairs.** Customer watches come in (about 1.8 a week, more with your own shop) with a complaint shared by more than one
+  fault. Put one on the timegrapher: magnetised races, a dry one loses amplitude, a broken mainspring shows no trace, a bent
+  hairspring limps (big beat error), worn pivots scatter, water damage goes wild. Choose the fix (hours, parts); you're paid
+  when it goes back working. A wrong fix wastes the work and the watch comes back. Uncollected after four weeks, it leaves.
+- **Your pieces.** Build tab: **Make this piece** pays the parts and queues the assembly. Once assembled it is on the
+  timegrapher; it needs at least a Bench check to be sold. The Bureau (Th 140, 3 weeks) and the Observatory (Th 650, 6 weeks)
+  keep it for their weeks and send the result back at Close week. Then **case** it (five cases; a movement too thick for a
+  case won't go in) and it goes into stock at its value.
+- **Selling.** Each week a few buyers (more with your own shop and a display window) look at your stock and may buy the
+  best value for its price (−20%, value, +20%, +50%). The dealer in town pays 55% at once. **Commissions** (ten kinds, from a
+  retirement watch to an Observatory piece, harder ones after 20 and 60 weeks) have a spec, a budget and a deadline: deliver a
+  cased piece that meets it from stock; late pays 10% less a week. **Trade batches**: 8 to 20 plain movements for another
+  brand, parts paid up front, paid on delivery.
+- **Upgrades** (14: machines, suppliers, the shop, a window, a second bench, climate control, a clean room) unlock parts and
+  tools and change rent, staff places, buyers and repair hours. **Staff**: apprentice, watchmaker, master watchmaker.
+- **The bank** lends once when the till goes below zero at Close week (8% over a year). Below zero again, the workshop closes.
+- **Save slots** (Career tab): three whole games on this phone. Loading one keeps this phone's settings.
+- Numbers to judge it by (a bot playing two years): repairs alone just pay the bills on a shared bench; repairs, pieces and
+  trade together end the first year near Th 34,000 before any upgrades.
+
 ## 0.4.0.0: timegrapher, adjustment, certification, tick (PR 3)
 
 - **The piece.** The Test tab holds one movement of the current build. Each piece has its own personality (first rate,
@@ -93,4 +121,3 @@ The Test tab prints these numbers for the movement on the bench until the timegr
 
 ## Known loose ends
 
-- Save slots exist in the save format but have no UI until PR 5.

@@ -1,0 +1,35 @@
+/* ---- shop.css: the Shop and Career tabs (app/shop.js, app/career.js), the Build tab's Make card and the Test tab's
+   career card. Lists of rows with their buttons on the right, the week's numbers, commissions, the books, the
+   week report. Light theme through the shared tokens. ---- */
+.shwk h3 .cnt,.card h3 .cnt{font-size:12px;font-weight:500;font-family:var(--mono);color:var(--brass-t);margin-left:8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:4px 0 12px;font-size:14px}
+.kv span{color:var(--muted)}.kv b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.shlist{list-style:none;margin:0;padding:0}
+.shlist li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--rule)}
+.shlist li:first-child{border-top:0;padding-top:2px}
+.shlist li>div:first-child{min-width:0;flex:1}
+.shlist li small{color:var(--muted);font-size:13px}
+.shlist li.own>div:first-child{opacity:.6}
+.shlist .acts{display:flex;flex-direction:column;gap:6px;flex:0 0 auto}
+.shlist .acts .btn{white-space:nowrap}
+.shlist .acts.h{flex-direction:row}
+.shlist .tick{font-size:13px;color:var(--good);font-weight:600}
+.shlist .lockt{color:var(--warn)}
+.shlist .good,.good{color:var(--good)}
+.shlist.rep li,.shlist.stk li{align-items:flex-start}
+.seg.sm{margin:8px 0 4px;padding:3px}.seg.sm button{min-height:36px;font-size:13px}
+.ord{padding:10px 0;border-top:1px solid var(--rule)}.ord:first-of-type{border-top:0;padding-top:0}
+.ord p{margin:4px 0}.ord .row{margin-top:8px}.ord.offer>b{color:var(--brass-t)}
+details.card>summary{list-style:none;cursor:pointer}details.card>summary::-webkit-details-marker{display:none}
+details.card>summary h3{display:flex;align-items:center;margin:0}
+details.card>summary h3::after{content:"";margin-left:auto;width:8px;height:8px;border-right:2px solid var(--dim);border-bottom:2px solid var(--dim);transform:rotate(45deg);transition:transform .2s}
+details.card[open]>summary h3{margin-bottom:8px}details.card[open]>summary h3::after{transform:rotate(225deg)}
+html.reduce details.card>summary h3::after{transition:none}
+table.books{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0}
+table.books th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);padding:0 6px 6px 0}
+table.books td{padding:5px 6px 5px 0;border-top:1px solid var(--rule);font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.books td.neg,.weekd.neg{color:var(--crit)}
+.weekd{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:20px;font-weight:600;margin:0 0 10px;color:var(--good)}
+.wklines{margin:0 0 14px;padding-left:18px;font-size:15px}.wklines li{margin:4px 0}.wklines li.dim{color:var(--dim);list-style:none;margin-left:-18px;margin-top:10px;font-size:13px}
+.bmake{border-color:var(--brass)}
+.tgcar h3{display:flex;align-items:baseline;flex-wrap:wrap}

@@ -3,6 +3,7 @@ html/head.html
 css/style.css
 css/build.css
 css/test.css
+css/shop.css
 html/body.html
 html/ld-libs.html
 sim/parts.js
@@ -25,6 +26,7 @@ app/boot.js
 app/build.js
 app/test.js
 app/bench.js
+app/business.js
 app/shop.js
 app/career.js
 app/help.js

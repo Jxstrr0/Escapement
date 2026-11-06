@@ -51,7 +51,7 @@ function game(over) {
     name: "Haldis 28 · Vallée café ☕",
     cfg: { bph: 28800, barrel: "single-large", escapement: "swiss-lever", hairspring: "steel-overcoil", complications: ["date"], finish: ["perlage"] },
     career: { cv: 1, year: 2004, week: 27, cash: 48250, rep: { collectors: 12, trade: 40, press: 3 }, owned: { "timing-six": true },
-      skills: { assembly: 3, regulating: 2 }, staff: {}, rnd: {}, goals: {},
+      skills: { assembly: 3, regulating: 2 }, staff: [{ name: "Joris Halm", kind: "watchmaker", since: 3 }], up: { shop: true }, rnd: {}, goals: {},
       log: [{ w: 26, t: "Chronometer certificate: piece #14", k: "good" }],
       stock: Array.from({ length: 30 }, (_, i) => ({ id: i, rate: [1.2, -0.8, 3.1, 2.4, -1.1, 0.4], amp: 284 - i })) }
   }, over || {});
