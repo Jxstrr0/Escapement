@@ -41,3 +41,5 @@ details.gl p{margin:0 0 12px;color:var(--muted)}
 /* the Bench tab's week card (app/bench.js) */
 ul.todo{margin:0 0 4px;padding-left:18px;color:var(--muted)}
 ul.todo li{margin:2px 0}
+html.photo #coach,html.photo #coSpot{display:none!important}   /* photo mode (app/photo.js) puts the tour away */
+#view.coach #phBtn{display:none}   /* the tour card covers the corner: photo mode waits for it */

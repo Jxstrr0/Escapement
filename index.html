@@ -407,6 +407,8 @@ details.gl p{margin:0 0 12px;color:var(--muted)}
 /* the Bench tab's week card (app/bench.js) */
 ul.todo{margin:0 0 4px;padding-left:18px;color:var(--muted)}
 ul.todo li{margin:2px 0}
+html.photo #coach,html.photo #coSpot{display:none!important}   /* photo mode (app/photo.js) puts the tour away */
+#view.coach #phBtn{display:none}   /* the tour card covers the corner: photo mode waits for it */
 /* ---- photo.css: photo mode (app/photo.js). The camera button at the bottom right of the 3D view; html.photo makes the view
    fill the screen with the panel, tab bar and HUD folded away, a top bar (title, hint, X) and a dock at the bottom
    (backdrop chips, the caption switch with its text, Save photo and Share). On a short landscape phone the dock stands
@@ -421,7 +423,7 @@ html.photo #toast{z-index:95;bottom:auto;top:calc(64px + env(safe-area-inset-top
 #phUi{position:absolute;inset:0;z-index:30;pointer-events:none;color:var(--chalk);-webkit-user-select:none;user-select:none}
 #phUi[hidden]{display:none}
 #phUi button{pointer-events:auto}
-.phtop{position:absolute;left:0;right:0;top:0;display:flex;align-items:flex-start;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 18px;background:linear-gradient(180deg,rgba(8,12,10,.65),rgba(8,12,10,0))}
+.phtop{position:absolute;left:0;right:0;top:0;display:flex;align-items:flex-start;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 26px;background:linear-gradient(180deg,rgba(8,12,10,.88) 0,rgba(8,12,10,.7) 60%,rgba(8,12,10,0))}   /* dark enough for its words over the white studio */
 .phh{flex:1;min-width:0;font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .phh small{display:block;margin-top:3px;font-weight:500;font-size:12px;letter-spacing:.01em;text-transform:none;color:var(--muted);opacity:0;animation:phhint 7s ease forwards}
 @keyframes phhint{0%,70%{opacity:1}100%{opacity:0}}
