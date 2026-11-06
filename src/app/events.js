@@ -40,7 +40,7 @@ function newsCard(){const c=car(),L=c.news.slice().reverse();if(!L.length)return
 function goalsCard(){const c=car(),ids=Object.keys(GOALS),n=ids.filter(id=>c.goals[id]!=null).length;
   return `<details class="card"><summary><h3>Goals<span class="cnt">${n} of ${ids.length}</span></h3></summary><ul class="shlist goals">${ids.map(id=>{const G=GOALS[id],w=c.goals[id];
     let when="";if(w!=null){const d=dateOf(w);when=` · ${d.year}, week ${d.week}`;}
-    return `<li class="${w!=null?"got":""}"><span class="gtick" aria-hidden="true">${w!=null?"✓":""}</span><div><b>${G.name}</b><br><small>${G.blurb}${when}</small></div></li>`;}).join("")}</ul></details>`;}
+    return `<li class="${w!=null?"got":""}"><span class="gtick" aria-hidden="true">${w!=null?"✓":""}</span><div><b>${G.name}</b><br><small>${G.blurb}${when}</small></div>${w!=null?`<div class="acts"><button class="btn sm" data-cd="goal" data-id="${id}">Trophy</button></div>`:""}</li>`;}).join("")}</ul></details>`;}
 function rivalsCard(){const c=car(),last=c.contests[c.contests.length-1];
   const placeOf=id=>{if(!last||!last.field)return "";const i=last.field.findIndex(f=>f[0]===id);return i<0?"":` · ${ordinal(i+1)} at Kessel Peak in ${last.year}`;};
   return `<details class="card"><summary><h3>Rival shops<span class="cnt">${RIVALS.length}</span></h3></summary><ul class="shlist">${RIVALS.map(rv=>`<li><div><b>${rv.name}</b><br><small>${rv.style}${placeOf(rv.id)}</small></div></li>`).join("")}</ul>

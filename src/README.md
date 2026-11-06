@@ -36,6 +36,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `css/build.css` | the Build tab: the docked capsule, accordion rows, option buttons and their delta chips, the stress report list |
 | `css/shop.css` | the Shop and Career tabs: row lists with buttons, the week numbers, commissions, the books, the week report; the Build tab's Make card and the Test tab's career card |
 | `css/events.css` | the Career tab's calendar cards (coming up, reputation bars, news, goals), the Kessel Peak Trial leaderboard, the saleroom, the cracked-crystal overlay |
+| `css/cards.css` | the certificate and trophy cards: the picture in its sheet, the Trophy buttons on the Goals card, the Certificates list |
 | `css/test.css` | the Test tab: the timegrapher box (dark in both themes), readouts, adjust and certify buttons, the trial sheet's check table |
 | `html/body.html` | `</style>`, all of the markup (`#app`, `#view` with the `#gl` canvas and HUD, five `.tabpage` sections, `#tabs`, sheet, toast, intro), the three.js r128 tag and the `ESC_LIBS` on-demand loader (`window.__escPost`) |
 | `html/ld-libs.html`, `ld-sim.html`, `ld-vis.html` | one-line `<script>__ld(fraction,"message")</script>` loading-bar steps after the block they report |
@@ -71,6 +72,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/calendar.js` | the calendar engine (PR 6): reputation (`REP_GAIN`, `addRep`, `repTier`, `REP_SEG`), the fair, the Kessel Peak Trial (`enterTrial`, rivals' points), auction nights (`saleOpen`, `saleLots`, `lotRun`, `lotSettle`, resale and buy-back), service returns, news, goals; `calClose` / `calWeekStart` (called by `closeWeek`), `calFx` |
 | `app/career.js` | the Career tab: Close week and its report (`doCloseWeek`), New game, the loan and closing sheets, the save slots |
 | `app/events.js` | the Career tab's cards (`calendarCard`, `repCard`, `newsCard`, `goalsCard`, `rivalsCard`) and the event sheets: `fairSheet`, `trialEntrySheet`, `raceSheet` (the trial day by day), `saleroomSheet` (live bidding), `crackFx` |
+| `app/cards.js` | certificate and trophy cards (PR 8): `S.career.certsLog` (`certLog` from `closeWeek`, `normCertsLog` on load), `drawCert` / `drawTrophy` (1080 × 1350 canvas: paper and stamp, felt and medal), `cardSheet` (the picture, Save / Share via `shareCanvas`), the Career tab's `certsCard` and the goals' Trophy buttons, `certSheetBtn` (the trial sheet's Certificate button) |
 | `app/help.js` | tutorial and help (PR 8); last app file, `</script>` |
 | `html/tail.html` | `</body></html>` (no trailing newline) |
 
