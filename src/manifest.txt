@@ -1,6 +1,7 @@
 # build order for index.html: one src/ path per line (node build.js concatenates them)
 html/head.html
 css/style.css
+css/build.css
 html/body.html
 html/ld-libs.html
 sim/parts.js

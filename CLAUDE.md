@@ -89,13 +89,14 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - The double-tap **loupe** camera move is on **all tiers** (it only moves the camera); reduced motion makes it cut instead of glide.
 - Money: the Velmark **thaler** (`Th 4,850`; 100 pfennig to a thaler), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (0.2.0.0)
+## Current status (0.3.0.0)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
 - PR 1 done: `WATCH_SIM` with 12 part slots (`PARTS`, 50 options), `simulate()` (amplitude, reserve, six positions × three temperatures, beat error, shock, magnetism, thickness, cost, hours, service, prestige, return risk), 17 `COMBOS` stress rules, `tools/sim-test.js` with 12 `TEST_BUILDS`. The Test tab shows the numbers as text.
 - Part `unlock` values are `start`, `shop:<upgrade id>` (PR 5 defines those upgrades: mill, lathe, cnc, polishing, timing-six, spring-supplier, jewel-supplier) or `rnd:<project id>` (PR 7).
-- Next: PR 2, the Build tab.
+- PR 2 done: the Build tab (`src/app/build.js`, `src/css/build.css`): eight accordion rows (`BUILD_SECS`), every option with a live delta line (amplitude, reserve, accuracy band, thickness, prestige, cost, hours, stress lines added or cleared), the docked capsule (rate band, reserve, parts cost, hours; Cert fills in with PR 3), the stress report card. Locked options say what unlocks them (`UNLOCK_NAME` until `UPGRADES`/`RND` carry names). A career's owned unlocks will live in `S.career.unlocks` (`{"shop:mill":true}`); with no career a Parts switch (`S.bAll`) offers Workshop or Everything. Each COMBOS rule now has a short `tag` for the chips.
+- Next: PR 3, timegrapher, adjustment, certification, tick.
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)
