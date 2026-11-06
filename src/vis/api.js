@@ -1,7 +1,7 @@
 /* ---- vis/api.js: the WATCH_VIS public object. The app calls these; the vis never reads game state. ---- */
 let started=false;
 return{
-  init(canvas){if(started)return;started=true;initRenderer(canvas);rebuild();bindOrbit(canvas);requestAnimationFrame(frame);},
+  init(canvas){if(started)return;started=true;initRenderer(canvas);rebuild();bindOrbit(canvas);requestAnimationFrame(frame);studioStart();},
   setQuality(tier){tier=tier==="ultra"||tier==="full"?tier:"lite";if(tier===V.tier&&V.move)return;V.tier=tier;if(started)rebuild();},
   /* rebuild the movement when the parts change (the same cfg again costs nothing) */
   setMovement(cfg){const k=JSON.stringify(cfg||{});if(k===V.cfgKey)return;V.cfgKey=k;V.cfg=JSON.parse(k);if(started)rebuildMove();},
