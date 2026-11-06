@@ -24,6 +24,7 @@ app/pwa.js
 app/boot.js
 app/build.js
 app/test.js
+app/bench.js
 app/shop.js
 app/career.js
 app/help.js

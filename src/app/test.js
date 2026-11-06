@@ -134,7 +134,8 @@ function renderTest(){
     `${r.thickness.toFixed(1)} mm · ${r.parts} parts · ${fmt$(r.cost)} parts · ${Math.round(r.hours)} h · prestige ${r.prestige}`,
     ``,
     ...(r.stress.length?r.stress.map(s=>({bad:"✖ ",warn:"▲ ",info:"· "}[s.sev])+s.text):["No stress lines: a sound build."])
-  ].join("\n");}
+  ].join("\n");
+  visSync();}
 TAB_RENDER.test=function(){renderTest();tgStart();};
 TAB_LEAVE.test=tgStop;
 
