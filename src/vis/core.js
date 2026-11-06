@@ -1,8 +1,9 @@
 <script>
 /* ===================== Escapement: 3D (WATCH_VIS) =====================
-   three.js r128. One IIFE spread over vis/core.js, studio.js, finish.js, movement.js, room.js, bench.js and api.js; the public object is in api.js.
+   three.js r128. One IIFE spread over vis/core.js, studio.js, finish.js, movement.js, room.js, bench.js, photo.js and api.js; the public object is in api.js.
    The vis never reads game state: the app calls WATCH_VIS.setMovement(cfg), .setRoom({stage,has}), .setRun({amp,bph,beatErr,wound}),
-   .setView(name), .setMotion(reduced), .setQuality(tier), .onView(fn) and reads .fps().
+   .setView(name), .setMotion(reduced), .setQuality(tier), .onView(fn), .setBackdrop(kind) and
+   .photoGrab(scale) (photo mode), and reads .fps().
    This file: module state, the renderer, the three graphics tiers and the materials.
      lite   pixel ratio 1, unlit metal that reflects a small baked copy of the studio light (cheaper than Phong), finishes
             as shade maps, Lambert felt and wood, no shadows, no post. The phone default; it must always look finished.

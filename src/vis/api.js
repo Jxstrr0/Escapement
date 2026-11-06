@@ -13,6 +13,12 @@ return{
   get view(){return V.view;},
   onView(fn){V.viewCbs.push(fn);},
   setMotion(reduced){V.reduce=!!reduced;},
+  /* photo mode (vis/photo.js): "workshop", "velvet" or "white"; keep / back round the mode; one big frame as a 2D canvas */
+  setBackdrop(kind){backSet(kind);},
+  get backdrop(){return V.back;},
+  photoKeep(){photoKeep();},
+  photoBack(){photoBack();},
+  photoGrab(scale){return photoGrab(scale);},
   fps(){return V.fpsObj;},
   get tier(){return V.tier;},
   _state:V

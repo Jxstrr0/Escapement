@@ -131,8 +131,9 @@ function certCell(){const tool=typeof ownedTool==="function"?ownedTool():TOOLS["
   if(o.observatory>0)return `Obs <small>${pc(o.observatory)}</small>`;
   if(o.chronometer>0)return `BCH <small>${pc(o.chronometer)}</small>`;
   return o.bench>0?`Bench <small>${pc(o.bench)}</small>`:`<small>none</small>`;}
+const CAP_G={Rate:"rate",Reserve:"reserve",Parts:"cost",Hours:"hours","Cert odds":"certodds"};   // tap a total: its help entry (app/help.js)
 function renderCap(){const r=bSim(S.cfg),f=x=>(x>=0?"+":"−")+Math.abs(Math.round(x));
-  const cell=(k,v,cls)=>`<div${cls?` class="${cls}"`:""}><span>${k}</span><b>${v}</b></div>`;
+  const cell=(k,v,cls)=>`<div${cls?` class="${cls}"`:""}${gA(CAP_G[k])}><span>${k}</span><b>${v}</b></div>`;
   $("bCap").innerHTML=cell("Rate",`${f(r.band[0])}…${f(r.band[1])}<small> s/d</small>`)+cell("Reserve",`${Math.round(r.reserveH)}<small> h</small>`)+
     cell("Parts",fmt$(r.cost))+cell("Hours",`${Math.round(r.hours)}<small> h</small>`)+cell("Cert odds",certCell());}
 

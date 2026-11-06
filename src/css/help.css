@@ -1,0 +1,45 @@
+/* ---- help.css: the tour's coach card and ring, the Help sheet's glossary, tap-to-explain hints (app/help.js), and the
+   intro's two buttons. The coach card sits over the bottom of the 3D view, which stays dark in both themes; the ring
+   pulses unless motion is reduced. ---- */
+#coach{position:absolute;left:10px;right:10px;bottom:10px;z-index:30;max-height:calc(100% - 64px);overflow-y:auto;padding:10px 12px 12px;
+  border-radius:12px;background:rgba(17,23,20,.94);border:1px solid rgba(201,164,92,.55);box-shadow:0 8px 24px rgba(0,0,0,.5);color:var(--chalk)}
+#view.coach #tag{visibility:hidden}
+#coach .cotop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:-4px -4px 2px 0}
+#coStep{font-family:var(--mono);font-size:12px;color:var(--brass-t);letter-spacing:.04em}
+#coSkip{min-height:44px;padding:0 10px;font-size:13px;color:var(--muted)}
+#coTitle{display:block;font-size:16px;margin-bottom:2px}
+#coText{margin:0;font-size:14px;line-height:1.4;color:var(--muted)}
+#coText b{color:var(--chalk)}
+#coActs{margin-top:8px}
+#coActs[hidden]{display:none}
+#coSpot{position:absolute;z-index:30;pointer-events:none;border-radius:12px;border:2px solid var(--brass2);
+  box-shadow:0 0 0 3px rgba(224,192,126,.25),0 0 18px rgba(224,192,126,.45);animation:coPulse 1.6s ease-in-out infinite}
+@keyframes coPulse{50%{box-shadow:0 0 0 6px rgba(224,192,126,.12),0 0 24px rgba(224,192,126,.6)}}
+:root[data-theme=light] #coSpot{border-color:#9a7424;box-shadow:0 0 0 3px rgba(154,116,36,.25)}
+@media (max-height:560px) and (orientation:landscape){
+  #coach{display:grid;grid-template-columns:auto 1fr auto auto;grid-template-areas:"step title acts skip" "text text text text";align-items:center;column-gap:10px;padding:6px 10px 8px;bottom:6px}
+  #coach .cotop{display:contents}#coStep{grid-area:step}#coSkip{grid-area:skip}#coTitle{grid-area:title;font-size:14px;margin:0;min-width:0}
+  #coText{grid-area:text;font-size:13px;line-height:1.3}#coActs{grid-area:acts;margin:0;flex-wrap:nowrap}#coActs .btn{min-height:44px}}
+html.reduce #coSpot{animation:none}
+@media (prefers-reduced-motion:reduce){#coSpot{animation:none}}
+@media (prefers-reduced-transparency:reduce){#coach{background:#111714}}
+/* tap-to-explain: a dotted underline on the label says it opens help */
+[data-g]{cursor:help;-webkit-tap-highlight-color:transparent}
+[data-g]>span:first-child,.lbl[data-g]{text-decoration:underline dotted;text-decoration-color:var(--dim);text-underline-offset:3px}
+.field>.lbl[data-g]{display:flex;align-items:center;min-height:40px;margin:0 0 2px}
+[data-g]:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:4px}
+/* the Help sheet */
+details.gl{border-bottom:1px solid var(--rule)}
+details.gl summary{cursor:pointer;padding:10px 0;font-weight:600;min-height:44px;box-sizing:border-box;display:flex;align-items:center}
+details.gl summary::after{content:"+";margin-left:auto;color:var(--brass-t);font-family:var(--mono)}
+details.gl[open] summary::after{content:"−"}
+details.gl p{margin:0 0 12px;color:var(--muted)}
+.glone{margin-top:0}
+/* the intro */
+#intro .introbtns{display:flex;flex-direction:column;gap:10px}
+#intro p.introhint{margin:12px 0 0;font-size:13px;color:var(--dim)}
+/* the Bench tab's week card (app/bench.js) */
+ul.todo{margin:0 0 4px;padding-left:18px;color:var(--muted)}
+ul.todo li{margin:2px 0}
+html.photo #coach,html.photo #coSpot{display:none!important}   /* photo mode (app/photo.js) puts the tour away */
+#view.coach #phBtn{display:none}   /* the tour card covers the corner: photo mode waits for it */
