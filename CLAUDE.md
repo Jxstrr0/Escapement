@@ -90,7 +90,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - The double-tap **loupe** camera move is on **all tiers** (it only moves the camera); reduced motion makes it cut instead of glide.
 - Money: the Velmark **thaler** (`Th 4,850`; 100 pfennig to a thaler), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (0.4.0.0)
+## Current status (0.5.0.0)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
@@ -99,7 +99,8 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - PR 2 done: the Build tab (`src/app/build.js`, `src/css/build.css`): eight accordion rows (`BUILD_SECS`), every option with a live delta line (amplitude, reserve, accuracy band, thickness, prestige, cost, hours, stress lines added or cleared), the docked capsule (rate band, reserve, parts cost, hours; Cert fills in with PR 3), the stress report card. Locked options say what unlocks them (`UNLOCK_NAME` until `UPGRADES`/`RND` carry names). A career's owned unlocks will live in `S.career.unlocks` (`{"shop:mill":true}`); with no career a Parts switch (`S.bAll`) offers Workshop or Everything. Each COMBOS rule now has a short `tag` for the chips.
 - PR 3 done: the Test tab is a timegrapher (scrolling trace, rate / amplitude / beat error / bph readouts, positions and temperatures by the owned `TOOLS` machine, wind and lift-angle settings), the adjustment loop (Regulate in regulator notches, Adjust beat, Poise; bench hours and skill XP per press), certification (`runTrial` over 15 days against `CERT`, verdict and check table in a sheet), the tick (`WATCH_SOUND`), and the Build capsule's Cert odds (`certOdds`). Skills: `SKILLS`, `SKILL_XP`; XP in `S.xp` until careers (then `S.career.xp`), levels from `skillLvls()`.
 - Save state added inside `esc-save` (no new keys): `S.bOpen`, `S.bAll` (PR 2); `S.xp`, `S.piece`, `S.pieceN`, `S.tg` (PR 3).
-- Next: PR 4, the parametric 3D movement on the Bench tab.
+- PR 4 done: the parametric 3D movement (`src/vis/movement.js`, numbers in `GEO`): pillar plate, barrel (single, twin, high-torque), centre / third / fourth wheels (the fourth gets 7 × bph / 1800 teeth), escape wheel, pallet fork, balance (smooth, screw, free-sprung) and hairspring (steel blued, alloy, silicon, overcoil), bridges and cock with jewels and blued screws, the regulator and shock spring, finishes (perlage, stripes, anglage, black polish), the rotor and every complication's module. The escape wheel steps per beat and the train turns from it; the fork flicks; a tourbillon cage turns once a minute. Static parts merge into one mesh per material per layer; Lite caps teeth at 36 (a grand complication is about 33k triangles). Views: Assembled / Exploded and the loupe (button or double tap), gliding or cutting with reduced motion. App side: `src/app/bench.js` (`visSync()` sends `setMovement` and `setRun` from the timegrapher state).
+- Next: PR 5, the shop.
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)

@@ -1,5 +1,6 @@
-/* ---- vis/bench.js: the bench (felt mat on a wooden top, one warm lamp), orbit and pinch controls, framing, and the
-   frame loop that swings the balance at the beat rate: bph/7200 full swings a second, amplitude in degrees either side. ---- */
+/* ---- vis/bench.js: the bench (felt mat on a wooden top, one warm lamp), orbit and pinch controls, a double tap for the
+   loupe, framing (fitDist keeps the whole movement in view at any aspect), the camera views (home, exploded, loupe; they
+   glide, or cut with reduced motion) and the frame loop, which hands the time to animateMovement (vis/movement.js). ---- */
 function buildBench(){
   const M=V.mats,g=new THREE.Group(),lite=V.tier==="lite";
   const top=new THREE.Mesh(new THREE.BoxGeometry(30,.6,30),M.wood);top.position.y=-.62;g.add(top);
@@ -15,11 +16,15 @@ function buildLights(){
   const rim=new THREE.DirectionalLight(0x9fb4c8,lite?.35:.5);rim.position.set(5,3,-6);g.add(rim);
   return g;
 }
+function dropGroup(k){const g=V[k];if(!g)return;V.scene.remove(g);g.traverse(o=>{if(o.geometry)o.geometry.dispose();});
+  const mm=g.userData&&g.userData.mats;if(mm){mm.own.forEach(m=>m.dispose());mm.texs.forEach(t=>t.dispose());}V[k]=null;}
+/* rebuild only the movement (a new cfg) */
+function rebuildMove(){dropGroup("move");V.move=buildMovement(V.cfg);V.scene.add(V.move);if(V.view==="loupe")setGoal("loupe");}
 /* rebuild everything that depends on the tier */
 function rebuild(){
-  for(const k of ["move","bench","lamp"])if(V[k]){V.scene.remove(V[k]);V[k].traverse(o=>{if(o.geometry)o.geometry.dispose();});V[k]=null;}
+  for(const k of ["move","bench","lamp"])dropGroup(k);
   makeMats(V.tier);
-  V.bench=buildBench();V.lamp=buildLights();V.move=buildPlaceholder();
+  V.bench=buildBench();V.lamp=buildLights();V.move=buildMovement(V.cfg);
   V.scene.add(V.bench,V.lamp,V.move);
   V.r.shadowMap.enabled=V.tier!=="lite";V.r.shadowMap.type=THREE.PCFSoftShadowMap;
   V.r.setPixelRatio(V.tier==="lite"?1:Math.min(window.devicePixelRatio||1,2));
@@ -33,37 +38,65 @@ function resize(force){
   const c=V.canvas,w=c.clientWidth|0,h=c.clientHeight|0;
   if(!w||!h||(!force&&w===V.w&&h===V.h))return;
   V.w=w;V.h=h;V.r.setSize(w,h,false);V.cam.aspect=w/h;V.cam.updateProjectionMatrix();
+  const was=V.fit;V.fit=fitDist();
+  if(!was||V.view==="home"&&!V.goal&&Math.abs(V.orbit.dist-was)<.01)V.orbit.dist=V.fit;   // keep the movement framed when the view changes shape
+  else if(V.goal)setGoal(V.view);
   if(V.comp){V.comp.setSize(w,h);V.comp.setPixelRatio&&V.comp.setPixelRatio(V.r.getPixelRatio());}
 }
+/* how far back the camera must sit to see the whole movement (plate, crown, a little room) at this aspect and pitch */
+function fitDist(pitch){
+  pitch=pitch==null?.9:pitch;const vf=V.cam.fov*Math.PI/360,hf=Math.atan(Math.tan(vf)*V.cam.aspect);
+  const hh=4.7*Math.sin(pitch)+1.2*Math.cos(pitch)+.5,hw=5.6;   // the top 0.5 leaves room for the HUD
+  return Math.max(hh/Math.tan(vf),hw/Math.tan(hf));}
+/* the camera views. Each sets a goal the frame loop glides to (or jumps to, with reduced motion) */
+function setGoal(view){
+  const u=V.move&&V.move.userData,o=V.orbit;
+  if(view==="loupe"&&u&&u.loupe)V.goal={tx:u.loupe.x,ty:u.loupe.y,tz:u.loupe.z,dist:6.4,pitch:1.05};
+  else if(view==="exploded")V.goal={tx:0,ty:2.0,tz:0,dist:fitDist(.45)*1.3,pitch:.45};
+  else V.goal={tx:0,ty:0,tz:0,dist:V.fit||fitDist(),pitch:.9};}
+function setViewName(view,quiet){
+  if(view!=="loupe"&&view!=="exploded")view="home";
+  V.view=view;V.explodeT=view==="exploded"?1:0;setGoal(view);
+  if(!quiet)for(const f of V.viewCbs)try{f(view);}catch(e){}}
 function placeCam(){
   const o=V.orbit,cp=Math.cos(o.pitch);
   V.cam.position.set(o.tx+Math.sin(o.yaw)*cp*o.dist,o.ty+Math.sin(o.pitch)*o.dist,o.tz+Math.cos(o.yaw)*cp*o.dist);
   V.cam.lookAt(o.tx,o.ty,o.tz);
 }
 /* one finger turns, two fingers pinch to zoom, the mouse wheel zooms */
+const maxDist=()=>Math.max(14,(V.fit||12)*1.6);
 function bindOrbit(el){
-  const P=new Map();let pinch0=0,dist0=0;
+  const P=new Map();let pinch0=0,dist0=0,down=null,lastTap=0,multi=false;
   el.addEventListener("pointerdown",e=>{el.setPointerCapture&&el.setPointerCapture(e.pointerId);P.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(P.size===2){const [a,b]=[...P.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);dist0=V.orbit.dist;}});
+    if(P.size===1){down={x:e.clientX,y:e.clientY,t:performance.now()};multi=false;}
+    if(P.size===2){multi=true;V.goal=null;const [a,b]=[...P.values()];pinch0=Math.hypot(a.x-b.x,a.y-b.y);dist0=V.orbit.dist;}});
   el.addEventListener("pointermove",e=>{const p=P.get(e.pointerId);if(!p)return;
-    if(P.size===1){V.orbit.yaw-=(e.clientX-p.x)*.008;V.orbit.pitch=Math.max(.25,Math.min(1.45,V.orbit.pitch+(e.clientY-p.y)*.006));}
+    if(P.size===1){const dx=e.clientX-p.x,dy=e.clientY-p.y;V.orbit.yaw-=dx*.008;V.orbit.pitch=Math.max(.25,Math.min(1.45,V.orbit.pitch+dy*.006));
+      if(V.goal&&(dx||dy))V.goal.pitch=null;}
     p.x=e.clientX;p.y=e.clientY;
-    if(P.size===2&&pinch0){const [a,b]=[...P.values()],d=Math.hypot(a.x-b.x,a.y-b.y);V.orbit.dist=Math.max(3.2,Math.min(14,dist0*pinch0/Math.max(d,1)));}});
-  const up=e=>{P.delete(e.pointerId);if(P.size<2)pinch0=0;};
+    if(P.size===2&&pinch0){const [a,b]=[...P.values()],d=Math.hypot(a.x-b.x,a.y-b.y);V.orbit.dist=Math.max(2.4,Math.min(maxDist(),dist0*pinch0/Math.max(d,1)));}});
+  const up=e=>{P.delete(e.pointerId);if(P.size<2)pinch0=0;
+    /* a double tap (two short taps that barely move, close together) toggles the loupe on the escapement */
+    if(e.type==="pointerup"&&P.size===0&&down&&!multi){const now=performance.now();
+      if(now-down.t<300&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<12){
+        if(now-lastTap<350){lastTap=0;setViewName(V.view==="loupe"?"home":"loupe");}else lastTap=now;}
+      else lastTap=0;}
+    if(P.size===0)down=null;};
   el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up);
-  el.addEventListener("wheel",e=>{e.preventDefault();V.orbit.dist=Math.max(3.2,Math.min(14,V.orbit.dist*(1+Math.sign(e.deltaY)*.08)));},{passive:false});
+  el.addEventListener("dblclick",e=>e.preventDefault());
+  el.addEventListener("wheel",e=>{e.preventDefault();V.goal=null;V.orbit.dist=Math.max(2.4,Math.min(maxDist(),V.orbit.dist*(1+Math.sign(e.deltaY)*.08)));},{passive:false});
 }
+/* glide the camera toward the goal; let go of it once there */
+function glide(dt){const g=V.goal;if(!g)return;const o=V.orbit,k=V.reduce?1:Math.min(1,dt*4.5);
+  let done=true;for(const key of ["tx","ty","tz","dist","pitch"]){if(g[key]==null)continue;const d=g[key]-o[key];o[key]+=d*k;if(Math.abs(d)>.002)done=false;else o[key]=g[key];}
+  if(done)V.goal=null;}
 function frame(now){
   requestAnimationFrame(frame);
   if(document.hidden||!V.r)return;
   resize(false);
-  const t=(now-V.t0)/1000,R=V.run,u=V.move&&V.move.userData;
-  if(u&&u.bal){
-    const f=R.bph/7200,amp=R.wound?R.amp*Math.PI/180:0;   // bph counts both beats; one full swing is two beats
-    const a=amp*Math.sin(TAU*f*t);
-    u.bal.rotation.y=a;
-    u.spring.scale.setScalar(1+.035*Math.sin(TAU*f*t));   // the spring breathes as the balance swings
-  }
+  const t=(now-V.t0)/1000,dt=Math.min(.1,(now-(V.last||now))/1000),u=V.move&&V.move.userData;V.last=now;
+  if(u&&u.wheels)animateMovement(u,t,dt);
+  glide(dt);
   placeCam();
   if(V.comp)V.comp.render();else V.r.render(V.scene,V.cam);
   V.frames++;
