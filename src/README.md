@@ -34,6 +34,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `html/head.html` | doctype, meta and PWA tags, inline critical style, `<title>`, the `#boot` loading splash and its loader script (`__ld`, `__ldGo`, `__ldDone`), Google Fonts (non-blocking), the opening `<style>` |
 | `css/style.css` | the base page CSS: theme tokens (dark felt + brass, light workshop), layout (3D view, panel, tab bar), cards, buttons, segmented pickers, sheet, toast, intro, the update bar, reduced motion / transparency |
 | `css/build.css` | the Build tab: the docked capsule, accordion rows, option buttons and their delta chips, the stress report list |
+| `css/shop.css` | the Shop and Career tabs: row lists with buttons, the week numbers, commissions, the books, the week report; the Build tab's Make card and the Test tab's career card |
 | `css/test.css` | the Test tab: the timegrapher box (dark in both themes), readouts, adjust and certify buttons, the trial sheet's check table |
 | `html/body.html` | `</style>`, all of the markup (`#app`, `#view` with the `#gl` canvas and HUD, five `.tabpage` sections, `#tabs`, sheet, toast, intro), the three.js r128 tag and the `ESC_LIBS` on-demand loader (`window.__escPost`) |
 | `html/ld-libs.html`, `ld-sim.html`, `ld-vis.html` | one-line `<script>__ld(fraction,"message")</script>` loading-bar steps after the block they report |
@@ -57,10 +58,11 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/pwa.js` | service worker registration, the "New version ready" bar, `PWA.canInstall` / `install` / `iosTip` |
 | `app/boot.js` | `TABS`, `TAB_RENDER`, `showTab`, the Settings sheet, intro, `start()` (scheduled with `__ldGo`) |
 | `app/build.js` | the Build tab: `BUILD_SECS`, `UNLOCK_NAME` / `hasUnlock`, `withOpt` (fit or toggle an option with its partners), `bSim` (cached simulate), the delta line, capsule, stress report |
-| `app/test.js` | the Test tab: the piece on the machine (`S.piece`, `curPiece`, `pieceSim`), `ownedTool`, the scrolling trace (`TG`, `tgStart` / `tgStop`), readouts, adjust and certify handlers, the trial sheet |
+| `app/test.js` | the Test tab: the piece on the machine (`S.piece` in the Sandbox, `S.career.bench` in a career; `curPiece`, `pieceCfg`, `pieceSim`, `tgMode`, a repair's faulty trace), the career card (`#tgCar`), `ownedTool`, the scrolling trace (`TG`, `tgStart` / `tgStop`), readouts, adjust and certify handlers, the trial sheet |
 | `app/bench.js` | the Bench tab: `visSync()` (the build and how it runs, to the 3D view), `benchLine()` (the movement in one line, also the view's tag), the Assembled / Exploded and loupe controls |
-| `app/shop.js` | the Shop tab (PR 5); now the Saves card buttons |
-| `app/career.js` | the Career tab (PR 6) |
+| `app/business.js` | the career engine: `newCareer`, `normCareer`, hours (`spendHours`, `hoursLeft`), money (`pay`, `earn`, the books), upgrades and staff, repairs (`addRepair`, `startFix`), commissions (`specChecks`, `deliver`), trade, your pieces (`makePiece`, `sendTrial`, `casePiece`, `sellPiece`), `closeWeek()`, the loan |
+| `app/shop.js` | the Shop tab: the week, your bench, repairs, stock and prices, commissions, trade, work in hand, upgrades, staff, the books; `fixSheet`, `caseSheet`, `confirmSheet`; the Saves card |
+| `app/career.js` | the Career tab: Close week and its report (`doCloseWeek`), New game, the loan and closing sheets, the save slots |
 | `app/help.js` | tutorial and help (PR 8); last app file, `</script>` |
 | `html/tail.html` | `</body></html>` (no trailing newline) |
 

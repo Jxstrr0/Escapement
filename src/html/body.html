@@ -31,6 +31,7 @@
       <p class="lede">Design a movement part by part. Each option shows what it would change; the capsule keeps the totals in view.</p>
       <div class="bcap" id="bCap"></div>
       <div class="field" id="bModeF" hidden><span class="lbl">Parts</span><div class="seg" id="bMode" role="group" aria-label="Which parts to offer"></div></div>
+      <div class="card bmake" id="bMake" hidden></div>
       <div id="buildForm"></div>
       <div class="card" id="bStress"><h3>Stress report</h3><ul class="stress" id="bStressList"></ul></div>
       <div class="row"><button class="btn ghost" id="bReset">Start over: a plain movement</button></div>
@@ -40,6 +41,7 @@
     <section class="tabpage" id="tab-test" aria-labelledby="h-test">
       <h2 id="h-test">Test</h2>
       <p class="lede">The movement on the timegrapher. Two dotted lines: their slope is the rate, the gap between them is beat error.</p>
+      <div class="card tgcar" id="tgCar" hidden></div>
       <div class="tgbox">
         <div class="tgread" id="tgRead"></div>
         <canvas id="tgCv" aria-label="Timegrapher trace" role="img"></canvas>
@@ -68,7 +70,7 @@
     <section class="tabpage" id="tab-shop" aria-labelledby="h-shop">
       <h2 id="h-shop">Shop</h2>
       <p class="lede">Repairs, retail pieces, commissions and trade work. Upgrades, staff and the books.</p>
-      <div class="card"><h3>The business<span class="soon">PR 5</span></h3><p>Cash flow, rent, salaries and parts stock, week by week.</p></div>
+      <div id="shopBody"></div>
       <div class="card" id="savesCard"><h3>Saves</h3><p>A backup code holds your whole game. Keep it somewhere safe, or paste it into Restore on another phone.</p>
         <div class="row"><button class="btn" id="exportSave">Back up</button><button class="btn" id="importSave">Restore</button></div>
         <div class="row"><button class="btn" data-bu="file">Save backup file</button><button class="btn" data-bu="load">Load backup file</button></div>
@@ -79,7 +81,8 @@
     <section class="tabpage" id="tab-career" aria-labelledby="h-career">
       <h2 id="h-career">Career</h2>
       <p class="lede">Weeks from 2000 to 2030: the valley fair, chronometry trials, auction nights, and the smartwatch years.</p>
-      <div class="card"><h3>Calendar &amp; reputation<span class="soon">PR 6</span></h3><p>Collectors, trade and press each watch what you make.</p></div>
+      <div id="careerBody"></div>
+      <div class="card"><h3>Calendar &amp; reputation<span class="soon">PR 6</span></h3><p>The valley fair, trials against rival shops, auction nights; collectors, trade and press each watch what you make.</p></div>
       <div class="card"><h3>R&amp;D<span class="soon">PR 7</span></h3><p>New escapements, hairsprings, complications, and one day your own calibre.</p></div>
     </section>
   </div>

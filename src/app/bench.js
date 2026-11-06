@@ -5,9 +5,12 @@
    (a double tap on the view does the same; the vis tells us through onView). */
 function visSync(){
   if(!window.WATCH_VIS)return;
-  try{WATCH_VIS.setMovement(S.cfg);
-    const st=tgState();WATCH_VIS.setRun({amp:st.amp,bph:st.bph,beatErr:st.beat,wound:true});}catch(e){}
+  try{WATCH_VIS.setMovement(S.cfg);const st=runState();WATCH_VIS.setRun({amp:st.amp,bph:st.bph,beatErr:st.beat,wound:true});}catch(e){}
   benchTag();if(typeof curTab!=="undefined"&&curTab==="bench")renderBench();}
+/* how the movement on the bench swings: the timegrapher's reading when it is your piece there (built as designed),
+   else the design's own numbers at full wind */
+function runState(){const st=tgState();if(st.mode==="piece"&&(!inCareer()||car().bench.key===JSON.stringify(S.cfg)))return st;
+  const r=bSim(S.cfg);return{amp:r.amp0,bph:r.bph,beat:r.beatErr};}
 /* the one-line name of the movement, e.g. "28,800 bph · 21 jewels · hand-wound · date" */
 function benchLine(){const c=SIM.normCfg(S.cfg).cfg,P=(s,id)=>SIM.part(s,id)||{};
   const comps=(c.complications||[]).map(id=>(P("complications",id).short||P("complications",id).name||id).toLowerCase());
@@ -19,8 +22,8 @@ function renderBench(){
   $("bView").innerHTML=segBtns(BENCH_VIEWS,v==="exploded"?"exploded":"home","view");
   const lb=$("bLoupe");lb.classList.toggle("on",v==="loupe");lb.setAttribute("aria-pressed",String(v==="loupe"));
   lb.textContent=v==="loupe"?"Back to the whole movement":"Loupe on the escapement";
-  const r=pieceSim(),st=tgState();
-  $("bNow").innerHTML=`<b>${benchLine()}</b><br>Swinging ${Math.round(st.amp)}° at ${(+r.bph).toLocaleString("en-GB")} beats an hour · beat error ${st.beat.toFixed(1)} ms · ${Math.round(r.reserveH)} h reserve`;}
+  const r=bSim(S.cfg),st=runState();
+  $("bNow").innerHTML=`<b>${benchLine()}</b><br>Swinging ${Math.round(st.amp)}° at ${(+st.bph).toLocaleString("en-GB")} beats an hour · beat error ${st.beat.toFixed(1)} ms · ${Math.round(r.reserveH)} h reserve`;}
 TAB_RENDER.bench=renderBench;
 onTap("bView",e=>{const b=e.target.closest("[data-view]");if(!b||!window.WATCH_VIS)return;WATCH_VIS.setView(b.dataset.view);renderBench();});
 onTap("bLoupe",()=>{if(!window.WATCH_VIS)return;WATCH_VIS.setView(WATCH_VIS.view==="loupe"?"home":"loupe");renderBench();});
