@@ -282,9 +282,9 @@ Quartz or smartwatch products of your own, multiplayer, real brand names, watch 
 - [x] PR 1: Movement sim, parts tables, combos, node tests (0.2.0.0)
 - [x] PR 2: Build tab with deltas and stress report (0.3.0.0)
 - [x] PR 3: Timegrapher, adjustment loop, certification, tick sound (0.4.0.0)
-- [x] PR 4: Parametric 3D movement on the Bench tab
-- [x] PR 5: Shop, repairs, commissions, upgrades, staff, saves
-- [ ] PR 6: Calendar, reputation, fairs, trials, auctions, smartwatch shift
+- [x] PR 4: Parametric 3D movement on the Bench tab (0.5.0.0)
+- [x] PR 5: Shop, repairs, commissions, upgrades, staff, saves (0.6.0.0)
+- [x] PR 6: Calendar, reputation, fairs, trials, auctions, smartwatch shift (0.7.0.0)
 - [ ] PR 7: R&D, complications, own calibre
 - [ ] PR 8: Tutorial, goals cards, photo mode, settings
 - [ ] PR 9: Blender props on Full/Ultra

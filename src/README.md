@@ -35,6 +35,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `css/style.css` | the base page CSS: theme tokens (dark felt + brass, light workshop), layout (3D view, panel, tab bar), cards, buttons, segmented pickers, sheet, toast, intro, the update bar, reduced motion / transparency |
 | `css/build.css` | the Build tab: the docked capsule, accordion rows, option buttons and their delta chips, the stress report list |
 | `css/shop.css` | the Shop and Career tabs: row lists with buttons, the week numbers, commissions, the books, the week report; the Build tab's Make card and the Test tab's career card |
+| `css/events.css` | the Career tab's calendar cards (coming up, reputation bars, news, goals), the Kessel Peak Trial leaderboard, the saleroom, the cracked-crystal overlay |
 | `css/test.css` | the Test tab: the timegrapher box (dark in both themes), readouts, adjust and certify buttons, the trial sheet's check table |
 | `html/body.html` | `</style>`, all of the markup (`#app`, `#view` with the `#gl` canvas and HUD, five `.tabpage` sections, `#tabs`, sheet, toast, intro), the three.js r128 tag and the `ESC_LIBS` on-demand loader (`window.__escPost`) |
 | `html/ld-libs.html`, `ld-sim.html`, `ld-vis.html` | one-line `<script>__ld(fraction,"message")</script>` loading-bar steps after the block they report |
@@ -42,8 +43,8 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `sim/parts.js` | `<script>`, header, IIFE open; `SLOTS`, `MULTI`, `PARTS` (12 slots), `DEFAULT_CFG`, `part(slot,id)` |
 | `sim/movement.js` | `POSITIONS`, `TEMPS`, the `K` table, `normCfg` (fills and fixes a cfg), `model`, `ampAt` / `beatAt` / `rateAt`, `simulate(cfg, skills, tools, opts)` |
 | `sim/combos.js` | `COMBOS`: stress rules with `when`, optional `pre` (changes the model) / `post` (changes the result), and `text` |
-| `sim/trial.js` | `CERT` (bench / chronometer / observatory), `CERT_ORDER`, `CERT_MULT`, `TRIAL` (the 15 days), `runTrial`, `verdict`, `ADJ` + `adjustPiece` + `hoursFor` (Regulate / Adjust beat / Poise), `certOdds` |
-| `sim/market.js` | `MARKET_ERA`, demand and pricing (PR 5 / 6); **the WATCH_SIM export object**, `module.exports`, `</script>` |
+| `sim/trial.js` | `CERT` (bench / chronometer / observatory), `CERT_ORDER`, `CERT_MULT`, `TRIAL` (the 15 days), `runTrial`, `verdict`, `ADJ` + `adjustPiece` + `hoursFor` (Regulate / Adjust beat / Poise), `certOdds`; `CONTEST`, `runContest`, `contestIndex` (the yearly Kessel Peak Trial: 30 days, points) |
+| `sim/market.js` | `ECON`, `pieceValue`, `buyChance`, `tradeTerms`; `MARKET_ERA` (the smartwatch years, the collectors' return) and `eraMult`; **the WATCH_SIM export object**, `module.exports`, `</script>` |
 | **WATCH_SOUND** | |
 | `sound/tick.js` | the whole block: `WATCH_SOUND` (`unlock`, `set({bph, beatMs, on})`, `stop`): two baked tick/tock buffers and a look-ahead scheduler |
 | **WATCH_VIS** (three.js) | |
@@ -62,7 +63,9 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/bench.js` | the Bench tab: `visSync()` (the build and how it runs, to the 3D view), `benchLine()` (the movement in one line, also the view's tag), the Assembled / Exploded and loupe controls |
 | `app/business.js` | the career engine: `newCareer`, `normCareer`, hours (`spendHours`, `hoursLeft`), money (`pay`, `earn`, the books), upgrades and staff, repairs (`addRepair`, `startFix`), commissions (`specChecks`, `deliver`), trade, your pieces (`makePiece`, `sendTrial`, `casePiece`, `sellPiece`), `closeWeek()`, the loan |
 | `app/shop.js` | the Shop tab: the week, your bench, repairs, stock and prices, commissions, trade, work in hand, upgrades, staff, the books; `fixSheet`, `caseSheet`, `confirmSheet`; the Saves card |
+| `app/calendar.js` | the calendar engine (PR 6): reputation (`REP_GAIN`, `addRep`, `repTier`, `REP_SEG`), the fair, the Kessel Peak Trial (`enterTrial`, rivals' points), auction nights (`saleOpen`, `saleLots`, `lotRun`, `lotSettle`, resale and buy-back), service returns, news, goals; `calClose` / `calWeekStart` (called by `closeWeek`), `calFx` |
 | `app/career.js` | the Career tab: Close week and its report (`doCloseWeek`), New game, the loan and closing sheets, the save slots |
+| `app/events.js` | the Career tab's cards (`calendarCard`, `repCard`, `newsCard`, `goalsCard`, `rivalsCard`) and the event sheets: `fairSheet`, `trialEntrySheet`, `raceSheet` (the trial day by day), `saleroomSheet` (live bidding), `crackFx` |
 | `app/help.js` | tutorial and help (PR 8); last app file, `</script>` |
 | `html/tail.html` | `</body></html>` (no trailing newline) |
 

@@ -1,7 +1,8 @@
 /* ===================== app/career.js: the Career tab =====================
    The week (Close week and its report), New game (Repair bench 2000, Skip ahead 2008, or the Sandbox), the bank's loan
    and the end of a career, and the three save slots ("esc-slot1" .. "esc-slot3": a whole game each; loading one keeps
-   this device's settings). PR 6 adds the calendar of events, reputation and goals; PR 7 R&D. */
+   this device's settings). The calendar, reputation, news, goals and rivals cards and the event sheets are in app/events.js
+   (PR 6); PR 7 adds R&D. */
 function renderCareer(){const el=$("careerBody"),c=car();let h="";
   if(!c)h=`<div class="card"><h3>Start a career</h3><p>You're in the Sandbox: every part, no money. A career starts with a bench, a little cash and the rent to pay.</p><div class="row"><button class="btn pri" data-cr="new">New game</button></div></div>`;
   else if(c.over)h=`<div class="card"><h3>The workshop is closed</h3><p>It ran from ${c.start} to ${c.year}: ${c.made} piece${c.made===1?"":"s"} made, ${c.sold.length} sold. The bank wouldn't lend twice.</p><div class="row"><button class="btn pri" data-cr="new">Start again</button></div></div>`;
@@ -10,12 +11,15 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
 <p>${c.kind==="shop"?"Your shop on the Haldis high street":upOwned("shop")?"Your shop on the high street":"A shared bench in a rented corner of a workshop"}, since ${c.start}. ${fmt$(c.cash)} in the till; ${fmt$(weeklyCosts())} a week goes out.</p>
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
 <div class="row"><button class="btn pri" data-cr="close">Close week</button></div>
-<p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;}
+<p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;
+    h+=calendarCard()+repCard()+newsCard()+goalsCard()+rivalsCard();}
   h+=slotsCard();
   if(c)h+=`<div class="row"><button class="btn ghost" data-cr="new">New game…</button></div>`;
   el.innerHTML=h;}
 TAB_RENDER.career=renderCareer;
-$("careerBody").addEventListener("click",e=>{const b=e.target.closest("[data-cr]");if(!b)return;const k=b.dataset.cr,i=+b.dataset.i;
+$("careerBody").addEventListener("click",e=>{const v=e.target.closest("[data-ev]");
+  if(v){const k=v.dataset.ev;if(k==="fair")fairSheet();if(k==="trial")trialEntrySheet();if(k==="race")raceSheet();if(k==="sale")saleroomSheet();return;}
+  const b=e.target.closest("[data-cr]");if(!b)return;const k=b.dataset.cr,i=+b.dataset.i;
   if(k==="close")doCloseWeek();
   if(k==="new")newGameSheet();
   if(k==="ssave"){const m=slotMeta(i);if(m)confirmSheet(`Save over slot ${i}?`,`It holds ${m.what}.`,"Save here",()=>slotSave(i));else slotSave(i);}
@@ -43,6 +47,11 @@ function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
 <ul class="wklines">${res.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}<li class="dim">Rent ${fmt$(rent())} · your keep ${fmt$(BIZ.keep)}${wages()?` · wages ${fmt$(wages())}`:""}${c.loan?` · loan ${fmt$(c.loan.pay)}`:""}</li></ul>
 <div class="row"><button class="btn pri" id="wkOk">Week ${c.week}, ${c.year}</button></div>`);
   $("wkOk").addEventListener("click",closeSheet);
+  const fx=calFx;if(fx.crack)crackFx();
+  if(fx.trial){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkRace">Watch the ${CALENDAR.trial.name}</button>`;
+    $("sheetBody").appendChild(row);$("wkRace").addEventListener("click",raceSheet);}
+  if(c.sale&&c.sale.wk===c.wk&&!c.sale.done){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkSale">Go to the ${c.sale.name}</button>`;
+    $("sheetBody").appendChild(row);$("wkSale").addEventListener("click",saleroomSheet);}
   const p=c.bench;if(p&&p.lastTrial&&!p.seen){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkTrial">See the trial result</button>`;
     $("sheetBody").appendChild(row);$("wkTrial").addEventListener("click",()=>{p.seen=true;save();trialSheet(p.lastTrial.t,p.lastTrial.tier);});}}
 function loanSheet(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=Math.round(amt*(1+L.rate));
