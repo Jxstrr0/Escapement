@@ -5,6 +5,8 @@ return{
   setQuality(tier){tier=tier==="ultra"||tier==="full"?tier:"lite";if(tier===V.tier&&V.move)return;V.tier=tier;if(started)rebuild();},
   /* rebuild the movement when the parts change (the same cfg again costs nothing) */
   setMovement(cfg){const k=JSON.stringify(cfg||{});if(k===V.cfgKey)return;V.cfgKey=k;V.cfg=JSON.parse(k);if(started)rebuildMove();},
+  /* the workshop round the bench: {stage: corner|shop|workshop|manufacture, has: {timing, cleaning, lathe, ...}} (vis/room.js) */
+  setRoom(spec){const k=JSON.stringify(spec||{});if(k===V.roomKey)return;V.roomKey=k;V.roomSpec=JSON.parse(k);if(started&&V.move)rebuildRoom();},
   setRun(o){Object.assign(V.run,o||{});},
   /* "home", "exploded" or "loupe"; the app hears double-tap changes through onView */
   setView(name){setViewName(name,true);},

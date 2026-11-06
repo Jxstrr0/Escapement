@@ -1,12 +1,6 @@
-/* ---- vis/bench.js: the bench (felt mat on a wooden top, one warm lamp), orbit and pinch controls, a double tap for the
+/* ---- vis/bench.js: the lights (one warm lamp; the room adds daylight, vis/room.js), rebuilds, orbit and pinch controls, a double tap for the
    loupe, framing (fitDist keeps the whole movement in view at any aspect), the camera views (home, exploded, loupe; they
    glide, or cut with reduced motion) and the frame loop, which hands the time to animateMovement (vis/movement.js). ---- */
-function buildBench(){
-  const M=V.mats,g=new THREE.Group(),lite=V.tier==="lite";
-  const top=new THREE.Mesh(new THREE.BoxGeometry(30,.6,30),M.wood);top.position.y=-.62;g.add(top);
-  const mat=new THREE.Mesh(new THREE.CylinderGeometry(5.5,5.5,.04,lite?48:96),M.felt);mat.position.y=-.3;mat.receiveShadow=!lite;g.add(mat);
-  return g;
-}
 function buildLights(){
   const g=new THREE.Group(),lite=V.tier==="lite";
   g.add(new THREE.HemisphereLight(0x8a9a90,0x1a1410,lite?.75:.45));
@@ -21,19 +15,27 @@ function dropGroup(k){const g=V[k];if(!g)return;V.scene.remove(g);g.traverse(o=>
 /* rebuild only the movement (a new cfg) */
 function rebuildMove(){dropGroup("move");V.move=buildMovement(V.cfg);V.scene.add(V.move);if(V.view==="loupe")setGoal("loupe");}
 /* rebuild everything that depends on the tier */
+/* the room (vis/room.js): rebuilt when the app's room spec changes; models follow on Full / Ultra */
+function rebuildRoom(){dropRoom();V.room=buildRoom(V.roomSpec);V.scene.add(V.room);
+  if(V.tier!=="lite")V.room.traverse(o=>{const mm=V.room.userData.mats;if(o.isMesh&&(o.material===mm.felt||o.material===mm.bench))o.receiveShadow=true;});
+  roomModels(V.room,V.room.userData.spec);}
 function rebuild(){
-  for(const k of ["move","bench","lamp"])dropGroup(k);
+  for(const k of ["move","lamp"])dropGroup(k);
   makeMats(V.tier);
-  V.bench=buildBench();V.lamp=buildLights();V.move=buildMovement(V.cfg);
-  V.scene.add(V.bench,V.lamp,V.move);
+  V.lamp=buildLights();V.move=buildMovement(V.cfg);
+  V.scene.add(V.lamp,V.move);rebuildRoom();
   V.r.shadowMap.enabled=V.tier!=="lite";V.r.shadowMap.type=THREE.PCFSoftShadowMap;
   /* Lite bakes its tone curve into the light (vis/studio.js); Full / Ultra tone-map the HDR reflections on the GPU */
   V.r.toneMapping=V.tier==="lite"?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;V.r.toneMappingExposure=ENV.full.exp;
   V.r.setPixelRatio(V.tier==="lite"?1:Math.min(window.devicePixelRatio||1,2));
-  V.comp=null;V.bloom=null;
+  V.comp=null;V.bloom=null;V.dof=null;
+  /* Ultra: depth of field focused on the movement (a macro lens: the closer, the shallower), then bloom on the brightest glints */
   if(V.tier==="ultra"&&window.__escPost)window.__escPost(ok=>{if(!ok||V.tier!=="ultra")return;
     V.comp=new THREE.EffectComposer(V.r);V.comp.addPass(new THREE.RenderPass(V.scene,V.cam));
-    V.bloom=new THREE.UnrealBloomPass(new THREE.Vector2(V.w||1,V.h||1),.3,.35,.93);V.comp.addPass(V.bloom);resize(true);});
+    /* depth of field before the bloom: the bloom pass draws the last step to the screen with the renderer's sRGB output */
+    if(THREE.BokehPass){V.dof=new THREE.BokehPass(V.scene,V.cam,{focus:12,aperture:ROOM.dof/12,maxblur:.008,width:V.w||1,height:V.h||1});V.comp.addPass(V.dof);}
+    V.bloom=new THREE.UnrealBloomPass(new THREE.Vector2(V.w||1,V.h||1),.3,.35,.93);V.comp.addPass(V.bloom);
+    resize(true);});
   resize(true);
 }
 function resize(force){
@@ -61,12 +63,12 @@ function setViewName(view,quiet){
   V.view=view;V.explodeT=view==="exploded"?1:0;setGoal(view);
   if(!quiet)for(const f of V.viewCbs)try{f(view);}catch(e){}}
 function placeCam(){
-  const o=V.orbit,cp=Math.cos(o.pitch);
+  const o=V.orbit;roomClamp(o);const cp=Math.cos(o.pitch);
   V.cam.position.set(o.tx+Math.sin(o.yaw)*cp*o.dist,o.ty+Math.sin(o.pitch)*o.dist,o.tz+Math.cos(o.yaw)*cp*o.dist);
   V.cam.lookAt(o.tx,o.ty,o.tz);
 }
 /* one finger turns, two fingers pinch to zoom, the mouse wheel zooms */
-const maxDist=()=>Math.max(14,(V.fit||12)*1.6);
+const maxDist=()=>Math.max(ROOM.zoomOut,(V.fit||12)*1.6);   // far enough out to take in the whole bench
 function bindOrbit(el){
   const P=new Map();let pinch0=0,dist0=0,down=null,lastTap=0,multi=false;
   el.addEventListener("pointerdown",e=>{el.setPointerCapture&&el.setPointerCapture(e.pointerId);P.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -99,7 +101,8 @@ function frame(now){
   const t=(now-V.t0)/1000,dt=Math.min(.1,(now-(V.last||now))/1000),u=V.move&&V.move.userData;V.last=now;
   if(u&&u.wheels)animateMovement(u,t,dt);
   glide(dt);
-  placeCam();
+  placeCam();roomCull();
+  if(V.dof){const u=V.dof.uniforms;u.focus.value=V.orbit.dist;u.aperture.value=ROOM.dof/V.orbit.dist;}
   if(V.comp)V.comp.render();else V.r.render(V.scene,V.cam);
   V.frames++;
   if(now-V.fpsAt>=1000){V.fpsObj={fps:Math.round(V.frames*1000/(now-V.fpsAt)),at:now};V.frames=0;V.fpsAt=now;}
