@@ -12,7 +12,7 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
 <div class="row"><button class="btn pri" data-cr="close">Close week</button></div>
 <p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;
-    h+=rndCard()+calendarCard()+repCard()+newsCard()+goalsCard()+rivalsCard();}
+    h+=rndCard()+calendarCard()+repCard()+newsCard()+goalsCard()+certsCard()+rivalsCard();}
   h+=slotsCard();
   if(c)h+=`<div class="row"><button class="btn ghost" data-cr="new">New game…</button></div>`;
   el.innerHTML=h;}
