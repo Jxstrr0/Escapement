@@ -13,15 +13,16 @@
      parts             how many parts it adds to the count
      unlock            "start" (owned from day one), "shop:<upgrade id>" (buy the tool or supplier in the Shop, PR 5)
                        or "rnd:<project id>" (research it, PR 7)
-   plus the stats that slot feeds into simulate() (sim/movement.js). Two slots, complications and finish, are lists:
-   a movement can carry several. DEFAULT_CFG is a plain manual 28,800 bph three-hand movement.
+   plus the stats that slot feeds into simulate() (sim/movement.js). Three slots, complications, finish and house, are
+   lists: a movement can carry several. DEFAULT_CFG is a plain manual 28,800 bph three-hand movement.
+   A cfg can also carry cal: the id of the player's own calibre it is built on (PR 7; K.calibre in movement.js).
    Numbers are a first pass, tuned in node with tools/sim-test.js; keep them here, never inline. */
 const WATCH_SIM=(function(){
 "use strict";
 
 /* the slots in the order the Build tab shows them, and whether a slot takes one option or a list */
-const SLOTS=["barrel","train","jewels","escapement","balance","hairspring","bph","regulator","shock","winding","complications","finish"];
-const MULTI={complications:true,finish:true};
+const SLOTS=["barrel","train","jewels","escapement","balance","hairspring","bph","regulator","shock","winding","complications","finish","house"];
+const MULTI={complications:true,finish:true,house:true};
 
 const PARTS={
   /* the mainspring barrel. torque on a 0..10 scale at full wind, falloff = share of that torque lost by the end of the
@@ -116,13 +117,23 @@ const PARTS={
     {id:"perlage",name:"Perlage",blurb:"Overlapping circles spotted onto the main plate.",cost:4,hours:4,prestige:1,parts:0,unlock:"start"},
     {id:"stripes",name:"Haldis stripes",blurb:"Straight ribbons ground across the bridges.",cost:6,hours:6,prestige:1,parts:0,unlock:"start"},
     {id:"anglage",name:"Anglage",blurb:"Every bridge edge bevelled and polished by hand.",cost:8,hours:20,prestige:3,parts:0,unlock:"start"},
-    {id:"black-polish",name:"Black polish",blurb:"Steel parts polished so flat they look black from most angles.",cost:10,hours:30,prestige:4,parts:0,unlock:"shop:polishing"}
+    {id:"black-polish",name:"Black polish",blurb:"Steel parts polished so flat they look black from most angles.",cost:10,hours:30,prestige:4,parts:0,unlock:"shop:polishing"},
+    {id:"rhodium",name:"Rhodium plating",blurb:"Plates and bridges plated silver-white instead of gilt: cool, bright, and it never tarnishes.",cost:14,hours:1,prestige:1,parts:0,unlock:"start"}
+  ],
+  /* parts made in your own workshop (any number; R&D, PR 7). of = the slot whose part you make yourself ("base" = the
+     plates and bridges, K.baseCost), save = the share of that part's cost you no longer pay a supplier. They cost bench
+     hours instead, and collectors pay for the "in-house" name (prestige) */
+  house:[
+    {id:"hairspring",name:"In-house hairsprings",blurb:"Drawn, coiled and vibrated to your balance in your own clean room.",cost:0,hours:2,prestige:2,parts:0,unlock:"rnd:house-spring",of:"hairspring",save:.6},
+    {id:"balance",name:"In-house balances",blurb:"Turned and poised on your own lathe.",cost:0,hours:2,prestige:1,parts:0,unlock:"rnd:house-balance",of:"balance",save:.5},
+    {id:"escapement",name:"In-house escapements",blurb:"Escape wheels and pallet forks cut on your own CNC.",cost:0,hours:3,prestige:2,parts:0,unlock:"rnd:house-escapement",of:"escapement",save:.5},
+    {id:"plates",name:"In-house plates and bridges",blurb:"The main plate and bridges milled from your own drawings.",cost:0,hours:4,prestige:2,parts:0,unlock:"rnd:house-plates",of:"base",save:.5}
   ]
 };
 
 /* a plain manual 28,800 bph three-hand movement */
 const DEFAULT_CFG={barrel:"single-large",train:"standard",jewels:"21",escapement:"swiss-lever",balance:"screw",hairspring:"steel-overcoil",
-  bph:"28800",regulator:"index",shock:"basic",winding:"manual",complications:[],finish:[]};
+  bph:"28800",regulator:"index",shock:"basic",winding:"manual",complications:[],finish:[],house:[]};
 
 /* look an option up; undefined if the id is not in the slot */
 function part(slot,id){const L=PARTS[slot];if(!L)return undefined;for(const o of L)if(o.id===id)return o;return undefined;}

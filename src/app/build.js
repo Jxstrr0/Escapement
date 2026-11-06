@@ -8,9 +8,11 @@
    - The docked capsule (#bCap) sticks to the top of the panel: rate band, reserve, parts cost, bench hours, and the
      certification odds (certCell: the best grade this build reaches at your skills, and how often).
    - The stress report card lists every COMBOS line for the build, worst first.
-   - Locked options are dimmed and say what unlocks them: a Shop upgrade (PR 5) or an R&D project (PR 7). Unlock names
-     live in UNLOCK_NAME until UPGRADES and RND carry their own. Before a career exists, a Parts switch offers
-     "Workshop" (what a new bench owns) or "Everything" (try any part); S.bAll remembers it. ---- */
+   - Locked options are dimmed and say what unlocks them: a Shop upgrade (PR 5) or an R&D project (PR 7); the names come
+     from UPGRADES and RND (UNLOCK_NAME is the fallback). Before a career exists, a Parts switch offers "Workshop" (what a
+     new bench owns) or "Everything" (try any part); S.bAll remembers it.
+   - PR 7: a Calibre row on top (only once you have a calibre, or in the Sandbox) puts the build on one of your calibres
+     (withCal, app/rnd.js) or takes it off; changing a core part takes it off too. In-house parts are their own row. ---- */
 const BUILD_SECS=[
   {id:"barrel",title:"Barrel",slots:["barrel"]},
   {id:"train",title:"Train & jewels",slots:["train","jewels"]},
@@ -19,11 +21,14 @@ const BUILD_SECS=[
   {id:"beat",title:"Beat rate & regulation",slots:["bph","regulator"]},
   {id:"shock",title:"Shock & winding",slots:["shock","winding"]},
   {id:"comps",title:"Complications",slots:["complications"]},
-  {id:"finish",title:"Finishing",slots:["finish"]}
+  {id:"finish",title:"Finishing",slots:["finish"]},
+  {id:"house",title:"In-house parts",slots:["house"]}
 ];
+const CAL_SEC={id:"cal",title:"Calibre"};
 const SLOT_NAME={barrel:"Mainspring barrel",train:"Wheel train",jewels:"Jewels",escapement:"Escapement",balance:"Balance wheel",
   hairspring:"Hairspring",bph:"Beat rate",regulator:"Regulator",shock:"Shock protection",winding:"Winding",
-  complications:"Add as many as the case and your skill allow",finish:"Each finish adds prestige and bench hours"};
+  complications:"Add as many as the case and your skill allow",finish:"Each finish adds prestige and bench hours",
+  house:"Make it yourself: cheaper parts and prestige, for more bench hours"};
 /* what each unlock is called until PR 5 (UPGRADES) and PR 7 (RND) give the real entries a name */
 const UNLOCK_NAME={
   "shop:mill":"milling machine","shop:lathe":"watchmaker's lathe","shop:cnc":"CNC mill","shop:polishing":"polishing bench",
@@ -32,7 +37,7 @@ const UNLOCK_NAME={
   "rnd:power-reserve":"Power reserve indicator","rnd:moonphase":"Moonphase","rnd:chrono":"Chronograph","rnd:annual-cal":"Annual calendar",
   "rnd:perp-cal":"Perpetual calendar","rnd:tourbillon":"Tourbillon","rnd:repeater":"Minute repeater","rnd:split-seconds":"Split-seconds"};
 function unlockName(u){const [kind,id]=u.split(":"),T=kind==="shop"?UPGRADES:RND,e=T&&T[id];return (e&&e.name)||UNLOCK_NAME[u]||id;}
-function unlockText(u){return u.startsWith("shop:")?`Needs the ${unlockName(u)} (Shop)`:`Research: ${unlockName(u)} (R&D)`;}
+function unlockText(u){return u.startsWith("shop:")?`Needs the ${unlockName(u)} (Shop)`:`Research: ${unlockName(u)} (Career tab, R&D)`;}
 /* is this option available? "start" always; otherwise the career's unlocks map ({"shop:mill":true, …}, filled by PR 5 and
    PR 7), or everything while there is no career and the Parts switch says Everything */
 function hasUnlock(u){if(u==="start")return true;const c=S.career;if(!c)return !!S.bAll;return !!(c.unlocks&&c.unlocks[u]);}
@@ -45,7 +50,7 @@ function withOpt(cfg,slot,id){
     if(a.includes(id))a=a.filter(x=>x!==id&&SIM.part(slot,x).needs!==id);
     else{a.push(id);const o=SIM.part(slot,id);if(o.needs&&!a.includes(o.needs))a.push(o.needs);}
     c[slot]=SIM.PARTS[slot].map(o=>o.id).filter(x=>a.includes(x));}   // keep table order
-  else{c[slot]=id;
+  else{c[slot]=id;delete c.cal;   // a core part changed: no longer on its calibre
     if(slot==="balance"){if(SIM.part("balance",id).freeSprung)c.regulator="free-sprung";else if(SIM.part("regulator",c.regulator).needsFreeSprung)c.regulator="index";}
     if(slot==="regulator"&&SIM.part("regulator",id).needsFreeSprung&&!SIM.part("balance",c.balance).freeSprung)c.balance="free-sprung";}
   return SIM.normCfg(c).cfg;}
@@ -93,8 +98,21 @@ function secSum(sec){return sec.slots.map(sl=>{const v=S.cfg[sl];
   return SIM.part(sl,v).name;}).join(" · ");}
 
 function bOpenId(){return S.bOpen==null?"barrel":S.bOpen;}
+/* the Calibre row: your own design, or one of your calibres (its core fitted in one go) */
+const calShown=()=>!S.career||calList().length>0;
+function calOptHtml(k,base){const on=(S.cfg.cal||"")===(k?k.id:"");
+  const d=on?`<i class="fit">${k?"on this calibre":"your own design"}</i>`:deltaHtml(bSim(withCal(S.cfg,k?k.id:null)),base);
+  const blurb=k?CAL_CORE.map(s=>SIM.part(s,k.core[s]).name).slice(0,6).join(" · "):"Every part chosen freely, row by row.";
+  return `<button class="opt${on?" on":""}" data-cal="${k?k.id:""}" aria-pressed="${on}"><span class="on-dot" aria-hidden="true"></span><b>${k?k.name+" calibre":"Your own design"}</b><span class="oc"></span><small>${blurb}</small><span class="d">${d}</span></button>`;}
+function calSecHtml(base,on){const k=calOf(S.cfg.cal);
+  let h=`<div class="acc${on?" open":""}"><button class="acch" data-sec="cal" aria-expanded="${on}"><span class="t">${CAL_SEC.title}</span><span class="sum">${k?k.name:"your own design"}</span><span class="chev" aria-hidden="true"></span></button>`;
+  if(on){h+=`<div class="accb"><div class="slot"><span class="lbl">Build on one of your calibres: fewer hours, cheaper parts, more prestige</span><div class="opts">${[null].concat(calList()).map(x=>calOptHtml(x,base)).join("")}</div></div>`;
+    h+=S.career?`<p class="hint">New calibres are developed in the Career tab, under R&amp;D.</p>`:`<div class="row"><button class="btn sm" id="bCalNew"${calList().length>=RND_SLOTS.calibresMax?" disabled":""}>Save this core as a calibre…</button></div>`;
+    h+=`</div>`;}
+  return h+`</div>`;}
 function renderBuildForm(){
   const base=bSim(S.cfg),open=bOpenId();let h="";
+  if(calShown())h+=calSecHtml(base,open==="cal");
   for(const sec of BUILD_SECS){const on=sec.id===open;
     h+=`<div class="acc${on?" open":""}"><button class="acch" data-sec="${sec.id}" aria-expanded="${on}"><span class="t">${sec.title}</span><span class="sum">${secSum(sec)}</span><span class="chev" aria-hidden="true"></span></button>`;
     if(on){h+=`<div class="accb">`;
@@ -130,11 +148,11 @@ function renderMode(){const show=!S.career;$("bModeF").hidden=!show;if(!show)ret
     `<button data-ball="${v}" class="${(S.bAll?"1":"0")===v?"on":""}" aria-pressed="${(S.bAll?"1":"0")===v}">${t}<small>${s}</small></button>`).join("");}
 
 /* in a career: make the design you see (parts paid now, assembly into the work in hand) */
-function renderMake(){const el=$("bMake"),on=inCareer();el.hidden=!on;if(!on)return;const c=car(),r=bSim(S.cfg),busy=c.bench;
-  el.innerHTML=`<h3>Make this piece</h3><p>${busy?`No. ${busy.no} is on your bench: case it or scrap it before you start another.`:`Parts ${fmt$(r.cost)} now, then about ${Math.round(r.hours)} h of assembly. You have ${fmt$(c.cash)}.`}</p>
-<div class="row"><button class="btn pri" id="bMakeGo"${busy||c.cash<r.cost?" disabled":""}>Make it (${fmt$(r.cost)})</button></div>`;}
+function renderMake(){const el=$("bMake"),on=inCareer();el.hidden=!on;if(!on)return;const c=car(),r=bSim(S.cfg),busy=c.bench,lk=lockedParts(S.cfg);
+  el.innerHTML=`<h3>Make this piece</h3><p>${busy?`No. ${busy.no} is on your bench: case it or scrap it before you start another.`:lk.length?`Not yours yet: ${lk.map(o=>o.name.toLowerCase()).join(", ")}. Take ${lk.length>1?"them":"it"} off, or get ${lk.length>1?"them":"it"} first (${unlockText(lk[0].unlock)}).`:`Parts ${fmt$(r.cost)} now, then about ${Math.round(r.hours)} h of assembly. You have ${fmt$(c.cash)}.`}</p>
+<div class="row"><button class="btn pri" id="bMakeGo"${busy||lk.length||c.cash<r.cost?" disabled":""}>Make it (${fmt$(r.cost)})</button></div>`;}
 $("bMake").addEventListener("click",e=>{if(!e.target.closest("#bMakeGo"))return;if(makePiece()){hud();TAB_RENDER.build();}});
-TAB_RENDER.build=function(){renderMode();renderCap();renderMake();renderBuildForm();renderStress();};
+TAB_RENDER.build=function(){calCheck(S.cfg);renderMode();renderCap();renderMake();renderBuildForm();renderStress();};
 
 function buildChanged(){save();renderCap();renderMake();renderBuildForm();renderStress();visSync();}
 $("buildForm").addEventListener("click",e=>{
@@ -143,13 +161,17 @@ $("buildForm").addEventListener("click",e=>{
     const el=$("buildForm").querySelector(`[data-sec="${id}"]`),pn=$("panel"),cap=$("bCap").getBoundingClientRect().bottom+6,top=el.getBoundingClientRect().top;
     if(top<cap)pn.scrollTop+=top-cap;   // keep the row's header under the capsule, not behind it
     return;}
+  if(e.target.closest("#bCalNew")){calSheet();return;}
   const b=e.target.closest(".opt");if(!b)return;
+  if(b.dataset.cal!=null){const id=b.dataset.cal||null;if((S.cfg.cal||null)===id)return;S.cfg=withCal(S.cfg,id);const k=calOf(id);
+    toast(k?`On the ${k.name} calibre: its core is fitted.`:"Your own design: every part is yours to change.");buildChanged();return;}
   const slot=b.dataset.slot,id=b.dataset.id,o=SIM.part(slot,id);
   if(b.classList.contains("lock")&&!(S.cfg[slot]===id)){toast(unlockText(o.unlock)+".");return;}
   if(!SIM.MULTI[slot]&&S.cfg[slot]===id)return;
   const was=S.cfg;S.cfg=withOpt(S.cfg,slot,id);
   const nm=(sl,x)=>SIM.part(sl,x).name;
-  if(SIM.MULTI[slot]){const add=S.cfg[slot].filter(x=>x!==id&&!was[slot].includes(x)),off=was[slot].filter(x=>x!==id&&!S.cfg[slot].includes(x));
+  if(was.cal&&!S.cfg.cal)toast(`Off the ${calName(was)} calibre: you changed part of its core.`);
+  else if(SIM.MULTI[slot]){const add=S.cfg[slot].filter(x=>x!==id&&!was[slot].includes(x)),off=was[slot].filter(x=>x!==id&&!S.cfg[slot].includes(x));
     if(add.length)toast(`${nm(slot,add[0])} added: the ${o.name.toLowerCase()} needs it.`);
     else if(off.length)toast(`${nm(slot,off[0])} taken off: it needs the ${o.name.toLowerCase()}.`);}
   else if(S.cfg.regulator!==was.regulator&&slot!=="regulator")toast(`Regulator set to ${nm("regulator",S.cfg.regulator).toLowerCase()} to match.`);

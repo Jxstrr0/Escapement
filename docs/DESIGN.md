@@ -2,6 +2,18 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 0.8.0.0: R&D, in-house parts and your own calibre (PR 7)
+
+- **R&D** (Career tab, the R&D card): 17 projects in `RND` (`src/app/state.js`). Pay the cost up front; the project is ready at the Close week its weeks run out, and it teaches you (skill XP). One runs at a time; the clean room or a master watchmaker on the staff gives a second R&D bench. Each project can need a skill level, a Shop upgrade or another project first, and the card says which. Stop a project and the money is gone.
+  - **Complications:** power reserve (Th 2,500, 4 weeks, a good first project), moonphase, chronograph (Th 16,000, 12 weeks, Complications 3), annual calendar, split-seconds (after the chronograph), perpetual calendar (after the annual), tourbillon, minute repeater (Th 110,000, 36 weeks).
+  - **Movement parts:** free-sprung balance, silicon hairspring, co-axial and detent escapements.
+  - The complications skill a project needs is below the complication's complexity on purpose: you can build one before you have mastered it, with extra beat error and returns until you train up (the "beyond your skill" stress line).
+- **In-house parts** (`PARTS.house`, a new list slot; Build tab, In-house parts row): hairsprings (needs the clean room), balances (lathe), escapements and plates & bridges (CNC). Each takes 50-60% off that part's cost and adds prestige (collectors pay for "in-house"), but costs 2-4 bench hours a piece. Finishing the project switches it on in your build.
+- **Your own calibre** (after in-house plates, with the CNC; Th 60,000 and 24 weeks, Th 25,000 and 14 weeks for each one after, up to four): name it, and the core of the build in the Build tab (barrel to winding) is frozen as your calibre. Pick it in the Calibre row at the top of the Build tab: its core goes in at once, and a piece built on it takes 20% fewer hours, its parts cost 20% less and collectors count 6 more prestige (`K.calibre`). Complications, finishes and in-house parts stay free; changing a core part takes the build off the calibre. Pieces are named after it ("No. 12 · Haldis 1 calibre, hand-wound, chronograph"). The goal "Your own calibre" is reached when the first one is ready. In the Sandbox, "Save this core as a calibre" is free and instant.
+- **Make refuses parts you don't own yet** (a build left over from the Sandbox, say): the Make card names them and what unlocks them.
+- **Rhodium plating:** a new finish (Th 14, 1 h, +1 prestige) that turns the plates and bridges silver-white in 3D instead of gilt.
+- Saved inside `esc-save` (no new keys): `S.career.rnd` (`done`, `run`), `S.career.calibres`, `S.cals` (the Sandbox's), and `cal` / `house` in a build. The sim's numbers for every build without them are unchanged.
+
 ## 0.7.2.0: the workshop
 
 - **The bench is in a room now.** The movement sits in a holder on a green felt mat on a raised oak watchmaker's bench at true scale (the plate is about 15 mm across), with a riser of small parts drawers behind it, tweezers, an eye loupe, an oiler and rodico on the mat, and a window over the Haldis valley behind. Zoom out (pinch or wheel) to see the whole bench and the room; the camera stays inside the walls.
@@ -47,7 +59,7 @@ This file describes the game as it actually is on `main`. It grows as plan PRs l
   less, walk-in buyers drop 20%, repairs 40%, and the press cares less about accuracy honours. From 2019 collectors pay 40%
   more at auction and for collectors' commissions, and finished pieces are worth up to 25% more.
 - **Goals** (Career tab): first Chronometer, first commission, your own shop, a trial podium, a sale under the hammer, your
-  own calibre (R&D, next), Observatory grade, a perpetual calendar, and through the slump (2019 with staff kept on).
+  own calibre (R&D), Observatory grade, a perpetual calendar, and through the slump (2019 with staff kept on).
 - **Rival shops** card: who they are and where they placed last time; your trial history.
 
 ## 0.6.0.0: the shop and the career (PR 5)
