@@ -106,6 +106,7 @@ h1,h2,h3{margin:0;font-weight:700;text-wrap:balance;letter-spacing:.005em}
 .hint{font-size:13px;color:var(--dim);margin:6px 0 0}
 textarea.code{width:100%;min-height:120px;resize:vertical;padding:10px;border-radius:10px;border:1px solid var(--rule);background:var(--felt);color:var(--chalk);font:13px/1.4 var(--mono);word-break:break-all}
 .buerr{color:var(--crit);min-height:1em}
+.simout{margin:8px 0 0;font-size:12px;line-height:1.5;white-space:pre-wrap;color:var(--chalk);overflow-x:auto}
 
 /* ---- bottom sheet, scrim, toast ---- */
 #scrim{position:fixed;inset:0;background:var(--scrim);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
@@ -178,7 +179,7 @@ html.reduce *,html.reduce *::before,html.reduce *::after{transition-duration:0s!
       <p class="lede">Put the movement on the timegrapher, read the trace, then regulate, adjust the beat and poise it.</p>
       <div class="card"><h3>Timegrapher<span class="soon">PR 3</span></h3><p>Two scrolling dot lines. The gap between them is beat error; their slope is the rate.</p></div>
       <div class="card"><h3>Certification<span class="soon">PR 3</span></h3><p>Bench pass, Chronometer and Observatory grades, each tested over 15 days across positions and temperatures.</p></div>
-      <pre class="card mono" id="simOut" hidden></pre>
+      <div class="card"><h3>Movement on the bench</h3><p>Raw numbers from the watch maths until the timegrapher arrives.</p><pre class="mono simout" id="simOut" hidden></pre></div>
     </section>
 
     <!-- SHOP: money, upgrades, staff, saves -->
@@ -239,27 +240,344 @@ if(sv&&sv.gfx==="ultra")document.write(ESC_LIBS.map(function(u){return '<script 
 /* ===================== Escapement: watch sim core (WATCH_SIM) =====================
    The physics and economy maths. Never touches the DOM or three.js, and runs in plain node: cut this <script> block out of
    the built index.html (search for "Escapement: watch sim core") and require it; it ends with module.exports = WATCH_SIM.
-   One IIFE spread over sim/parts.js, movement.js, combos.js, trial.js and market.js (in that order); the export object is
-   at the end of market.js.
+   tools/sim-test.js does exactly that. One IIFE spread over sim/parts.js, movement.js, combos.js, trial.js and market.js
+   (in that order); the export object is at the end of market.js.
 
-   This file: the parts tables. PARTS is an object of slots, each slot an array of options with id, name, cost, hours,
-   prestige, unlock ("start" | "shop" | "rnd:<id>") and the stats that slot uses. DEFAULT_CFG is a plain manual 28,800 bph
-   three-hand movement. Filled in by PR 1 (docs/ESCAPEMENT-PLAN.md section 4a). */
+   This file: the parts tables (plan section 4a). PARTS is an object of slots; each slot is a list of options with
+     id, name, blurb   what the player reads
+     cost              parts cost per piece, in thalers
+     hours             bench hours it adds to building one piece
+     prestige          what collectors see in it (points, summed)
+     parts             how many parts it adds to the count
+     unlock            "start" (owned from day one), "shop:<upgrade id>" (buy the tool or supplier in the Shop, PR 5)
+                       or "rnd:<project id>" (research it, PR 7)
+   plus the stats that slot feeds into simulate() (sim/movement.js). Two slots, complications and finish, are lists:
+   a movement can carry several. DEFAULT_CFG is a plain manual 28,800 bph three-hand movement.
+   Numbers are a first pass, tuned in node with tools/sim-test.js; keep them here, never inline. */
 const WATCH_SIM=(function(){
 "use strict";
-const PARTS={};
-const DEFAULT_CFG={bph:28800};
-/* ---- movement.js: simulate(cfg, skills, tools). Torque, amplitude, reserve, rate per position and temperature,
-   beat error, shock and magnetism, thickness, cost, hours, prestige. Every constant in the K table. PR 1 (plan 4b). ---- */
-const K={};
-function simulate(cfg){return{cfg:Object.assign({},DEFAULT_CFG,cfg||{}),ready:false,note:"The movement sim arrives in PR 1."};}
-/* ---- combos.js: COMBOS, part interactions that add a stress line and sometimes a penalty. PR 1 (plan 4c). ---- */
-const COMBOS=[];
+
+/* the slots in the order the Build tab shows them, and whether a slot takes one option or a list */
+const SLOTS=["barrel","train","jewels","escapement","balance","hairspring","bph","regulator","shock","winding","complications","finish"];
+const MULTI={complications:true,finish:true};
+
+const PARTS={
+  /* the mainspring barrel. torque on a 0..10 scale at full wind, falloff = share of that torque lost by the end of the
+     reserve, reserveH = hours of running from full wind at 28,800 bph with nothing extra to drive, thick = mm added */
+  barrel:[
+    {id:"single-small",name:"Single barrel, small",blurb:"A slim spring. Cheap and thin, but weak.",cost:22,hours:0,prestige:0,parts:4,unlock:"start",torque:4.8,falloff:.42,reserveH:40,thick:0},
+    {id:"single-large",name:"Single barrel, large",blurb:"The everyday choice: decent torque and two days of reserve.",cost:34,hours:0,prestige:0,parts:4,unlock:"start",torque:6.0,falloff:.36,reserveH:48,thick:.25},
+    {id:"double",name:"Twin barrels",blurb:"Two springs in series: a flatter torque curve and a long reserve.",cost:78,hours:3,prestige:2,parts:9,unlock:"shop:mill",torque:6.0,falloff:.22,reserveH:72,thick:.35},
+    {id:"high-torque",name:"High-torque barrel",blurb:"A thick spring for heavy complications. Strong but short-lived.",cost:66,hours:1,prestige:1,parts:5,unlock:"shop:spring-supplier",torque:8.0,falloff:.40,reserveH:42,thick:.5}
+  ],
+  /* the wheel train from barrel to escape wheel. friction 0..1 (lower is better), maxBph = the fastest beat it is rated for */
+  train:[
+    {id:"standard",name:"Standard train",blurb:"Stamped wheels and plain pivots. Fine up to 28,800 bph.",cost:38,hours:0,prestige:0,parts:14,unlock:"start",friction:.30,maxBph:28800},
+    {id:"polished-pivots",name:"Polished pivots",blurb:"The same wheels with burnished pivots: less friction, rated for 36,000 bph.",cost:66,hours:4,prestige:1,parts:14,unlock:"shop:lathe",friction:.26,maxBph:36000},
+    {id:"fine-pitch",name:"Fine-pitch train",blurb:"Cut wheels with a finer tooth form. The smoothest power delivery you can buy.",cost:118,hours:6,prestige:2,parts:14,unlock:"shop:cnc",friction:.22,maxBph:36000}
+  ],
+  /* jewel count. mult scales train friction */
+  jewels:[
+    {id:"17",name:"17 jewels",blurb:"Every pivot that matters, jewelled.",cost:17,hours:0,prestige:0,parts:17,unlock:"start",mult:1.00},
+    {id:"21",name:"21 jewels",blurb:"Adds cap jewels on the fast wheels.",cost:26,hours:1,prestige:0,parts:21,unlock:"start",mult:.93},
+    {id:"25",name:"25 jewels",blurb:"Cap jewels throughout. A little smoother, a little prouder.",cost:40,hours:2,prestige:1,parts:25,unlock:"shop:jewel-supplier",mult:.89},
+    {id:"31",name:"31 jewels",blurb:"More jewels than strictly needed. Collectors notice; physics barely does.",cost:62,hours:3,prestige:2,parts:31,unlock:"shop:jewel-supplier",mult:.88}
+  ],
+  /* the escapement. efficiency 0..1 = share of the train's torque delivered to the balance; oilDrift = rate lost per year
+     since service as the oil ages (s/day/year); shockFragile 0..1; lubeFree = needs no oil on the pallets */
+  escapement:[
+    {id:"swiss-lever",name:"Swiss lever",blurb:"The standard for a century. Reliable, needs oil, loses a little as it ages.",cost:44,hours:0,prestige:0,parts:6,unlock:"start",efficiency:.38,oilDrift:1.2,shockFragile:.2,lubeFree:false,thick:0},
+    {id:"hi-eff-lever",name:"High-efficiency lever",blurb:"Lighter pallets and optimised geometry: more amplitude from the same spring.",cost:72,hours:3,prestige:1,parts:6,unlock:"shop:cnc",efficiency:.41,oilDrift:1.0,shockFragile:.25,lubeFree:false,thick:0},
+    {id:"coaxial-style",name:"Co-axial style",blurb:"Radial impulse with almost no sliding friction. Barely drifts between services.",cost:230,hours:10,prestige:4,parts:9,unlock:"rnd:coaxial",efficiency:.44,oilDrift:.3,shockFragile:.2,lubeFree:false,thick:.15},
+    {id:"detent",name:"Detent (chronometer)",blurb:"A marine chronometer escapement: superb efficiency, no oil, and it hates a knock.",cost:390,hours:18,prestige:6,parts:7,unlock:"rnd:detent",efficiency:.48,oilDrift:.15,shockFragile:.8,lubeFree:true,thick:.2}
+  ],
+  /* the balance wheel. inertia (1 = a normal 10 mm balance) soaks up torque; poise 0..1 = how well it is balanced out of the box */
+  balance:[
+    {id:"smooth-small",name:"Smooth balance, small",blurb:"Light and easy to drive. Less stable on the wrist.",cost:28,hours:0,prestige:0,parts:3,unlock:"start",inertia:.9,poise:.74,freeSprung:false},
+    {id:"smooth-large",name:"Smooth balance, large",blurb:"More inertia: steadier rate, but it needs the torque to swing it.",cost:34,hours:0,prestige:0,parts:3,unlock:"start",inertia:1.25,poise:.72,freeSprung:false},
+    {id:"screw",name:"Screw balance",blurb:"Timing screws round the rim let you poise it properly.",cost:58,hours:3,prestige:1,parts:21,unlock:"start",inertia:1.0,poise:.84,freeSprung:false},
+    {id:"free-sprung",name:"Free-sprung balance",blurb:"Adjusted by inertia weights, not a regulator. The serious-maker's choice.",cost:150,hours:6,prestige:3,parts:9,unlock:"rnd:free-sprung",inertia:1.05,poise:.92,freeSprung:true}
+  ],
+  /* the hairspring. tempCoeff = rate change per degree C away from 23 (s/day/C); magnet 0..1 susceptibility; overcoil 0..1
+     (how much it centres the breathing, which cuts the amplitude error); brittle = cracks rather than bends in a drop */
+  hairspring:[
+    {id:"steel-flat",name:"Steel, flat",blurb:"Plain carbon steel. Swings badly with temperature and loves a magnet.",cost:8,hours:0,prestige:0,parts:1,unlock:"start",tempCoeff:.62,magnet:.9,overcoil:0,brittle:false},
+    {id:"steel-overcoil",name:"Steel, Breguet overcoil",blurb:"The outer coil lifted and bent in: breathes concentrically, still steel.",cost:18,hours:4,prestige:1,parts:1,unlock:"start",tempCoeff:.62,magnet:.9,overcoil:.55,brittle:false},
+    {id:"alloy-flat",name:"Self-compensating alloy, flat",blurb:"A nickel-iron alloy that barely notices temperature.",cost:32,hours:0,prestige:1,parts:1,unlock:"shop:spring-supplier",tempCoeff:.12,magnet:.45,overcoil:0,brittle:false},
+    {id:"alloy-overcoil",name:"Alloy, Breguet overcoil",blurb:"Compensating alloy with an overcoil: the classic chronometer spring.",cost:48,hours:4,prestige:2,parts:1,unlock:"shop:spring-supplier",tempCoeff:.12,magnet:.45,overcoil:.55,brittle:false},
+    {id:"silicon",name:"Silicon",blurb:"Etched, not drawn: ignores magnets and heat. Shatters in a hard drop.",cost:125,hours:0,prestige:3,parts:1,unlock:"rnd:silicon",tempCoeff:.03,magnet:0,overcoil:.65,brittle:true}
+  ],
+  /* beat rate (beats per hour). rateStability divides the amplitude and position errors; reserveMult scales reserve;
+     ampMult scales amplitude (a faster balance swings less far); wearMult speeds up wear and shortens service */
+  bph:[
+    {id:"18000",name:"18,000 bph",blurb:"5 beats a second. Lazy, frugal, long reserve; easily upset on the wrist.",cost:0,hours:0,prestige:1,parts:0,unlock:"start",bph:18000,rateStability:.70,reserveMult:1.25,ampMult:1.06,wearMult:.8},
+    {id:"21600",name:"21,600 bph",blurb:"6 beats a second. The old workhorse.",cost:0,hours:0,prestige:0,parts:0,unlock:"start",bph:21600,rateStability:.82,reserveMult:1.12,ampMult:1.03,wearMult:.9},
+    {id:"28800",name:"28,800 bph",blurb:"8 beats a second. The modern standard.",cost:0,hours:0,prestige:0,parts:0,unlock:"start",bph:28800,rateStability:1.0,reserveMult:1.0,ampMult:1.0,wearMult:1.0},
+    {id:"36000",name:"36,000 bph",blurb:"10 beats a second. Hums, holds its rate, eats its reserve and its pivots.",cost:0,hours:3,prestige:2,parts:0,unlock:"start",bph:36000,rateStability:1.25,reserveMult:.78,ampMult:.93,wearMult:1.35}
+  ],
+  /* the regulator. drift = rate it wanders by per year (s/day/year); adjustRes = smallest regulating step (s/day);
+     beatFloor = the best beat error it lets you reach (ms); needsFreeSprung = only works with a free-sprung balance */
+  regulator:[
+    {id:"index",name:"Index regulator",blurb:"A lever on the hairspring. Simple, but each nudge is coarse.",cost:10,hours:0,prestige:0,parts:2,unlock:"start",drift:1.0,adjustRes:2.0,beatFloor:.3,needsFreeSprung:false},
+    {id:"micro-adjust",name:"Micro-adjust (swan neck)",blurb:"A screw-driven index: fine steps, and it stays put.",cost:36,hours:1,prestige:1,parts:4,unlock:"shop:timing-six",drift:.4,adjustRes:.5,beatFloor:.15,needsFreeSprung:false},
+    {id:"free-sprung",name:"Free-sprung (weights)",blurb:"No index at all: regulate by turning the balance weights.",cost:0,hours:2,prestige:2,parts:0,unlock:"rnd:free-sprung",drift:.1,adjustRes:.25,beatFloor:.08,needsFreeSprung:true}
+  ],
+  /* shock protection for the balance jewels. shockRating 0..1 */
+  shock:[
+    {id:"none",name:"None",blurb:"Solid jewels. One drop and the balance pivots are gone.",cost:0,hours:0,prestige:0,parts:0,unlock:"start",shockRating:.1},
+    {id:"basic",name:"Basic shock jewels",blurb:"Spring-mounted jewels. Survives everyday knocks.",cost:12,hours:0,prestige:0,parts:6,unlock:"start",shockRating:.55},
+    {id:"premium",name:"Premium shock system",blurb:"Lyre springs, top and bottom. Survives a drop onto a tiled floor, usually.",cost:34,hours:1,prestige:1,parts:8,unlock:"shop:jewel-supplier",shockRating:.85}
+  ],
+  /* manual or automatic. thick = mm added (the rotor); keepsWind = worn daily it stays near the top of the torque curve */
+  winding:[
+    {id:"manual",name:"Hand-wound",blurb:"Wind it every morning. Thin, and collectors like the ritual.",cost:0,hours:0,prestige:1,parts:0,unlock:"start",thick:0,keepsWind:false},
+    {id:"automatic",name:"Automatic",blurb:"A rotor winds it as you move. Thicker, more parts, never runs down on the wrist.",cost:140,hours:6,prestige:0,parts:45,unlock:"start",thick:1.2,keepsWind:true}
+  ],
+  /* complications (any number). torqueDraw = extra load on the train (share of torque); thick = mm; complexity 1..10 = the
+     complications skill needed to build it cleanly; needs = another complication it relies on; posAvg = share of the
+     vertical-position error it averages out (the tourbillon) */
+  complications:[
+    {id:"date",name:"Date",blurb:"A date ring that jumps at midnight.",cost:60,hours:6,prestige:1,parts:22,unlock:"start",torqueDraw:.04,thick:.5,complexity:1},
+    {id:"gmt",name:"GMT",blurb:"A second time zone on a 24-hour hand.",cost:90,hours:8,prestige:2,parts:26,unlock:"start",torqueDraw:.05,thick:.6,complexity:2},
+    {id:"power-reserve",name:"Power reserve indicator",blurb:"A hand that shows how much wind is left.",cost:80,hours:8,prestige:2,parts:30,unlock:"rnd:power-reserve",torqueDraw:.03,thick:.4,complexity:2},
+    {id:"moonphase",name:"Moonphase",blurb:"A painted moon that waxes and wanes, right for 122 years if you cut the wheel well.",cost:120,hours:12,prestige:4,parts:34,unlock:"rnd:moonphase",torqueDraw:.03,thick:.5,complexity:3},
+    {id:"chrono",name:"Chronograph",blurb:"A stopwatch on the same movement: column wheel, clutch, three pushers' worth of levers.",cost:460,hours:40,prestige:6,parts:250,unlock:"rnd:chrono",torqueDraw:.22,thick:1.8,complexity:5},
+    {id:"annual-cal",name:"Annual calendar",blurb:"Knows 30- and 31-day months. Needs a nudge once a year, on 1 March.",cost:420,hours:40,prestige:7,parts:120,unlock:"rnd:annual-cal",torqueDraw:.08,thick:1.0,complexity:6},
+    {id:"perp-cal",name:"Perpetual calendar",blurb:"Knows leap years. Right until 2100, when the Gregorian rule catches it out.",cost:1150,hours:120,prestige:10,parts:180,unlock:"rnd:perp-cal",torqueDraw:.10,thick:1.4,complexity:8},
+    {id:"tourbillon",name:"Tourbillon",blurb:"The whole escapement in a cage that turns once a minute, averaging out the vertical positions.",cost:1450,hours:80,prestige:12,parts:70,unlock:"rnd:tourbillon",torqueDraw:.16,thick:.8,complexity:8,posAvg:.7},
+    {id:"repeater",name:"Minute repeater",blurb:"Chimes the time on two gongs at the press of a slide. The summit.",cost:2400,hours:200,prestige:14,parts:300,unlock:"rnd:repeater",torqueDraw:.02,thick:1.6,complexity:9},
+    {id:"split-seconds",name:"Split-seconds",blurb:"A second chronograph hand that stops on its own: timing two runners at once.",cost:900,hours:80,prestige:12,parts:120,unlock:"rnd:split-seconds",torqueDraw:.12,thick:1.2,complexity:9,needs:"chrono"}
+  ],
+  /* finishing (any number). Hours and prestige only: it changes nothing about how the watch runs */
+  finish:[
+    {id:"perlage",name:"Perlage",blurb:"Overlapping circles spotted onto the main plate.",cost:4,hours:4,prestige:1,parts:0,unlock:"start"},
+    {id:"stripes",name:"Haldis stripes",blurb:"Straight ribbons ground across the bridges.",cost:6,hours:6,prestige:1,parts:0,unlock:"start"},
+    {id:"anglage",name:"Anglage",blurb:"Every bridge edge bevelled and polished by hand.",cost:8,hours:20,prestige:3,parts:0,unlock:"start"},
+    {id:"black-polish",name:"Black polish",blurb:"Steel parts polished so flat they look black from most angles.",cost:10,hours:30,prestige:4,parts:0,unlock:"shop:polishing"}
+  ]
+};
+
+/* a plain manual 28,800 bph three-hand movement */
+const DEFAULT_CFG={barrel:"single-large",train:"standard",jewels:"21",escapement:"swiss-lever",balance:"screw",hairspring:"steel-overcoil",
+  bph:"28800",regulator:"index",shock:"basic",winding:"manual",complications:[],finish:[]};
+
+/* look an option up; undefined if the id is not in the slot */
+function part(slot,id){const L=PARTS[slot];if(!L)return undefined;for(const o of L)if(o.id===id)return o;return undefined;}
+/* ---- movement.js: simulate(cfg, skills, tools, opts) (plan section 4b). Every constant is in the K table below.
+   cfg     a movement: one option id per slot, lists for complications and finish (see DEFAULT_CFG in parts.js)
+   skills  the watchmaker's levels 1..10: assembly, regulating, poising, finishing, complications (missing = 1)
+   tools   {timingRes} from the owned timing machine (1 = basic; better machines read finer and help set the beat)
+   opts    seed    a number or text that makes this one piece (two pieces of the same build differ slightly)
+           adjust  {reg, beat, poise}: the player's adjustment (PR 3). reg = s/day of regulator correction,
+                   beat 0..1 = share of the beat error taken out, poise 0..1 = share of the positional error taken out
+           age     years since the last service (oil ageing)
+           caseMax the case's movement-thickness limit in mm (PR 5), for the "too thick" combo
+           worn    true = on the wrist (an automatic stays near full wind)
+   Returns the result object: amplitude, reserve, rates per position and temperature, beat error, shock and magnetism,
+   thickness, parts, cost, hours, service interval, prestige, a stress report from COMBOS, and `m`, the model numbers
+   rateAt / ampAt / beatAt need (the timegrapher and the trial read rates from those).
+   Positions: DU dial up, DD dial down, PU crown up, PD crown down, PL crown left, PR crown right.
+   Temperatures: 8, 23 and 38 C. ---- */
+const POSITIONS=["DU","DD","PU","PD","PL","PR"],VERTICAL={PU:1,PD:1,PL:1,PR:1},TEMPS=[8,23,38];
+const SKILL_NAMES=["assembly","regulating","poising","finishing","complications"];
+const K={
+  ampScale:230,         // amplitude at full wind (deg) = ampScale * sqrt(torque * efficiency * (1 - friction) / (1 + draw)) / inertia
+  ampFall:.9,           // then it falls with the torque across the reserve: amp(t) = amp0 * (torque(t) / torque0) ^ ampFall
+  ampMin:150,ampMax:335,// clamp; below ~150 the escapement can't unlock reliably and the watch is as good as stopped
+  ampRef:270,           // the amplitude the hairspring is tuned for: no isochronism error here
+  iso:.11,              // s/day gained per degree of amplitude below ampRef (before the overcoil helps)
+  overcoilCut:.75,      // share of the isochronism error a perfect overcoil (1.0) removes
+  poise:28,             // s/day: positional error scale for a balance with poise 0
+  poiseAmp:180,         // positional error grows by 1x for every poiseAmp degrees below ampRef
+  posShape:{DU:0,DD:.18,PU:.55,PD:-1.0,PL:.42,PR:-.62},   // the usual pattern: dial-up best, crown-down worst
+  posJitter:.25,        // each piece's own scatter on that pattern
+  freeSprungPoise:.8,   // a free-sprung balance keeps its poise better
+  regSpread:16,         // s/day: how far off a fresh assembly runs before regulation, at assembly level 1
+  beatBase:2.6,         // ms: beat error out of the box at assembly level 1 with the basic timing machine
+  overComplexBeat:.22,  // ms of extra beat error per level of complexity above the complications skill
+  wornT:8,              // h: an automatic on the wrist stays this close to full wind
+  overBphFriction:1.15, // train friction multiplier when the beat is faster than the train is rated for
+  overBphWear:1.5,
+  ageAmp:.03,           // share of amplitude lost per year since service as the oil thickens
+  lubeFreeAge:.3,       // an oil-free escapement ages at this share of the rate
+  baseThick:3.1,        // mm: plates, bridges, dial train of a plain three-hander
+  baseParts:96,         // plates, bridges, screws, keyless works
+  baseCost:60,baseHours:16,
+  serviceBase:5,        // years between services for a Swiss lever at 28,800
+  ret:{base:.01,shock:.07,magnet:.03,oil:.006,over:.03,max:.5},   // yearly chance a sold piece comes back
+  skillStep:{beat:.18,reg:.09,poise:.07,hours:.03}                // per skill level above 1
+};
+
+const clamp=(x,a,b)=>x<a?a:x>b?b:x;
+const lvl=(skills,k)=>clamp(+((skills||{})[k])||1,1,10);
+/* small deterministic random numbers, so a piece keeps its personality: hash a text to a seed, then mulberry32 */
+function hashStr(s){let h=2166136261;s=String(s);for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
+function rng(seed){let a=(typeof seed==="number"?seed:hashStr(seed))>>>0;return()=>{a=a+0x6D2B79F5>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+
+/* fill missing slots from DEFAULT_CFG, drop unknown ids, and fix rule-breaking builds. Returns {cfg, fixes} where fixes
+   lists what was changed, in words, so the Build tab can say so */
+function normCfg(cfg){
+  const c={},fixes=[];cfg=cfg||{};
+  for(const s of SLOTS){
+    if(MULTI[s]){const v=Array.isArray(cfg[s])?cfg[s]:[];c[s]=[...new Set(v.filter(id=>part(s,id)))];continue;}
+    c[s]=part(s,cfg[s])?cfg[s]:DEFAULT_CFG[s];}
+  const reg=part("regulator",c.regulator),bal=part("balance",c.balance);
+  if(reg.needsFreeSprung&&!bal.freeSprung){c.regulator="index";fixes.push("A free-sprung regulator needs a free-sprung balance, so it was set back to an index.");}
+  if(bal.freeSprung&&!reg.needsFreeSprung){c.regulator="free-sprung";fixes.push("A free-sprung balance is regulated by its weights, so the regulator was set to free-sprung.");}
+  for(const id of c.complications.slice()){const o=part("complications",id);
+    if(o.needs&&!c.complications.includes(o.needs)){c.complications=c.complications.filter(x=>x!==id);fixes.push(o.name+" needs a "+part("complications",o.needs).name.toLowerCase()+", so it was taken off.");}}
+  return{cfg:c,fixes};
+}
+/* the option objects for a normalised cfg */
+function pick(c){const P={};for(const s of SLOTS)P[s]=MULTI[s]?c[s].map(id=>part(s,id)):part(s,c[s]);return P;}
+
+/* ---- the model numbers for one piece ---- */
+function model(cfg,skills,tools,opts){
+  opts=opts||{};const n=normCfg(cfg),c=n.cfg,P=pick(c),adj=Object.assign({reg:0,beat:0,poise:0},opts.adjust||{});
+  const L=k=>lvl(skills,k),comps=P.complications;
+  const draw=comps.reduce((a,o)=>a+o.torqueDraw,0);
+  const maxCx=comps.reduce((a,o)=>Math.max(a,o.complexity),0),overCx=Math.max(0,maxCx-L("complications"));
+  const overBph=P.bph.bph>P.train.maxBph;
+  const friction=P.train.friction*P.jewels.mult*(overBph?K.overBphFriction:1);
+  const age=Math.max(0,+opts.age||0),ageAmp=1-K.ageAmp*age*(P.escapement.lubeFree?K.lubeFreeAge:1);
+  const R=rng(opts.seed!=null?opts.seed:JSON.stringify(c));
+  const jit={};for(const p of POSITIONS)jit[p]=(R()*2-1)*K.posJitter;
+  const posAvg=comps.reduce((a,o)=>Math.max(a,o.posAvg||0),0);
+  const m={
+    torque:P.barrel.torque,falloff:P.barrel.falloff,
+    reserveH:P.barrel.reserveH*P.bph.reserveMult/(1+draw),
+    amp0:K.ampScale*Math.sqrt(P.barrel.torque*P.escapement.efficiency*(1-friction)/(1+draw))*P.bph.ampMult*ageAmp/P.balance.inertia,
+    keepsWind:P.winding.keepsWind,worn:!!opts.worn,
+    isoK:K.iso*(1-P.hairspring.overcoil*K.overcoilCut)/P.bph.rateStability,
+    poiseE:K.poise*(1-P.balance.poise)*Math.pow(1-K.skillStep.poise,L("poising")-1)*(1-clamp(adj.poise,0,.95))
+      *(P.balance.freeSprung?K.freeSprungPoise:1)/P.bph.rateStability,
+    posAvg,jit,
+    tempCoeff:P.hairspring.tempCoeff,
+    offset:(R()*2-1)*K.regSpread*Math.pow(1-K.skillStep.reg,L("assembly")-1)+(+adj.reg||0),
+    ageDrift:-(P.escapement.oilDrift*(P.escapement.lubeFree?K.lubeFreeAge:1)+P.regulator.drift*.5)*age,
+    wrist:1,               // combos can raise this (rate scatter on the wrist)
+    beat0:0,beatFloor:P.regulator.beatFloor,
+    draw,overCx,overBph,friction,age,adj
+  };
+  const be=K.beatBase*Math.pow(1-K.skillStep.beat,L("assembly")-1)/Math.max(.5,+(tools||{}).timingRes||1)+overCx*K.overComplexBeat;
+  m.beat0=Math.max(m.beatFloor,m.beatFloor+(Math.max(be,m.beatFloor)-m.beatFloor)*(1-clamp(adj.beat,0,1)));
+  return{c,P,m,fixes:n.fixes,L};
+}
+/* hours since full wind -> torque share used; an automatic on the wrist stays near the top of the curve */
+function windT(m,t){return m.keepsWind&&m.worn?Math.min(t,K.wornT):t;}
+function ampAt(m,t){const tt=clamp(windT(m,t),0,m.reserveH);return clamp(m.amp0*Math.pow(1-m.falloff*tt/m.reserveH,K.ampFall),K.ampMin,K.ampMax);}
+function beatAt(m,t){return m.beat0*Math.sqrt(K.ampRef/ampAt(m,t));}   // beat error grows as the amplitude falls
+/* rate in s/day for a position, hours since full wind and temperature in C */
+function rateAt(m,pos,t,temp){
+  const a=ampAt(m,t);
+  const iso=m.isoK*(K.ampRef-a);
+  let pe=m.poiseE*((K.posShape[pos]||0)+(pos==="DU"?0:m.jit[pos]))*(1+(K.ampRef-a)/K.poiseAmp);
+  if(VERTICAL[pos])pe*=1-m.posAvg;
+  const te=m.tempCoeff*((temp==null?23:temp)-23);
+  return (iso+pe)*m.wrist+te+m.offset+m.ageDrift;}
+
+function simulate(cfg,skills,tools,opts){
+  opts=opts||{};
+  const {c,P,m,fixes,L}=model(cfg,skills,tools,opts);
+  const fired=new Set();
+  COMBOS.forEach(r=>{if(r.pre&&r.when({c,P,m,opts})){r.pre(m,{c,P});fired.add(r);}});   // penalties that change the model
+  const comps=P.complications,all=[];
+  for(const s of SLOTS)if(MULTI[s])all.push(...P[s]);else all.push(P[s]);
+  const sum=k=>all.reduce((a,o)=>a+(o[k]||0),0);
+  const rates={};for(const p of POSITIONS)rates[p]={t0:rateAt(m,p,0,23),t24:rateAt(m,p,24,23)};
+  const r24=POSITIONS.map(p=>rates[p].t24),r0=POSITIONS.map(p=>rates[p].t0),every=r0.concat(r24);
+  const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+  const shock=clamp(P.shock.shockRating*(1-P.escapement.shockFragile*.6)*(P.balance.inertia>1.1?.92:1),0,1);
+  const magnet=P.hairspring.magnet;
+  const thickness=K.baseThick+(P.barrel.thick||0)+(P.escapement.thick||0)+P.winding.thick+comps.reduce((a,o)=>a+o.thick,0);
+  const hoursRaw=K.baseHours+sum("hours");
+  const res={
+    cfg:c,fixes,
+    bph:P.bph.bph,beatsPerSec:P.bph.bph/3600,
+    amp0:ampAt(m,0),amp24:ampAt(m,24),ampEnd:ampAt(m,m.reserveH),
+    reserveH:m.reserveH,
+    rates,
+    rateMean24:mean(r24),rateMean0:mean(r0),
+    posSpread24:Math.max(...r24)-Math.min(...r24),
+    band:[Math.min(...every),Math.max(...every)],
+    temps:TEMPS.map(T=>({T,rate:rateAt(m,"DU",0,T)})),
+    tempSpread:Math.abs(rateAt(m,"DU",0,38)-rateAt(m,"DU",0,8)),
+    beatErr:m.beat0,beatErr24:beatAt(m,24),
+    shock,magnetResist:1-magnet,
+    returnRisk:0,
+    thickness,parts:K.baseParts+sum("parts"),
+    cost:K.baseCost+sum("cost"),
+    hours:hoursRaw,hoursSkilled:hoursRaw*Math.pow(1-K.skillStep.hours,L("assembly")-1),
+    serviceYears:K.serviceBase*(1.2/(.4+P.escapement.oilDrift*.67))/(P.bph.wearMult*(m.overBph?K.overBphWear:1)),
+    prestige:sum("prestige"),
+    complexity:comps.reduce((a,o)=>Math.max(a,o.complexity),0),overComplex:m.overCx,
+    dropCrack:P.hairspring.brittle?.6:0,
+    stress:[],m
+  };
+  res.returnRisk=clamp(K.ret.base+(1-shock)*K.ret.shock+magnet*K.ret.magnet+P.escapement.oilDrift*K.ret.oil+m.overCx*K.ret.over,0,K.ret.max);
+  for(const f of fixes)res.stress.push({id:"fixed",sev:"info",text:f});
+  COMBOS.forEach(r=>{if(r.pre?fired.has(r):r.when({c,P,m,r:res,opts})){if(r.post)r.post(res,{c,P});res.stress.push({id:r.id,sev:r.sev,text:typeof r.text==="function"?r.text({c,P,m,r:res,opts}):r.text});}});
+  if(opts.caseMax&&res.thickness>opts.caseMax+1e-9)res.tooThick=true;
+  const ord={bad:0,warn:1,info:2};res.stress.sort((a,b)=>ord[a.sev]-ord[b.sev]);
+  return res;
+}
+/* ---- combos.js: COMBOS, how parts interact (plan section 4c). Each rule adds a plain-English line to the stress report
+   and sometimes a penalty.
+     id    short name        sev   "bad" (will cause trouble), "warn" (costs you something), "info" (worth knowing)
+     when  ctx -> true when the rule applies. ctx = {c: cfg, P: the option objects, m: model numbers, r: result, opts}
+     pre   (m, ctx) -> change the model BEFORE rates are worked out (r is not there yet). A rule with pre is checked early
+     post  (r, ctx) -> change the result after (return risk, flags). Rules without pre are checked against the result
+     text  the line, or ctx -> the line
+   Order here is the order lines appear within each severity. ---- */
+const COMBOS=[
+  /* penalties on the model */
+  {id:"fast-small-barrel",sev:"bad",when:x=>x.P.bph.bph>=36000&&x.c.barrel==="single-small",
+    pre:m=>{m.reserveH*=.88;},
+    text:x=>`Reserve under 30 h: a small spring can't feed a 36,000 bph balance for long (${Math.round(x.r.reserveH)} h). It stops overnight off the wrist.`},
+  {id:"over-bph",sev:"warn",when:x=>x.m.overBph,
+    text:x=>`The ${x.P.train.name.toLowerCase()} is rated to ${x.P.train.maxBph.toLocaleString("en-GB")} bph. At ${x.P.bph.bph.toLocaleString("en-GB")} the pivots wear fast and friction rises: polished pivots fix it.`},
+  {id:"steel-chrono-noshock",sev:"bad",when:x=>/^steel/.test(x.c.hairspring)&&x.c.complications.includes("chrono")&&x.c.shock==="none",
+    pre:m=>{m.wrist*=1.6;},
+    text:"Will not hold rate on the wrist: every chronograph start and reset jolts an unprotected steel hairspring."},
+  /* lines about the result */
+  {id:"weak-balance",sev:"bad",when:x=>x.r.amp0<220,
+    post:r=>{r.returnRisk=Math.min(.5,r.returnRisk+.03);},
+    text:x=>x.P.balance.inertia>1.1&&x.P.barrel.torque<6.5
+      ?`Amplitude below 220° at full wind (${Math.round(x.r.amp0)}°): the large balance is too heavy for this spring.`
+      :`Amplitude below 220° at full wind (${Math.round(x.r.amp0)}°): not enough torque reaches the balance. A stronger barrel, less friction or a lighter balance would help.`},
+  {id:"low-amp-24",sev:"warn",when:x=>x.r.amp0>=220&&x.r.amp24<200&&x.r.reserveH>24,
+    text:x=>`Tired by evening: amplitude drops to ${Math.round(x.r.amp24)}° after 24 h, and the rate wanders with it.`},
+  {id:"short-reserve",sev:"warn",when:x=>x.r.reserveH<36&&!x.P.winding.keepsWind&&!(x.P.bph.bph>=36000&&x.c.barrel==="single-small"),
+    text:x=>`Only ${Math.round(x.r.reserveH)} h of reserve: a hand-wound watch left on the dresser stops before the next morning.`},
+  {id:"detent-drop",sev:"bad",when:x=>x.c.escapement==="detent"&&(x.c.shock==="none"||x.c.shock==="basic"),
+    post:r=>{r.returnRisk=Math.min(.5,r.returnRisk+.1);r.dropRisk=true;},
+    text:"Drop test risk: a detent escapement unlocks on a knock and can trip, stop or break its spring. It needs premium shock protection to live on a wrist."},
+  {id:"silicon-brittle",sev:"warn",when:x=>x.P.hairspring.brittle,
+    text:"Silicon doesn't bend, it cracks. A hard drop that a steel spring would survive breaks this one: hairspring cracked."},
+  {id:"no-shock",sev:"warn",when:x=>x.c.shock==="none"&&x.c.escapement!=="detent",
+    text:"No shock protection: the first drop breaks a balance pivot. Expect returns."},
+  {id:"magnet-steel",sev:"warn",when:x=>x.P.hairspring.magnet>=.8,
+    text:"Steel hairspring: a phone speaker or a handbag clasp can magnetise it, and it then gains minutes a day until demagnetised."},
+  {id:"temp-steel",sev:"warn",when:x=>x.r.tempSpread>10,
+    text:x=>`Temperature: ${x.r.tempSpread.toFixed(0)} s/day between a cold morning and a hot afternoon. A compensating alloy spring fixes this.`},
+  {id:"too-thick",sev:"bad",when:x=>x.opts.caseMax&&x.r.thickness>x.opts.caseMax,
+    text:x=>`Too thick for the case: ${x.r.thickness.toFixed(1)} mm against the case's ${x.opts.caseMax.toFixed(1)} mm${x.P.winding.keepsWind?" (the automatic rotor alone adds 1.2 mm)":""}.`},
+  {id:"over-complex",sev:"warn",when:x=>x.m.overCx>0,
+    text:x=>`Beyond your skill: this build needs complications level ${x.r.complexity}. Expect extra beat error and returns until you train up.`},
+  {id:"fast-beat",sev:"info",when:x=>x.P.bph.bph>=36000&&x.r.reserveH>=30,
+    text:"36,000 bph: holds its rate better on the wrist, but wears faster and wants a service sooner."},
+  {id:"slow-beat",sev:"info",when:x=>x.P.bph.bph<=18000,
+    text:"18,000 bph: a lovely lazy sweep and a long reserve, but every knock on the wrist shows in the rate."},
+  {id:"tourbillon",sev:"info",when:x=>x.m.posAvg>0,
+    text:"The tourbillon cage averages out most of the vertical-position error. It does nothing for dial up or dial down."},
+  {id:"lube-free",sev:"info",when:x=>x.P.escapement.lubeFree,
+    text:"No oil on the pallets: the rate hardly drifts between services."}
+];
 /* ---- trial.js: runTrial(cfg, adjust, tier), the 15-day certification trial; CERT tiers and CERT_MULT. PR 3 (plan 6c). ---- */
 const CERT={};
 /* ---- market.js: demand, pricing and the market era table (smartwatch shift). PR 5 and PR 6. Then the WATCH_SIM export object. ---- */
 const MARKET_ERA=[];
-return{PARTS,DEFAULT_CFG,K,simulate,COMBOS,CERT,MARKET_ERA};
+return{SLOTS,MULTI,PARTS,DEFAULT_CFG,part,normCfg,POSITIONS,TEMPS,SKILL_NAMES,K,simulate,ampAt,rateAt,beatAt,hashStr,rng,COMBOS,CERT,MARKET_ERA};
 })();
 if(typeof module!=="undefined"&&module.exports)module.exports=WATCH_SIM;
 </script>
@@ -452,7 +770,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.1.0.1";
+const VERSION="0.2.0.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -807,10 +1125,28 @@ __ldGo(start);
 TAB_RENDER.build=function(){};
 /* ===================== app/test.js: the Test tab =====================
    The timegrapher trace, position and temperature buttons, the adjustment loop (Regulate, Adjust beat, Poise) and
-   certification. Arrives in PR 3 (plan section 6). Until then, ?sim=1 shows the raw simulate() result as text. */
+   certification arrive in PR 3 (plan section 6). Until then the tab shows what WATCH_SIM.simulate() says about the movement
+   on the bench, as plain text: amplitude, reserve, the six-position rates, beat error and the stress report. ---- */
+const sgn=x=>(x>=0?"+":"−")+Math.abs(x).toFixed(1);
 TAB_RENDER.test=function(){
-  if(!/[?&]sim=1(&|$)/.test(location.search))return;
-  const o=$("simOut");o.hidden=false;o.textContent=JSON.stringify(SIM.simulate(S.cfg),null,2);};
+  const r=SIM.simulate(S.cfg,S.career&&S.career.skills,null,{seed:"bench"}),o=$("simOut");
+  const row=k=>SIM.POSITIONS.map(p=>sgn(r.rates[p][k]).padStart(6)).join("");
+  o.hidden=false;
+  o.textContent=[
+    `Amplitude   ${Math.round(r.amp0)}° full wind · ${Math.round(r.amp24)}° at 24 h`,
+    `Reserve     ${Math.round(r.reserveH)} h`,
+    `Beat        ${r.bph.toLocaleString("en-GB")} bph · beat error ${r.beatErr.toFixed(2)} ms`,
+    ``,
+    `Rate s/day  `+SIM.POSITIONS.map(p=>p.padStart(6)).join(""),
+    `  0 h       `+row("t0"),
+    ` 24 h       `+row("t24"),
+    `Mean ${sgn(r.rateMean24)} · spread ${r.posSpread24.toFixed(1)} · 8→38 °C ${r.tempSpread.toFixed(1)} s/day`,
+    ``,
+    `Shock ${(r.shock*100).toFixed(0)}% · magnet resistance ${(r.magnetResist*100).toFixed(0)}% · returns ${(r.returnRisk*100).toFixed(0)}%/yr`,
+    `${r.thickness.toFixed(1)} mm · ${r.parts} parts · ${fmt$(r.cost)} parts · ${Math.round(r.hours)} h · prestige ${r.prestige}`,
+    ``,
+    ...(r.stress.length?r.stress.map(s=>({bad:"✖ ",warn:"▲ ",info:"· "}[s.sev])+s.text):["No stress lines: a sound build."])
+  ].join("\n");};
 /* ===================== app/shop.js: the Shop tab =====================
    Repairs, retail pieces, commissions, trade supply, cases and dials, upgrades, staff and the weekly books arrive in PR 5
    (plan section 8). For now: the Saves card (Back up / Restore, app/savecode.js). */
