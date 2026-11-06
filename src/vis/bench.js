@@ -18,7 +18,7 @@ function rebuildMove(){dropGroup("move");V.move=buildMovement(V.cfg);V.scene.add
 /* the room (vis/room.js): rebuilt when the app's room spec changes; models follow on Full / Ultra */
 function rebuildRoom(){dropRoom();V.room=buildRoom(V.roomSpec);V.scene.add(V.room);
   if(V.tier!=="lite")V.room.traverse(o=>{const mm=V.room.userData.mats;if(o.isMesh&&(o.material===mm.felt||o.material===mm.bench))o.receiveShadow=true;});
-  roomModels(V.room,V.room.userData.spec);}
+  roomModels(V.room,V.room.userData.spec);backApply();}   // backApply: photo mode's backdrop (vis/photo.js) hides a new room too
 function rebuild(){
   for(const k of ["move","lamp"])dropGroup(k);
   makeMats(V.tier);
@@ -28,14 +28,14 @@ function rebuild(){
   /* Lite bakes its tone curve into the light (vis/studio.js); Full / Ultra tone-map the HDR reflections on the GPU */
   V.r.toneMapping=V.tier==="lite"?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;V.r.toneMappingExposure=ENV.full.exp;
   V.r.setPixelRatio(V.tier==="lite"?1:Math.min(window.devicePixelRatio||1,2));
-  V.comp=null;V.bloom=null;V.dof=null;
+  V.comp=null;V.bloom=null;V.dof=null;backApply();
   /* Ultra: depth of field focused on the movement (a macro lens: the closer, the shallower), then bloom on the brightest glints */
   if(V.tier==="ultra"&&window.__escPost)window.__escPost(ok=>{if(!ok||V.tier!=="ultra")return;
     V.comp=new THREE.EffectComposer(V.r);V.comp.addPass(new THREE.RenderPass(V.scene,V.cam));
     /* depth of field before the bloom: the bloom pass draws the last step to the screen with the renderer's sRGB output */
     if(THREE.BokehPass){V.dof=new THREE.BokehPass(V.scene,V.cam,{focus:12,aperture:ROOM.dof/12,maxblur:.008,width:V.w||1,height:V.h||1});V.comp.addPass(V.dof);}
     V.bloom=new THREE.UnrealBloomPass(new THREE.Vector2(V.w||1,V.h||1),.3,.35,.93);V.comp.addPass(V.bloom);
-    resize(true);});
+    resize(true);backApply();});
   resize(true);
 }
 function resize(force){

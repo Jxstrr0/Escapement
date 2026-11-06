@@ -407,6 +407,57 @@ details.gl p{margin:0 0 12px;color:var(--muted)}
 /* the Bench tab's week card (app/bench.js) */
 ul.todo{margin:0 0 4px;padding-left:18px;color:var(--muted)}
 ul.todo li{margin:2px 0}
+/* ---- photo.css: photo mode (app/photo.js). The camera button at the bottom right of the 3D view; html.photo makes the view
+   fill the screen with the panel, tab bar and HUD folded away, a top bar (title, hint, X) and a dock at the bottom
+   (backdrop chips, the caption switch with its text, Save photo and Share). On a short landscape phone the dock stands
+   down the right side. The dock sits beside the view, not over it (app/photo.js sets --phb / --phr to its size), so what
+   you see is what gets saved. The view's top bar stays dark in both themes; the dock follows the theme (a pale workshop
+   panel in the light theme). Reduced transparency makes the top bar opaque. ---- */
+#phBtn{position:absolute;right:10px;bottom:8px;z-index:5}
+html.photo,html.photo body{overflow:hidden}
+html.photo #view{position:fixed;inset:0 var(--phr,0px) var(--phb,0px) 0;z-index:60;flex:none;min-height:0;max-width:none}
+html.photo #panel,html.photo #tabs,html.photo #hud,html.photo #tag,html.photo #fpsHud,html.photo #phBtn,html.photo #pwaBar,html.photo #buBar{display:none!important}
+html.photo #toast{z-index:95;bottom:auto;top:calc(64px + env(safe-area-inset-top,0px))}
+#phUi{position:absolute;inset:0;z-index:30;pointer-events:none;color:var(--chalk);-webkit-user-select:none;user-select:none}
+#phUi[hidden]{display:none}
+#phUi button{pointer-events:auto}
+.phtop{position:absolute;left:0;right:0;top:0;display:flex;align-items:flex-start;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 18px;background:linear-gradient(180deg,rgba(8,12,10,.65),rgba(8,12,10,0))}
+.phh{flex:1;min-width:0;font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.phh small{display:block;margin-top:3px;font-weight:500;font-size:12px;letter-spacing:.01em;text-transform:none;color:var(--muted);opacity:0;animation:phhint 7s ease forwards}
+@keyframes phhint{0%,70%{opacity:1}100%{opacity:0}}
+html.reduce .phh small{animation:none;opacity:1}
+@media (prefers-reduced-motion:reduce){.phh small{animation:none;opacity:1}}
+.phx{flex:none;width:44px;height:44px;border-radius:22px;display:grid;place-items:center;background:rgba(18,24,21,.72);border:1px solid rgba(255,255,255,.18);color:var(--chalk)}
+.phx svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.phdock{--pd-bg:#121815;--pd-ink:#f2efe6;--pd-mute:#b3bab4;--pd-line:rgba(255,255,255,.12);--pd-chip:rgba(255,255,255,.05);
+  position:fixed;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:8px;
+  padding:10px max(12px,calc((100% - 536px)/2)) calc(10px + env(safe-area-inset-bottom,0px));background:var(--pd-bg);color:var(--pd-ink);border-top:1px solid var(--pd-line);pointer-events:auto}
+:root[data-theme=light] .phdock{--pd-bg:#fbf8f1;--pd-ink:#18201b;--pd-mute:#4f5852;--pd-line:#d9d1c2;--pd-chip:#ece6da}
+.phrow{display:flex;align-items:center;gap:8px}
+.phl{flex:none;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--pd-mute)}
+.phchips{flex:1;min-width:0;display:flex;gap:6px}
+.phchips button,.phact button,.phcap{min-height:44px;border-radius:10px;border:1px solid var(--pd-line);background:var(--pd-chip);color:var(--pd-ink);font:600 14px var(--font)}
+.phchips button{flex:1 1 0;min-width:0;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--pd-mute)}
+.phchips button.on{border-color:var(--brass);color:var(--pd-ink);box-shadow:inset 0 0 0 1px var(--brass)}
+.phcap{display:flex;align-items:center;gap:10px;width:100%;padding:6px 10px;text-align:left}
+.phtick{flex:none;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--pd-mute);display:grid;place-items:center}
+.phcap.on .phtick{background:var(--brass);border-color:var(--brass)}
+.phcap.on .phtick::after{content:"";width:9px;height:5px;border:2px solid var(--brass-ink);border-top:0;border-right:0;transform:translateY(-1px) rotate(-45deg)}
+.phct{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.phct b{font-weight:600}
+.phct small{font:11px var(--mono);color:var(--pd-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phact{display:flex;gap:8px}
+.phact button{flex:1 1 0;min-width:0}
+.phact button[hidden]{display:none}
+.phact .phpri{flex:1.6 1 0;background:var(--brass);border-color:var(--brass);color:var(--brass-ink);font-weight:700}
+.phact button:disabled{opacity:.6}
+@media (orientation:landscape) and (max-height:560px){
+  .phdock{left:auto;top:0;width:calc(280px + env(safe-area-inset-right,0px));justify-content:center;overflow-y:auto;border-top:0;border-left:1px solid var(--pd-line);
+    padding:calc(10px + env(safe-area-inset-top,0px)) calc(12px + env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) 12px}
+  .phrow{flex-direction:column;align-items:stretch;gap:6px}
+  .phchips button{font-size:12px;padding:0 2px}}
+@media (max-width:374px){.phchips button{font-size:12px}.phl{display:none}}
+@media (prefers-reduced-transparency:reduce){.phx{background:#19201c}.phtop{background:rgba(8,12,10,.9)}}
 </style>
 
 <div id="app">
@@ -1105,9 +1156,10 @@ return api;
 </script>
 <script>
 /* ===================== Escapement: 3D (WATCH_VIS) =====================
-   three.js r128. One IIFE spread over vis/core.js, studio.js, finish.js, movement.js, room.js, bench.js and api.js; the public object is in api.js.
+   three.js r128. One IIFE spread over vis/core.js, studio.js, finish.js, movement.js, room.js, bench.js, photo.js and api.js; the public object is in api.js.
    The vis never reads game state: the app calls WATCH_VIS.setMovement(cfg), .setRoom({stage,has}), .setRun({amp,bph,beatErr,wound}),
-   .setView(name), .setMotion(reduced), .setQuality(tier), .onView(fn) and reads .fps().
+   .setView(name), .setMotion(reduced), .setQuality(tier), .onView(fn), .setBackdrop(kind) and
+   .photoGrab(scale) (photo mode), and reads .fps().
    This file: module state, the renderer, the three graphics tiers and the materials.
      lite   pixel ratio 1, unlit metal that reflects a small baked copy of the studio light (cheaper than Phong), finishes
             as shade maps, Lambert felt and wood, no shadows, no post. The phone default; it must always look finished.
@@ -1911,7 +1963,7 @@ function rebuildMove(){dropGroup("move");V.move=buildMovement(V.cfg);V.scene.add
 /* the room (vis/room.js): rebuilt when the app's room spec changes; models follow on Full / Ultra */
 function rebuildRoom(){dropRoom();V.room=buildRoom(V.roomSpec);V.scene.add(V.room);
   if(V.tier!=="lite")V.room.traverse(o=>{const mm=V.room.userData.mats;if(o.isMesh&&(o.material===mm.felt||o.material===mm.bench))o.receiveShadow=true;});
-  roomModels(V.room,V.room.userData.spec);}
+  roomModels(V.room,V.room.userData.spec);backApply();}   // backApply: photo mode's backdrop (vis/photo.js) hides a new room too
 function rebuild(){
   for(const k of ["move","lamp"])dropGroup(k);
   makeMats(V.tier);
@@ -1921,14 +1973,14 @@ function rebuild(){
   /* Lite bakes its tone curve into the light (vis/studio.js); Full / Ultra tone-map the HDR reflections on the GPU */
   V.r.toneMapping=V.tier==="lite"?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;V.r.toneMappingExposure=ENV.full.exp;
   V.r.setPixelRatio(V.tier==="lite"?1:Math.min(window.devicePixelRatio||1,2));
-  V.comp=null;V.bloom=null;V.dof=null;
+  V.comp=null;V.bloom=null;V.dof=null;backApply();
   /* Ultra: depth of field focused on the movement (a macro lens: the closer, the shallower), then bloom on the brightest glints */
   if(V.tier==="ultra"&&window.__escPost)window.__escPost(ok=>{if(!ok||V.tier!=="ultra")return;
     V.comp=new THREE.EffectComposer(V.r);V.comp.addPass(new THREE.RenderPass(V.scene,V.cam));
     /* depth of field before the bloom: the bloom pass draws the last step to the screen with the renderer's sRGB output */
     if(THREE.BokehPass){V.dof=new THREE.BokehPass(V.scene,V.cam,{focus:12,aperture:ROOM.dof/12,maxblur:.008,width:V.w||1,height:V.h||1});V.comp.addPass(V.dof);}
     V.bloom=new THREE.UnrealBloomPass(new THREE.Vector2(V.w||1,V.h||1),.3,.35,.93);V.comp.addPass(V.bloom);
-    resize(true);});
+    resize(true);backApply();});
   resize(true);
 }
 function resize(force){
@@ -2000,6 +2052,85 @@ function frame(now){
   V.frames++;
   if(now-V.fpsAt>=1000){V.fpsObj={fps:Math.round(V.frames*1000/(now-V.fpsAt)),at:now};V.frames=0;V.fpsAt=now;}
 }
+/* ---- vis/photo.js: photo mode's side of the 3D view (the controls, the caption and the file are app/photo.js) ----
+   setBackdrop(kind) swaps what is round the movement:
+     workshop  the room as it is (vis/room.js): the bench, the mat, the window over the valley
+     velvet    the room hidden; the movement lies on deep black velvet in a soft pool of lamp light that fades to black
+     white     the room hidden; a seamless white studio sweep with a soft contact shadow under the movement
+   Each cloth is one disc wearing a painted texture (BACK; MeshBasicMaterial, unlit and not tone-mapped, so its rim is
+   exactly the clear colour and there is no horizon line from any angle). Full / Ultra add a ShadowMaterial disc for the
+   lamp's real shadow; Lite has the painted contact shadow only, one texture read a pixel. The lamp lights stay as they are,
+   so the movement looks the same in every backdrop; the room's daylight goes with the room.
+   The clear colour sits in the target's colour space: raw for the screen, linear for Ultra's composer (backApply).
+   photoKeep() / photoBack() remember and put back the camera, the view and the backdrop round photo mode.
+   photoGrab(scale) renders one frame at scale x the view's CSS size (the long side capped at BACK.grab.side, the pixel count
+   lower through Ultra's composer, so a phone doesn't run out of memory) and returns a 2D canvas copy of it. ---- */
+const BACK={
+  velvet:{bg:0x050505,pool:[32,30,31],edge:[5,5,5],spread:.24,nap:.07,blob:.5,blobR:.06,shadow:.6},
+  white:{bg:0xe4e3df,pool:[241,240,236],edge:[228,227,223],spread:.3,nap:0,blob:.2,blobR:.07,shadow:.24},
+  r:110,y:-.03,                       // the cloth's radius (scene units) and height (just under the dial side)
+  grab:{side:4096,px:16e6,compPx:9e6}};   // photoGrab caps: the long side, and the pixel count (Ultra's composer keeps several targets that size)
+V.back="workshop";V.backG=null;V.keep=null;
+/* the cloth's texture: the pool of light (centre colour to the edge colour), the velvet's nap (fading out before the rim so
+   the rim matches the clear colour), a soft dark contact shadow under the movement. Painted once per backdrop and tier */
+function backCanvas(B){
+  const S=V.tier==="lite"?256:512,c=document.createElement("canvas");c.width=c.height=S;
+  const g=c.getContext("2d"),img=g.createImageData(S,S),d=img.data,h=S/2;
+  for(let y=0;y<S;y++)for(let x=0;x<S;x++){
+    const t=Math.hypot(x+.5-h,y+.5-h)/h,pool=Math.exp(-(t/B.spread)*(t/B.spread)),fade=Math.max(0,1-t/.8);
+    const nap=B.nap?(fNoise(x*.9,y*.9,Math.round(S*.9),91)-.5)*2*B.nap*fade+(fHash(x,y,92)-.5)*B.nap*.6*fade:0;
+    const shade=1-B.blob*Math.exp(-(t/B.blobR)*(t/B.blobR)*2),i=(y*S+x)*4;
+    for(let k=0;k<3;k++){const v=B.edge[k]+(B.pool[k]-B.edge[k])*pool;d[i+k]=Math.max(0,Math.min(255,Math.round(v*shade*(1+nap))));}
+    d[i+3]=255;}
+  g.putImageData(img,0,0);return c;}
+function backDrop(){const g=V.backG;if(!g)return;V.scene.remove(g);
+  g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose();}});V.backG=null;}
+function backGroup(kind){
+  const B=BACK[kind],lite=V.tier==="lite";
+  if(V.backG&&V.backG.userData.kind===kind&&V.backG.userData.tier===V.tier)return V.backG;
+  backDrop();
+  const G=new THREE.Group(),tex=new THREE.CanvasTexture(backCanvas(B));tex.encoding=THREE.sRGBEncoding;
+  const cloth=new THREE.Mesh(new THREE.CircleGeometry(BACK.r,lite?40:72),new THREE.MeshBasicMaterial({map:tex,toneMapped:false,fog:false,dithering:true}));
+  cloth.rotation.x=-Math.PI/2;cloth.position.y=BACK.y;G.add(cloth);
+  if(!lite){const sh=new THREE.Mesh(new THREE.CircleGeometry(16,48),new THREE.ShadowMaterial({opacity:B.shadow,fog:false}));
+    sh.rotation.x=-Math.PI/2;sh.position.y=BACK.y+.01;sh.receiveShadow=true;G.add(sh);}
+  G.userData.kind=kind;G.userData.tier=V.tier;V.scene.add(G);V.backG=G;return G;}
+/* show the backdrop V.back says. Called on a change, after every room rebuild, and when the tier (or Ultra's composer) changes */
+function backApply(){
+  if(!V.r||!V.scene)return;const B=BACK[V.back];
+  /* Ultra's last pass (the bloom, drawn to the screen) tone-maps the already tone-mapped frame a second time, which greys a
+     white studio to about #d5; on the white backdrop it passes the frame through as Full would show it */
+  if(V.bloom&&V.bloom.basic){const tm=V.back!=="white";if(V.bloom.basic.toneMapped!==tm){V.bloom.basic.toneMapped=tm;V.bloom.basic.needsUpdate=true;}}
+  if(!B){if(V.room)V.room.visible=true;if(V.backG)V.backG.visible=false;
+    V.r.setClearColor(ROOM.fog.col,1);V.scene.fog.color.set(ROOM.fog.col);return;}
+  if(V.room)V.room.visible=false;
+  backGroup(V.back).visible=true;
+  const c=V.comp?sRGB(B.bg):new THREE.Color(B.bg);
+  V.r.setClearColor(c,1);V.scene.fog.color.copy(c);}
+function backSet(kind){V.back=BACK[kind]?kind:"workshop";backApply();}
+/* photo mode remembers the camera (where it is gliding to, if it is on the way), the view and the backdrop, and puts them back */
+function photoKeep(){const o=V.orbit,g=V.goal||{},at=k=>g[k]!=null?g[k]:o[k];
+  V.keep={orbit:{yaw:o.yaw,pitch:at("pitch"),dist:at("dist"),tx:at("tx"),ty:at("ty"),tz:at("tz")},view:V.view,back:V.back};}
+function photoBack(){const k=V.keep;if(!k)return;V.keep=null;
+  backSet(k.back);resize(true);Object.assign(V.orbit,k.orbit);V.goal=null;
+  if(V.view!==k.view){V.view=k.view;V.explodeT=k.view==="exploded"?1:0;for(const f of V.viewCbs)try{f(k.view);}catch(e){}}}
+/* one frame at `scale` x the CSS size, copied out before the browser shows it (no preserveDrawingBuffer needed) */
+function photoGrab(scale){
+  if(!V.r||!V.canvas)return null;
+  const w=V.canvas.clientWidth|0,h=V.canvas.clientHeight|0;if(!w||!h)return null;
+  const G=BACK.grab,side=Math.min(G.side,V.r.capabilities.maxTextureSize||4096),px=V.comp?G.compPx:G.px;
+  const pr=Math.max(.5,Math.min(+scale||1,side/Math.max(w,h),Math.sqrt(px/(w*h)))),pr0=V.r.getPixelRatio();
+  let out=null;
+  try{
+    V.r.setPixelRatio(pr);V.r.setSize(w,h,false);
+    if(V.comp){if(V.comp.setPixelRatio)V.comp.setPixelRatio(pr);V.comp.setSize(w,h);}
+    placeCam();roomCull();
+    if(V.dof){const u=V.dof.uniforms;u.focus.value=V.orbit.dist;u.aperture.value=ROOM.dof/V.orbit.dist;}
+    if(V.comp)V.comp.render();else V.r.render(V.scene,V.cam);
+    out=document.createElement("canvas");out.width=V.canvas.width;out.height=V.canvas.height;out.getContext("2d").drawImage(V.canvas,0,0);
+  }catch(e){out=null;}
+  finally{V.r.setPixelRatio(pr0);resize(true);}
+  return out;}
 /* ---- vis/api.js: the WATCH_VIS public object. The app calls these; the vis never reads game state. ---- */
 let started=false;
 return{
@@ -2015,6 +2146,12 @@ return{
   get view(){return V.view;},
   onView(fn){V.viewCbs.push(fn);},
   setMotion(reduced){V.reduce=!!reduced;},
+  /* photo mode (vis/photo.js): "workshop", "velvet" or "white"; keep / back round the mode; one big frame as a 2D canvas */
+  setBackdrop(kind){backSet(kind);},
+  get backdrop(){return V.back;},
+  photoKeep(){photoKeep();},
+  photoBack(){photoBack();},
+  photoGrab(scale){return photoGrab(scale);},
   fps(){return V.fpsObj;},
   get tier(){return V.tier;},
   _state:V
@@ -2309,8 +2446,8 @@ const sheetOn=()=>$("sheet").classList.contains("on");
    Auto-adjust (S.gfxAuto, on unless false), same rules as PEW: once the scene has settled, watch the frame rate WATCH_VIS
    measures. If it stays under ~27 fps for ~8 s, step ONE tier down (ultra > full > lite) and say so in a toast. It never steps
    up, and a manual tier pick after an auto-drop is respected for the rest of the session.
-   Skipped while the page is hidden, for the first ~6 s, for 3 s after a tier or tab change, and whenever the view isn't
-   drawing. Automated browsers (navigator.webdriver) are left alone unless PERF.force is set (test hook: PERF.force=12). */
+   Skipped while the page is hidden, for the first ~6 s, for 3 s after a tier or tab change, whenever the view isn't
+   drawing, and in photo mode (html.photo, app/photo.js: a full-screen view and big still frames are not a slow phone). Automated browsers (navigator.webdriver) are left alone unless PERF.force is set (test hook: PERF.force=12). */
 const PERF={T:["lite","full","ultra"],LOW:27,NEED:8000,SETTLE:6000,HOLD:3000,boot:performance.now(),f:null,fAt:0,sAt:0,low:0,tier:null,tab:null,holdTo:0,dropped:false,manual:false,force:null};
 function perfReset(hold){PERF.low=0;PERF.sAt=0;if(hold)PERF.holdTo=performance.now()+PERF.HOLD;}
 /* the player picked a tier or flipped auto-adjust in Settings */
@@ -2318,7 +2455,7 @@ function perfManual(){PERF.manual=true;perfReset(true);}
 function perfPoll(){
   if(!window.WATCH_VIS)return;
   const now=performance.now();
-  if(S.gfxAuto===false||(PERF.dropped&&PERF.manual)||document.hidden||now-PERF.boot<PERF.SETTLE){perfReset(true);return;}
+  if(S.gfxAuto===false||(PERF.dropped&&PERF.manual)||document.hidden||now-PERF.boot<PERF.SETTLE||document.documentElement.classList.contains("photo")){perfReset(true);return;}
   if(navigator.webdriver&&PERF.force==null)return;
   const tier=gfxTier();if(tier!==PERF.tier){PERF.tier=tier;perfReset(true);}
   if(curTab!==PERF.tab){PERF.tab=curTab;perfReset(true);}
@@ -3163,6 +3300,107 @@ TAB_RENDER.bench=renderBench;
 onTap("bView",e=>{const b=e.target.closest("[data-view]");if(!b||!window.WATCH_VIS)return;WATCH_VIS.setView(b.dataset.view);renderBench();});
 onTap("bLoupe",()=>{if(!window.WATCH_VIS)return;WATCH_VIS.setView(WATCH_VIS.view==="loupe"?"home":"loupe");renderBench();});
 if(window.WATCH_VIS)WATCH_VIS.onView(()=>{if(curTab==="bench")renderBench();});
+/* ===================== app/photo.js: photo mode =====================
+   The camera button on the 3D view (#phBtn, every tab) opens photo mode, html.photo: the panel and the tab bar fold away,
+   the view fills the screen, and dragging, pinching, the mouse wheel and the double-tap loupe work as ever (vis/bench.js).
+   A dock beside the view (#phUi; under it, or down the right side of a landscape phone) picks the backdrop
+   (WATCH_VIS.setBackdrop: the workshop, black velvet, a white studio), turns the caption on or off, and saves or shares
+   the picture: one frame rendered at 2 to 4 times the screen's size
+   (WATCH_VIS.photoGrab), a thin caption strip drawn along its bottom (the piece's name, its calibre, its certificate),
+   out through shareCanvas (app/share.js) as escapement-<piece>-<stamp>.png. X or Esc leaves, and the camera, the view and
+   the backdrop go back exactly as they were (photoKeep / photoBack).
+   The choices live in S.photo = {back, cap} inside esc-save (no new key); phoPrefs() checks them on every read.
+   Auto-adjust graphics waits while html.photo is on (app/perf.js), so a big frame never lowers the tier. ---- */
+const PHO={on:false,busy:false,from:null};
+const PHO_BACKS=[["workshop","Workshop"],["velvet","Black velvet"],["white","White studio"]];
+const PHO_ICON={cam:'<svg viewBox="0 0 24 24"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.6"/></svg>',
+  x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>'};
+/* S.photo, checked: a backdrop from the list (else the workshop) and the caption on unless it was turned off */
+function phoPrefs(){const p=buObjS(S.photo)?S.photo:{};return S.photo={back:PHO_BACKS.some(b=>b[0]===p.back)?p.back:"workshop",cap:p.cap!==false};}
+/* what the caption says about the movement in the view (S.cfg): in a career, your bench piece when that is what's shown
+   (its number, name and certificate); otherwise the design: its calibre's name if it has one, and benchLine() */
+function phoCaption(){
+  const key=JSON.stringify(S.cfg),b=inCareer()?car().bench:null,cal=calName(S.cfg),line=benchLine();let title,cert=null,bits=[];
+  if(b&&b.key===key){title=pieceName(b.cfg,b.no);cert=b.cert;bits.push(line.split(" · ").slice(0,2).join(" · "));}   // the name already says the winding and the complications
+  else{const p=!inCareer()&&S.piece&&S.piece.key===key?S.piece:null;cert=p?p.cert:null;
+    if(cal){title=cal+" calibre";bits.push(line);}else title=line;}
+  const C=cert&&SIM.CERT[cert];
+  if(C)bits.unshift(C.stamp?`${C.name} · ${C.body}`:C.name);
+  return{title,sub:bits.join(" · ")};}
+/* the two fonts the strip is drawn in, loaded before drawing (asked for on opening, so Save never waits long) */
+function phoFonts(){try{return Promise.race([Promise.all(['600 40px "Space Grotesk"','500 20px "JetBrains Mono"'].map(f=>document.fonts.load(f))).then(()=>document.fonts.ready),
+  new Promise(r=>setTimeout(r,1500))]).catch(()=>{});}catch(e){return Promise.resolve();}}
+function phoFit(x,s,max){s=String(s==null?"":s);if(x.measureText(s).width<=max)return s;while(s.length>2&&x.measureText(s+"…").width>max)s=s.slice(0,-1);return s.trimEnd()+"…";}
+/* the caption strip along the bottom of the frame: name above, the details and the game's name below; light on the white studio */
+function phoStrip(cv,cap,back){
+  const w=cv.width,h=cv.height,x=cv.getContext("2d"),u=Math.sqrt(w*h)/120,sh=Math.round(u*6.6),pad=Math.round(u*2.2),lt=back==="white";
+  x.save();x.fillStyle=lt?"rgba(250,249,245,.9)":"rgba(10,14,12,.82)";x.fillRect(0,h-sh,w,sh);
+  x.fillStyle=lt?"#a07a2c":"#c9a45c";x.fillRect(0,h-sh,w,Math.max(1,Math.round(u*.14)));
+  x.textBaseline="alphabetic";x.textAlign="left";
+  const mono=`500 ${Math.round(u*1.45)}px "JetBrains Mono",ui-monospace,Menlo,Consolas,monospace`,brand="ESCAPEMENT",one=!cap.sub;
+  x.font=mono;const bw=x.measureText(brand).width;
+  x.font=`600 ${Math.round(u*2.5)}px "Space Grotesk",-apple-system,"Segoe UI",sans-serif`;x.fillStyle=lt?"#18201b":"#f2efe6";
+  x.fillText(phoFit(x,cap.title,w-pad*(one?3:2)-(one?bw:0)),pad,h-sh+u*(one?4.2:3.3));   // with nothing to add, one line and the name beside it
+  x.font=mono;if(!one){x.fillStyle=lt?"#4f5852":"#b3bab4";x.fillText(phoFit(x,cap.sub,w-pad*3-bw),pad,h-sh+u*5.4);}
+  x.textAlign="right";x.fillStyle=lt?"#7a5c1c":"#d9b56e";x.fillText(brand,w-pad,h-sh+u*(one?4.2:5.4));
+  x.restore();return cv;}
+/* the finished picture as a canvas (also handy from the console): the frame, plus the strip when the caption is on */
+function phoPicture(){
+  const v=$("view"),long=Math.max(v.clientWidth,v.clientHeight)||1,cv=WATCH_VIS.photoGrab(Math.min(4,Math.max(2,2560/long)));
+  if(!cv)return null;const p=phoPrefs();if(p.cap)phoStrip(cv,phoCaption(),p.back);return cv;}
+async function phoShot(share){
+  if(PHO.busy||!PHO.on)return;PHO.busy=true;phoBusy(true);
+  try{await phoFonts();await new Promise(r=>requestAnimationFrame(r));
+    const cv=phoPicture();if(!cv){toast("Couldn't take the picture here.");return;}
+    const cap=phoCaption();await shareCanvas(cv,`escapement-${shareSlug(cap.title)}-${shareStamp()}.png`,cap.title,share);}
+  catch(e){toast("Couldn't take the picture here.");}
+  finally{PHO.busy=false;phoBusy(false);}}
+function phoBusy(on){for(const id of ["phShot","phShare"])$(id).disabled=on;$("phShot").textContent=on?"Developing…":"Save photo";}
+/* ---- the button, the dock and their state ---- */
+function phoBuild(){
+  const v=$("view");if(!v||$("phUi"))return;
+  const fab=document.createElement("button");fab.type="button";fab.id="phBtn";fab.className="hudbtn";fab.title="Photo mode";fab.setAttribute("aria-label","Photo mode");fab.innerHTML=PHO_ICON.cam;v.appendChild(fab);
+  const ui=document.createElement("div");ui.id="phUi";ui.hidden=true;ui.setAttribute("role","group");ui.setAttribute("aria-label","Photo mode");
+  ui.innerHTML=`<div class="phtop"><div class="phh">Photo mode<small>Drag to turn · pinch or scroll to zoom · double-tap for the loupe</small></div>
+      <button type="button" class="phx" id="phX" aria-label="Leave photo mode" title="Leave photo mode (Esc)">${PHO_ICON.x}</button></div>
+    <div class="phdock">
+      <div class="phrow"><span class="phl" id="phBackL">Backdrop</span><div class="phchips" id="phBack" role="group" aria-labelledby="phBackL">${PHO_BACKS.map(([k,t])=>`<button type="button" data-back="${k}" aria-pressed="false">${t}</button>`).join("")}</div></div>
+      <button type="button" class="phcap" id="phCap" aria-pressed="true"><span class="phtick" aria-hidden="true"></span><span class="phct"><b>Caption</b><small id="phCapTxt"></small></span></button>
+      <div class="phact"><button type="button" class="phpri" id="phShot">Save photo</button><button type="button" id="phShare" hidden>Share</button></div>
+    </div>`;
+  v.appendChild(ui);
+  fab.addEventListener("click",phoOpen);
+  $("phX").addEventListener("click",phoClose);
+  $("phBack").addEventListener("click",e=>{const b=e.target.closest("[data-back]");if(!b||!PHO.on)return;const p=phoPrefs();p.back=b.dataset.back;WATCH_VIS.setBackdrop(p.back);save();phoSync();});
+  $("phCap").addEventListener("click",()=>{const p=phoPrefs();p.cap=!p.cap;save();phoSync();});
+  $("phShot").addEventListener("click",()=>phoShot(false));$("phShare").addEventListener("click",()=>phoShot(true));
+  window.addEventListener("keydown",e=>{if(PHO.on&&e.key==="Escape"){e.preventDefault();e.stopPropagation();phoClose();}},true);
+  window.addEventListener("resize",()=>{if(PHO.on)phoLayout();});}
+/* the dock sits beside the view, not over it: under it in portrait, down the right side on a short landscape phone. The view
+   is given the rest of the screen (--phb / --phr, css/photo.css), so the picture saved is the picture seen */
+function phoLayout(){const r=$("phUi").querySelector(".phdock").getBoundingClientRect(),st=document.documentElement.style,side=r.top<=1&&r.height>=innerHeight-1;
+  st.setProperty("--phb",side?"0px":Math.round(innerHeight-r.top)+"px");st.setProperty("--phr",side?Math.round(innerWidth-r.left)+"px":"0px");}
+function phoSync(){
+  const p=phoPrefs(),cap=phoCaption();
+  document.querySelectorAll("#phBack [data-back]").forEach(b=>{const on=b.dataset.back===p.back;b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on));});
+  $("phCap").classList.toggle("on",p.cap);$("phCap").setAttribute("aria-pressed",String(p.cap));
+  $("phCapTxt").textContent=p.cap?[cap.title,cap.sub].filter(Boolean).join(" · "):"Off: just the picture";
+  $("phShare").hidden=!canShareFiles();}
+function phoOpen(){
+  if(PHO.on)return;const W=window.WATCH_VIS;
+  if(!W||!W.photoGrab||!W._state.r){toast("Photo mode needs the 3D view, which isn't running on this device.");return;}
+  if(sheetOn())closeSheet();
+  PHO.on=true;PHO.from=document.activeElement;W.photoKeep();
+  document.documentElement.classList.add("photo");$("phUi").hidden=false;
+  W.setBackdrop(phoPrefs().back);phoSync();phoLayout();phoFonts();
+  $("phShot").focus({preventScroll:true});}
+function phoClose(){
+  if(!PHO.on)return;PHO.on=false;
+  document.documentElement.classList.remove("photo");$("phUi").hidden=true;
+  for(const k of ["--phb","--phr"])document.documentElement.style.removeProperty(k);
+  WATCH_VIS.photoBack();   // after the class comes off: the view has its old size again, so the camera lands where it was
+  const f=PHO.from;PHO.from=null;try{(f&&f.isConnected&&f.offsetParent?f:$("phBtn")).focus({preventScroll:true});}catch(e){}}
+phoBuild();
 /* ===================== app/business.js: the career engine (plan section 8) =====================
    S.career is the game (null in the Sandbox, where every part is offered and nothing costs). Tables: BIZ, UPGRADES, STAFF,
    FAULTS, CASES, COMMISSION_TEMPLATES (app/state.js); prices from SIM.pieceValue / buyChance / tradeTerms (sim/market.js).
