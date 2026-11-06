@@ -9,7 +9,10 @@
    hydrate() of each one. Then buWrite() writes all four keys and puts the old values back if any write fails, so a bad
    paste can never leave a half-restored game. The next version of this format is ESC2:.
    A new localStorage key must be added to buMake and buWrite (and to check-savecode.js), or backups won't carry it.
-   UI: Shop tab -> Saves, and Settings -> Saves (buttons call buBackupOpen / buRestoreOpen).
+   UI: Shop tab -> Saves, and Settings -> Saves (buttons call buBackupOpen / buRestoreOpen; the two file buttons carry
+   data-bu="file" / data-bu="load" and are picked up by one click listener at the bottom of this file).
+   Save safety (bottom of this file): backup files, asking the browser to keep our storage, and the backup reminder.
+   The last backup time is S.lastBackup (milliseconds), a field inside the esc-save object, so no new key.
    Tests: `node check-savecode.js` in the repo root. */
 const BU_V=1,BU_PREFIX="ESC"+BU_V+":";
 const BU_B64="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_",BU_MAXCODES=65536;
@@ -122,8 +125,9 @@ function buWrite(d){
 /* ---- the two sheets ---- */
 function buSelect(ta){try{ta.select();ta.setSelectionRange(0,ta.value.length);}catch(e){}}
 async function buCopy(ta){
-  try{await navigator.clipboard.writeText(ta.value);toast("Copied. Paste it somewhere safe.");return;}catch(e){}   // no clipboard access: select it instead
+  try{await navigator.clipboard.writeText(ta.value);buMarked();toast("Copied. Paste it somewhere safe.");return;}catch(e){}   // no clipboard access: select it instead
   ta.focus();buSelect(ta);let ok=false;try{ok=document.execCommand("copy");}catch(e){}
+  if(ok)buMarked();
   toast(ok?"Copied. Paste it somewhere safe.":"Code selected. Long-press it and tap Copy.");}
 function buBackupOpen(){let code="";try{code=buCode();}catch(e){}
   if(!code){toast("Couldn't make a backup code on this device");return;}
@@ -151,5 +155,84 @@ function buRestore(text,err){
   err.textContent="";
   let r;try{r=buRead(text);}catch(e){say(e&&e.bu||"damaged");return;}
   if(!confirm(buAsk(r.data)))return;
+  r.data.save.lastBackup=Date.now();   // restoring means a copy of this game exists: no reminder for a while
   if(!buWrite(r.data)){say("store");return;}
-  closeSheet();applyLoaded(r.data.save,"Backup restored");}
+  closeSheet();applyLoaded(r.data.save,"Backup restored");buPersist();}
+
+/* ===================== save safety =====================
+   Every Kelbo game shares the jxstrr0.github.io origin, so one storage quota: if the phone runs low, the browser may
+   clear the whole origin, and every game's saves with it. Three things make that less likely to hurt:
+   1. buPersist() asks the browser to keep our storage (navigator.storage.persist). Once per page load, and only once the
+      player has something worth keeping (a save write with progress, a backup or a restore), because Firefox shows a
+      prompt for it. Chrome and Safari decide quietly. buStoreLine() fills the "Storage: ..." line in both Saves spots.
+   2. Backup files: the same ESC1: code, as escapement-backup-YYYY-MM-DD.txt. Shared through the share sheet where files
+      can be shared (iPhone: Save to Files, also from the Home Screen app), else downloaded. Loading a file puts its text
+      into the Restore sheet and runs the same checks and the same confirm as a pasted code.
+   3. buRemind(): with progress and no backup yet (or none for 14 days), one quiet bar per visit, at a calm moment (after
+      start-up or on a tab switch, never over a sheet or the intro). Later PRs: skip it while a timed run is going.
+   Nothing here touches anything outside esc-. */
+const BU_REMIND_DAYS=14,BU_FILE_MAX=16e6;
+function buFileName(d){d=d||new Date();const p=n=>String(n).padStart(2,"0");
+  return `escapement-backup-${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}.txt`;}   // local date
+/* something worth keeping: a career started, or a save slot used */
+function buHasProgress(){if(S&&S.career)return true;
+  for(let i=1;i<=SLOTS;i++){try{if(localStorage.getItem(slotKey(i))!=null)return true;}catch(e){}}return false;}
+let buAsked=false;
+async function buPersist(){if(buAsked)return;buAsked=true;
+  try{const st=navigator.storage;if(!st||!st.persist||!st.persisted)return;if(!(await st.persisted()))await st.persist();}catch(e){}
+  buStoreLine();}
+function buSaved(){if(!buAsked&&buHasProgress())buPersist();}   // save() calls this after each good write
+async function buStoreLine(){const els=document.querySelectorAll("[data-bu-store]");if(!els.length)return;
+  let on=null;try{const st=navigator.storage;if(st&&st.persisted)on=await st.persisted();}catch(e){on=null;}
+  els.forEach(el=>{el.hidden=on===null;
+    el.textContent=on?"Storage: kept safe on this device.":"Storage: your browser may clear saves if the phone runs low. Keep a backup file.";});}
+function buMarked(){S.lastBackup=Date.now();save();buPersist();buBarHide();}   // a backup was made: copied code or saved file
+async function buSaveFile(){let code="";try{code=buCode();}catch(e){}
+  if(!code){toast("Couldn't make a backup code on this device");return;}
+  const name=buFileName(),text=code+"\n";
+  try{const f=new File([text],name,{type:"text/plain"});
+    if(navigator.canShare&&navigator.share&&navigator.canShare({files:[f]})){
+      try{await navigator.share({files:[f]});buMarked();toast("Backup file saved.");}
+      catch(e){if(!e||e.name!=="AbortError")buDownload(text,name);}   // cancelled: not saved, say nothing
+      return;}}catch(e){}
+  buDownload(text,name);}
+function buDownload(text,name){
+  try{const url=URL.createObjectURL(new Blob([text],{type:"text/plain"})),a=document.createElement("a");
+    a.href=url;a.download=name;a.style.display="none";document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);buMarked();toast("Backup file saved: "+name);}
+  catch(e){toast("Couldn't save a file here. Use Back up and copy the code instead.");}}
+let buInput=null;
+function buLoadFile(){
+  if(!buInput){buInput=document.createElement("input");buInput.type="file";buInput.accept=".txt,text/plain";buInput.hidden=true;
+    buInput.addEventListener("change",()=>{const f=buInput.files&&buInput.files[0];buInput.value="";if(!f)return;
+      if(f.size>BU_FILE_MAX){buRestoreFile("");return;}
+      const r=new FileReader();r.onload=()=>buRestoreFile(String(r.result||""));r.onerror=()=>buRestoreFile("");r.readAsText(f);});
+    document.body.appendChild(buInput);}
+  buInput.click();}
+/* the file's text goes through the Restore sheet: same checks, same errors, same confirm as a pasted code */
+function buRestoreFile(text){buRestoreOpen();const ta=$("codeIn"),err=$("codeErr");text=String(text).trim();ta.value=text;
+  if(!text){err.textContent=BU_MSG.notcode;return;}
+  buRestore(text,err);}
+/* the reminder bar (same look as the "New version ready" bar) */
+let buBar=null,buReminded=false;
+function buBarHide(){if(buBar)buBar.classList.remove("on");}
+function buRemind(){
+  if(buReminded||$("boot")||sheetOn()||!$("intro").hidden||!buHasProgress())return;
+  const pb=$("pwaBar");if(pb&&pb.classList.contains("on"))return;   // not now: the next calm moment tries again
+  const last=buNum(S.lastBackup)?S.lastBackup:0,days=last?Math.floor((Date.now()-last)/864e5):Infinity;
+  if(days<BU_REMIND_DAYS)return;
+  buReminded=true;
+  if(!buBar){buBar=document.createElement("div");buBar.id="buBar";buBar.setAttribute("role","status");
+    buBar.innerHTML='<span id="buBarMsg"></span><button type="button" class="btn sm pri" id="buBarGo">Saves</button><button type="button" class="pwalater" id="buBarLater" aria-label="Dismiss until next visit">Later</button>';
+    ($("app")||document.body).appendChild(buBar);
+    $("buBarLater").addEventListener("click",buBarHide);
+    $("buBarGo").addEventListener("click",()=>{buBarHide();showTab("shop");
+      const c=$("savesCard");if(c)c.scrollIntoView({block:"center",behavior:reduced()?"auto":"smooth"});});}
+  $("buBarMsg").textContent=last?`Last backup ${days} days ago.`:"No backup of this game yet.";
+  buBar.classList.add("on");}
+if(typeof document!=="undefined"){   // (check-savecode.js loads this file in node, with no page)
+  document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-bu]");if(!b)return;
+    if(b.dataset.bu==="file")buSaveFile();else if(b.dataset.bu==="load")buLoadFile();});
+  $("tabs").addEventListener("click",()=>setTimeout(buRemind,700));
+  window.addEventListener("load",()=>setTimeout(buRemind,4000));
+  buStoreLine();}
