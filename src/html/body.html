@@ -1,0 +1,93 @@
+</style>
+
+<div id="app">
+  <div id="view">
+    <canvas id="gl" aria-label="The movement on your bench" role="img"></canvas>
+    <div id="hud">
+      <div class="brand">Escapement<small id="weekLbl">The Haldis · 2000</small></div>
+      <div class="money"><b id="cashLbl">—</b><span id="repLbl"></span></div>
+      <button class="hudbtn" id="setOpen" aria-label="Settings" title="Settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+    <div id="tag">28,800 bph · placeholder balance</div>
+    <div id="fpsHud" aria-hidden="true"></div>
+  </div>
+
+  <div id="panel">
+    <!-- BENCH: the 3D movement and what is on the bench right now -->
+    <section class="tabpage on" id="tab-bench" aria-labelledby="h-bench">
+      <h2 id="h-bench">Bench</h2>
+      <p class="lede">A shared bench in a rented corner of a workshop in the Haldis. Drag the view to turn the balance; pinch to zoom.</p>
+      <div class="card"><h3>On the bench<span class="soon">PR 4</span></h3><p>The movement you build will sit here in 3D and tick at the beat rate you chose. For now a plain balance wheel swings at 28,800 beats an hour.</p></div>
+      <div class="card"><h3>Repair queue<span class="soon">PR 5</span></h3><p>Customer watches with a fault come in here. Diagnose them on the timegrapher, fix them and get paid.</p></div>
+    </section>
+
+    <!-- BUILD: part-by-part movement design -->
+    <section class="tabpage" id="tab-build" aria-labelledby="h-build">
+      <h2 id="h-build">Build</h2>
+      <p class="lede">Design a movement part by part. Every choice shows what it does to amplitude, reserve, accuracy, thickness, cost and hours.</p>
+      <div class="card"><h3>Parts<span class="soon">PR 2</span></h3><p>Barrel · Train &amp; jewels · Escapement · Balance &amp; hairspring · Beat rate &amp; regulation · Shock &amp; winding · Complications · Finishing</p></div>
+      <div class="card"><h3>Stress report<span class="soon">PR 2</span></h3><p>Plain English about what will go wrong with a build, and why.</p></div>
+    </section>
+
+    <!-- TEST: timegrapher, adjustment, certification -->
+    <section class="tabpage" id="tab-test" aria-labelledby="h-test">
+      <h2 id="h-test">Test</h2>
+      <p class="lede">Put the movement on the timegrapher, read the trace, then regulate, adjust the beat and poise it.</p>
+      <div class="card"><h3>Timegrapher<span class="soon">PR 3</span></h3><p>Two scrolling dot lines. The gap between them is beat error; their slope is the rate.</p></div>
+      <div class="card"><h3>Certification<span class="soon">PR 3</span></h3><p>Bench pass, Chronometer and Observatory grades, each tested over 15 days across positions and temperatures.</p></div>
+      <pre class="card mono" id="simOut" hidden></pre>
+    </section>
+
+    <!-- SHOP: money, upgrades, staff, saves -->
+    <section class="tabpage" id="tab-shop" aria-labelledby="h-shop">
+      <h2 id="h-shop">Shop</h2>
+      <p class="lede">Repairs, retail pieces, commissions and trade work. Upgrades, staff and the books.</p>
+      <div class="card"><h3>The business<span class="soon">PR 5</span></h3><p>Cash flow, rent, salaries and parts stock, week by week.</p></div>
+      <div class="card" id="savesCard"><h3>Saves</h3><p>A backup code holds your whole game. Keep it somewhere safe, or paste it into Restore on another phone.</p>
+        <div class="row"><button class="btn" id="exportSave">Back up</button><button class="btn" id="importSave">Restore</button></div></div>
+    </section>
+
+    <!-- CAREER: calendar, reputation, events, goals -->
+    <section class="tabpage" id="tab-career" aria-labelledby="h-career">
+      <h2 id="h-career">Career</h2>
+      <p class="lede">Weeks from 2000 to 2030: the valley fair, chronometry trials, auction nights, and the smartwatch years.</p>
+      <div class="card"><h3>Calendar &amp; reputation<span class="soon">PR 6</span></h3><p>Collectors, trade and press each watch what you make.</p></div>
+      <div class="card"><h3>R&amp;D<span class="soon">PR 7</span></h3><p>New escapements, hairsprings, complications, and one day your own calibre.</p></div>
+    </section>
+  </div>
+
+  <nav id="tabs" aria-label="Main">
+    <button data-tab="bench" class="on" aria-current="page"><svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M5 20v-4h14v4"/><path d="M9 16l3-8 4 2"/><path d="M14 6.5a2.5 2.5 0 1 1 3.5 3.5"/></svg>Bench</button>
+    <button data-tab="build"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg>Build</button>
+    <button data-tab="test"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M6 15l3-3 3 2 3-5 3 3"/></svg>Test</button>
+    <button data-tab="shop"><svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v7h14v-7"/><path d="M10 20v-4h4v4"/></svg>Shop</button>
+    <button data-tab="career"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h3M8 17h6"/></svg>Career</button>
+  </nav>
+
+  <div id="scrim"></div>
+  <div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle"><header><h2 id="sheetTitle">Options</h2><button class="btn sm ghost" id="sheetClose">Close</button></header><div class="body" id="sheetBody"></div></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <div id="intro" hidden>
+    <div class="box">
+      <h1>Escapement</h1>
+      <p class="sub">A watchmaker's career · The Haldis</p>
+      <p>Build mechanical movements part by part. Put them on the timegrapher, chase chronometer certification, and grow a shared repair bench into a manufacture with its own calibres.</p>
+      <button class="btn pri" id="introGo">Open the bench</button>
+      <div class="credit">A game by Longlight Interactive · <span id="verLbl"></span></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+<script>/* three.js post-processing addons (bloom) for the Ultra tier. A phone on Lite never loads them: they are written in here only when the
+   saved tier is Ultra, else WATCH_VIS.setQuality("ultra") loads them on demand through window.__escPost. build.js reads ESC_LIBS so the
+   service worker precaches every URL (same pattern as PEW's PEW_LIBS). Order matters (Composer before the passes). */
+(function(){window.ESC_LIBS=["https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js","https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"];
+var ready=function(){return !!(window.THREE&&THREE.EffectComposer&&THREE.RenderPass&&THREE.UnrealBloomPass);},p=null;
+window.__escPost=function(cb){if(ready()){cb&&cb(true);return;}
+ if(!p)p=new Promise(function(res){var i=0;(function next(){if(i>=ESC_LIBS.length){res(ready());return;}var s=document.createElement("script");s.src=ESC_LIBS[i++];s.async=false;s.crossOrigin="anonymous";s.onload=next;s.onerror=function(){p=null;res(false);};document.head.appendChild(s);})();});
+ p.then(function(ok){cb&&cb(ok);});};
+var sv=null;try{sv=JSON.parse(localStorage.getItem("esc-save")||"null");}catch(e){}
+if(sv&&sv.gfx==="ultra")document.write(ESC_LIBS.map(function(u){return '<script src="'+u+'" crossorigin="anonymous"><\/script>';}).join(""));
+})();</script>
