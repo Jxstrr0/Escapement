@@ -8,7 +8,7 @@ Blender makes only what stands up off the dial and catches the light, so Full / 
   silver     (steel dress)   faceted batons, doubled at 12
   black      (steel sports)  lume plots in polished surrounds, batons at 3, 6 and 9, a triangle at 12
   open       (gold, display back)  domed gold studs, a double baton at 12
-  guilloche  (platinum)      applied Roman numerals, set radially
+  guilloche  (platinum)      applied Roman numerals, set radially, the 4 to 8 turned to read upright
   enamel     (gold dress)    nothing applied: its Roman numerals are fired into the enamel (printed in code)
 Every hour marker is its own object named h0 (12 o'clock) to h11 (11 o'clock), so the game can hide the ones a sub-dial
 or a window covers. Materials: applied (the marker metal), lume. Modelled on a dial of radius DIAL_R mm, centre at the
@@ -155,7 +155,9 @@ def guilloche():
         ob.name = "h%d" % h
         # radial: the foot of each numeral points at the centre
         at_hour(ob, h, DIAL_R - 3.2)
-        # the 4 to 8 numerals would read upside down at the bottom; radial setting keeps them all foot-in (as on a clock)
+        # the 4 to 8 numerals would read upside down at the bottom: turn them half round so they read upright (feet out)
+        if 3 < h < 9:
+            ob.rotation_euler.z += math.pi
         w = max(v.co.x for v in ob.data.vertices) - min(v.co.x for v in ob.data.vertices)
         if w > 4.4 * MM:   # VIII and XII are wide: narrow them a little so they clear their neighbours
             ob.scale = (4.4 * MM / w, 1, 1)

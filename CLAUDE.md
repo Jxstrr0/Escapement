@@ -93,7 +93,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: the Velmark **thaler** (`Th 4,850`; 100 pfennig to a thaler), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (0.10.1.0)
+## Current status (0.10.2.0)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
