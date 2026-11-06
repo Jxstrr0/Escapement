@@ -11,6 +11,7 @@ Sister project: Prairie Engine Works (`Jxstrr0/350Chev`). The stack, build scrip
 - PWA: `manifest.webmanifest`, `icons/`, and the generated `sw.js`. Installed copies work offline.
 - Assets: CC0 and CC-BY assets are fine. Every one gets a line in a `CREDITS.md` next to its folder (`sounds/CREDITS.md`, `models/CREDITS.md`, `textures/CREDITS.md`); ask Kelbo when a licence is unclear.
 - Node 16 or newer for the scripts (22 is what was last used). Nothing to install. `tools/make-icons.js` needs Playwright (run by hand; output is committed).
+- The props made in Blender (PR 9) are Python scripts in `tools/blender/` (`python3 tools/blender/all.py`; needs `pip install bpy`, Pillow and numpy). Run by hand; the `.glb` files they write to `models/` are committed. Never edit a model by hand: change its script.
 
 ## Commands (repo root)
 
@@ -92,7 +93,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: the Velmark **thaler** (`Th 4,850`; 100 pfennig to a thaler), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (0.9.0.0)
+## Current status (0.10.0.0)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
@@ -109,7 +110,8 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - PR 7 done (0.8.0.0): R&D, `src/app/rnd.js`. `RND` (17 projects: complications, movement parts, in-house, calibre) and `RND_SLOTS` in `state.js`; pay up front, done at Close week (`rndClose`), unlocks `rnd:<id>`, teaches XP. In-house parts are a third list slot, `house` (`PARTS.house`: of / save); a cfg can carry `cal` (calibre id), and `K.calibre` gives the bonus. Calibres live in `S.career.calibres` (Sandbox: `S.cals`), each `{id, name, core}` over `CAL_CORE`; the Build tab has a Calibre row on top and an In-house parts row. Make refuses locked parts (`lockedParts`). Rhodium plating finish (vis: silver plates and bridges). The default sim seed leaves an empty `house` out (`seedKey`) so old builds keep their numbers.
 - Known balance point: cash piles up after a few years for a player who sells certified gold pieces (a bot reaches six figures by year 3). R&D (about Th 600,000 for everything) is now the big spend; watch whether it is enough.
 - PR 8 done (0.9.0.0): `src/app/help.js` (the coach-card tour `TUT`, run by `tutKick` after every `save()`; `GLOSS` glossary, `helpSheet`, tap-to-explain via `data-g` / `gA(key)`), `src/app/cards.js` (certificate and trophy cards, `S.career.certsLog`), `src/app/photo.js` + `src/vis/photo.js` (photo mode, backdrops via `WATCH_VIS.setBackdrop`, `photoGrab`; `S.photo`), `src/app/share.js` (`shareCanvas`, the one save-or-share path). The intro offers a Repair bench career with the tour or the Sandbox. Landscape phones get a side-by-side layout (`style.css`). Tour state in the career: `tut`, `tutStep`, `tutRep`.
-- Next: PR 9, Blender props on Full/Ultra (case and crown, dials, tourbillon cage shell, nicer machines).
+- PR 9 done (0.10.0.0): the Bench's Dial side view (`src/vis/watch.js`: `CASE_GEO`, `WATCH`, `watchLayout`, `dialCanvas`, `buildWatch`; app side `watchSpec()` and `S.dialCase` in `src/app/bench.js`). Each case brings its own dial (cosmetic only). Blender props scripted in `tools/blender/` (`common.py`, `case.py`, `dials.py`, `tourbillon.py`, `machines.py`, `all.py`): three case sizes, four applied-marker dials, the tourbillon cage (`moveModels` in `vis/movement.js`), the timing machine, cleaning machine and display window (`ROOM_MODELS`). Materials are named by role and swapped for the game's own; Lite draws everything in code.
+- Next: see the plan's checklist (PR 9 was the last numbered PR); balance and polish from phone testing.
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)

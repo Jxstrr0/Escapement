@@ -13,7 +13,7 @@ function buildLights(){
 function dropGroup(k){const g=V[k];if(!g)return;V.scene.remove(g);g.traverse(o=>{if(o.geometry)o.geometry.dispose();});
   const mm=g.userData&&g.userData.mats;if(mm){mm.own.forEach(m=>m.dispose());mm.texs.forEach(t=>t.dispose());}V[k]=null;}
 /* rebuild only the movement (a new cfg) */
-function rebuildMove(){dropGroup("move");V.move=buildMovement(V.cfg);V.scene.add(V.move);if(V.view==="loupe")setGoal("loupe");}
+function rebuildMove(){dropGroup("move");V.move=buildMovement(V.cfg);V.scene.add(V.move);moveModels(V.move);watchShow();if(V.view==="loupe")setGoal("loupe");}
 /* rebuild everything that depends on the tier */
 /* the room (vis/room.js): rebuilt when the app's room spec changes; models follow on Full / Ultra */
 function rebuildRoom(){dropRoom();V.room=buildRoom(V.roomSpec);V.scene.add(V.room);
@@ -23,7 +23,7 @@ function rebuild(){
   for(const k of ["move","lamp"])dropGroup(k);
   makeMats(V.tier);
   V.lamp=buildLights();V.move=buildMovement(V.cfg);
-  V.scene.add(V.lamp,V.move);rebuildRoom();
+  V.scene.add(V.lamp,V.move);moveModels(V.move);rebuildRoom();rebuildWatch();
   V.r.shadowMap.enabled=V.tier!=="lite";V.r.shadowMap.type=THREE.PCFSoftShadowMap;
   /* Lite bakes its tone curve into the light (vis/studio.js); Full / Ultra tone-map the HDR reflections on the GPU */
   V.r.toneMapping=V.tier==="lite"?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;V.r.toneMappingExposure=ENV.full.exp;
@@ -52,15 +52,20 @@ function fitDist(pitch){
   pitch=pitch==null?.9:pitch;const vf=V.cam.fov*Math.PI/360,hf=Math.atan(Math.tan(vf)*V.cam.aspect);
   const hh=4.7*Math.sin(pitch)+1.2*Math.cos(pitch)+.5,hw=5.6;   // the top 0.5 leaves room for the HUD
   return Math.max(hh/Math.tan(vf),hw/Math.tan(hf));}
+/* the same for the cased watch (vis/watch.js): its lugs reach further than the movement, the crown sticks out at the side */
+function fitWatch(pitch){const u=V.watch&&V.watch.userData,L=u?u.halfL:6.3,Wd=u?u.halfW:6.4,h=u?u.h:2.6;
+  const vf=V.cam.fov*Math.PI/360,hf=Math.atan(Math.tan(vf)*V.cam.aspect),hh=L*Math.sin(pitch)+h*Math.cos(pitch)+.4;
+  return 1.12*Math.max(hh/Math.tan(vf),(Wd+.3)/Math.tan(hf));}
 /* the camera views. Each sets a goal the frame loop glides to (or jumps to, with reduced motion) */
 function setGoal(view){
   const u=V.move&&V.move.userData,o=V.orbit;
   if(view==="loupe"&&u&&u.loupe)V.goal={tx:u.loupe.x,ty:u.loupe.y,tz:u.loupe.z,dist:6.4,pitch:1.05};
   else if(view==="exploded")V.goal={tx:0,ty:2.0,tz:0,dist:fitDist(.45)*1.3,pitch:.45};
+  else if(view==="dial")V.goal={tx:0,ty:.6,tz:.4,dist:fitWatch(1.15),pitch:1.15};
   else V.goal={tx:0,ty:0,tz:0,dist:V.fit||fitDist(),pitch:.9};}
 function setViewName(view,quiet){
-  if(view!=="loupe"&&view!=="exploded")view="home";
-  V.view=view;V.explodeT=view==="exploded"?1:0;setGoal(view);
+  if(view!=="loupe"&&view!=="exploded"&&view!=="dial")view="home";
+  V.view=view;V.explodeT=view==="exploded"?1:0;watchShow();setGoal(view);
   if(!quiet)for(const f of V.viewCbs)try{f(view);}catch(e){}}
 function placeCam(){
   const o=V.orbit;roomClamp(o);const cp=Math.cos(o.pitch);
@@ -83,7 +88,9 @@ function bindOrbit(el){
     /* a double tap (two short taps that barely move, close together) toggles the loupe on the escapement */
     if(e.type==="pointerup"&&P.size===0&&down&&!multi){const now=performance.now();
       if(now-down.t<300&&Math.hypot(e.clientX-down.x,e.clientY-down.y)<12){
-        if(now-lastTap<350){lastTap=0;setViewName(V.view==="loupe"?"home":"loupe");}else lastTap=now;}
+        if(now-lastTap<350){lastTap=0;
+          if(V.view==="dial"){const f=fitWatch(1.15),o=V.orbit;V.goal={tx:0,ty:.6,tz:.4,dist:o.dist>f*.75?f*.5:f,pitch:o.dist>f*.75?1.3:1.15};}   // on the dial side: closer in on the dial and back
+          else setViewName(V.view==="loupe"?"home":"loupe");}else lastTap=now;}
       else lastTap=0;}
     if(P.size===0)down=null;};
   el.addEventListener("pointerup",up);el.addEventListener("pointercancel",up);
@@ -99,7 +106,8 @@ function frame(now){
   if(document.hidden||!V.r)return;
   resize(false);
   const t=(now-V.t0)/1000,dt=Math.min(.1,(now-(V.last||now))/1000),u=V.move&&V.move.userData;V.last=now;
-  if(u&&u.wheels)animateMovement(u,t,dt);
+  if(u&&u.wheels&&V.move.visible)animateMovement(u,t,dt);
+  if(V.watch&&V.watch.visible)animateWatch(V.watch.userData,(now-V.watch.userData.t0)/1000);
   glide(dt);
   placeCam();roomCull();
   if(V.dof){const u=V.dof.uniforms;u.focus.value=V.orbit.dist;u.aperture.value=ROOM.dof/V.orbit.dist;}

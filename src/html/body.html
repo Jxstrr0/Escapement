@@ -16,10 +16,12 @@
     <!-- BENCH: the 3D movement and what is on the bench right now -->
     <section class="tabpage on" id="tab-bench" aria-labelledby="h-bench">
       <h2 id="h-bench">Bench</h2>
-      <p class="lede">A shared bench in a rented corner of a workshop in the Haldis, high in the north of Velmark. Drag the view to turn the movement, pinch to zoom, double-tap for the loupe.</p>
+      <p class="lede">A shared bench in a rented corner of a workshop in the Haldis, high in the north of Velmark. Drag the view to turn the movement, pinch to zoom, double-tap for the loupe. Dial side shows it cased.</p>
       <div class="card" id="bCard"><h3>On the bench</h3>
         <p id="bNow"></p>
         <div class="field"><span class="lbl">View</span><div class="seg" id="bView" role="group" aria-label="How the movement sits"></div></div>
+        <div class="field" id="bCaseF" hidden><span class="lbl">Case</span><div class="seg" id="bCase" role="group" aria-label="Which case to try"></div></div>
+        <p class="hint" id="bDialHint" hidden>A preview: each case brings its own dial, and you choose one when you case the piece. The hands show the time where you are; the seconds hand steps at the beat rate.</p>
         <button type="button" class="btn" id="bLoupe" aria-pressed="false">Loupe on the escapement</button>
         <p class="hint">Change parts on the Build tab and the movement here is rebuilt to match; regulate it on the Test tab and the balance swings at the new amplitude.</p></div>
       <div class="card" id="bTodo"></div>

@@ -2,6 +2,31 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 0.10.0.0: the dial side and the Blender props (PR 9)
+
+**Dial side.** The Bench tab has a third view next to Assembled and Exploded: the movement cased and turned dial up, on its strap (`src/vis/watch.js`, `WATCH_VIS.setWatch`). A Case row picks which of the five cases to try. Each case brings its own dial (one dial per case, cosmetic only: the dial adds nothing to the price beyond what the case already does). The choice is a preview kept in `S.dialCase` inside `esc-save`; the real case is still chosen when you case the piece.
+
+| Case | Size | Dial | Hands | Strap |
+|---|---|---|---|---|
+| Steel dress | dress, 36 mm | silver sunburst, applied faceted batons | dauphine | black leather |
+| Steel sports | big, 41 mm, crown guards | black sunburst, lume plots, triangle at 12 | sword with lume | black rubber |
+| Gold dress | dress | cream enamel, Roman numerals fired in | blued Breguet | brown leather |
+| Gold, display back | big | cream grained, gold studs, an open heart where a balance swings | leaf | dark brown |
+| Platinum | mid, 39 mm | guilloché waves, applied Roman numerals | blued Breguet | navy |
+
+The build decides the rest of the dial (`watchLayout`). Each complication takes one of the 12, 3, 6 or 9 o'clock slots, in this order: the tourbillon aperture, the moon, the perpetual calendar's day / date / month, the chronograph's 30-minute counter and small seconds, the power reserve, the annual calendar's day and month windows, then the date window (at 4:30 if the four slots are full). The hour marker under a slot is left out. Chronographs get pushers at 2 and 4, a split-seconds gets a button at 10, and a repeater gets a slide on the left flank.
+
+The hands show the real local time. The seconds hand steps at the movement's beat rate (8 steps a second at 28,800 bph), and stops if the watch is let down. The date, day, month and moon show today. The chronograph runs. The split hand stops for a lap now and then and catches up. A double tap on the dial side zooms in on the dial and back. Photo mode shoots it like any other view.
+
+**The props.** Each one is a Python script in `tools/blender/` that drives Blender headless (`pip install bpy`) and packs its output into `models/` with `tools/pack-model.py`; `python3 tools/blender/all.py` remakes them all. No model is edited by hand. Materials are named by role (`metal`, `polish`, `crystal`, `applied`, `lume`, `cage`, and the room's own names) and the game swaps in its own tier material for each, so one case model serves steel, gold and platinum.
+
+- `case-dress.glb`, `case-mid.glb`, `case-big.glb`: case middle with lugs, bezel, back, flange, crystal, and a fluted crown.
+- `dial-silver.glb`, `dial-black.glb`, `dial-open.glb`, `dial-guilloche.glb`: the applied hour markers, one node per hour (`h0` to `h11`) so the game can leave out the ones under a sub-dial. The enamel dial has nothing applied.
+- `tourbillon-cage.glb`: a lower carriage, three pillars, an upper bridge of lyre-shaped arms and a jewel. It replaces the coded cage in the movement and fills the tourbillon aperture on the dial.
+- The timing machine, the cleaning machine and the display window in the workshop (`src/vis/room.js`).
+
+Lite never downloads a model. It draws everything in code from the same numbers (`CASE_GEO` matches the case script): turned case profiles, extruded lugs and straps, coded markers (guilloché gets batons), and the printed dial (a 512 px canvas; 1024 on Full and Ultra, where the guilloché also gets a normal map). On Full and Ultra each coded stand-in hides when its model lands.
+
 ## 0.9.0.0: help, the tour, cards and photo mode (PR 8)
 
 - **First screen:** the intro offers **Start at the repair bench** (a Repair bench career, with the tour) or **Just look around** (the Sandbox, as before).

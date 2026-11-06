@@ -59,7 +59,7 @@ function photoKeep(){const o=V.orbit,g=V.goal||{},at=k=>g[k]!=null?g[k]:o[k];
   V.keep={orbit:{yaw:o.yaw,pitch:at("pitch"),dist:at("dist"),tx:at("tx"),ty:at("ty"),tz:at("tz")},view:V.view,back:V.back};}
 function photoBack(){const k=V.keep;if(!k)return;V.keep=null;
   backSet(k.back);resize(true);Object.assign(V.orbit,k.orbit);V.goal=null;
-  if(V.view!==k.view){V.view=k.view;V.explodeT=k.view==="exploded"?1:0;for(const f of V.viewCbs)try{f(k.view);}catch(e){}}}
+  if(V.view!==k.view){V.view=k.view;V.explodeT=k.view==="exploded"?1:0;watchShow();for(const f of V.viewCbs)try{f(k.view);}catch(e){}}}
 /* one frame at `scale` x the CSS size, copied out before the browser shows it (no preserveDrawingBuffer needed) */
 function photoGrab(scale){
   if(!V.r||!V.canvas)return null;

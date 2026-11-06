@@ -2,7 +2,8 @@
    The 3D movement on the bench: visSync() hands the vis the current build (setMovement) and how it is running right now
    (setRun: the amplitude, beat rate and beat error the timegrapher would show), and is called whenever any of those
    change. The tab card names the movement and switches the view: Assembled / Exploded, and the loupe on the escapement
-   (a double tap on the view does the same; the vis tells us through onView). Under it, This week (renderBenchTodo):
+   (a double tap on the view does the same; the vis tells us through onView), and Dial side: the movement cased and turned
+   dial up (watchSpec sends setWatch: the case to try, S.dialCase, the complications, the words on the dial). Under it, This week (renderBenchTodo):
    repairs waiting, your piece, stock, and buttons to the tab for each and to Close week.
    roomSync() tells the vis what the workshop round the bench looks like (setRoom): the career stage and the machines
    owned. It runs from visSync and from every save(), and costs nothing when nothing changed (the vis compares). */
@@ -16,7 +17,7 @@ function roomSync(){if(!window.WATCH_VIS||!WATCH_VIS.setRoom)return;try{WATCH_VI
 function visSync(){
   if(!window.WATCH_VIS)return;
   roomSync();
-  try{WATCH_VIS.setMovement(S.cfg);const st=runState();WATCH_VIS.setRun({amp:st.amp,bph:st.bph,beatErr:st.beat,wound:true});}catch(e){}
+  try{WATCH_VIS.setMovement(S.cfg);if(WATCH_VIS.setWatch)WATCH_VIS.setWatch(watchSpec());const st=runState();WATCH_VIS.setRun({amp:st.amp,bph:st.bph,beatErr:st.beat,wound:true});}catch(e){}
   benchTag();if(typeof curTab!=="undefined"&&curTab==="bench")renderBench();}
 /* how the movement on the bench swings: the timegrapher's reading when it is your piece there (built as designed),
    else the design's own numbers at full wind */
@@ -27,11 +28,20 @@ function benchLine(){const c=SIM.normCfg(S.cfg).cfg,P=(s,id)=>SIM.part(s,id)||{}
   const comps=(c.complications||[]).map(id=>(P("complications",id).short||P("complications",id).name||id).toLowerCase());
   return [(+c.bph).toLocaleString("en-GB")+" bph",c.jewels+" jewels",c.winding==="automatic"?"automatic":"hand-wound"].concat(comps).join(" · ");}
 function benchTag(){const t=$("tag");if(t&&window.WATCH_VIS)t.textContent=benchLine();}
-const BENCH_VIEWS=[["home","Assembled"],["exploded","Exploded"]];
+const BENCH_VIEWS=[["home","Assembled"],["exploded","Exploded"],["dial","Dial side"]];
+/* the Dial side view: the movement cased and turned over. Each case comes with its own dial (CASES); before you case a
+   piece you can try them all here (S.dialCase, a preview only). The hands tell the time where you are. */
+const DIAL_CASES=[["steel-dress","Steel","dress"],["steel-sport","Steel","sports"],["gold-dress","Gold","dress"],["gold-big","Gold","display"],["platinum","Platinum","guilloché"]];
+function watchSpec(){const c=SIM.normCfg(S.cfg).cfg,comps=c.complications||[],p=inCareer()&&car().bench;
+  const cert=p&&p.cert&&p.cert!=="bench"&&p.key===JSON.stringify(S.cfg)?SIM.CERT[p.cert].name.split(" ")[0]:"";
+  return{caseId:CASES[S.dialCase]?S.dialCase:"steel-dress",comps,top:"HALDIS",
+    mid:cert||(comps.includes("tourbillon")?"Tourbillon":c.winding==="automatic"?"Automatic":""),foot:"Velmark"};}
 function renderBench(){
   const v=window.WATCH_VIS?WATCH_VIS.view:"home";
-  $("bView").innerHTML=segBtns(BENCH_VIEWS,v==="exploded"?"exploded":"home","view");
-  const lb=$("bLoupe");lb.classList.toggle("on",v==="loupe");lb.setAttribute("aria-pressed",String(v==="loupe"));
+  $("bView").innerHTML=segBtns(BENCH_VIEWS,v==="exploded"||v==="dial"?v:"home","view");
+  $("bCaseF").hidden=v!=="dial";$("bDialHint").hidden=v!=="dial";
+  if(v==="dial")$("bCase").innerHTML=segBtns(DIAL_CASES,CASES[S.dialCase]?S.dialCase:"steel-dress","case");
+  const lb=$("bLoupe");lb.hidden=v==="dial";lb.classList.toggle("on",v==="loupe");lb.setAttribute("aria-pressed",String(v==="loupe"));
   lb.textContent=v==="loupe"?"Back to the whole movement":"Loupe on the escapement";
   const r=bSim(S.cfg),st=runState();
   $("bNow").innerHTML=`<b>${benchLine()}</b><br>Swinging ${Math.round(st.amp)}° at ${(+st.bph).toLocaleString("en-GB")} beats an hour · beat error ${st.beat.toFixed(1)} ms · ${Math.round(r.reserveH)} h reserve`;
@@ -49,5 +59,6 @@ function renderBenchTodo(){const el=$("bTodo"),c=car();
 $("bTodo").addEventListener("click",e=>{const b=e.target.closest("[data-bt]");if(!b)return;const k=b.dataset.bt;if(k==="close")doCloseWeek();else showTab(k);});
 TAB_RENDER.bench=renderBench;
 onTap("bView",e=>{const b=e.target.closest("[data-view]");if(!b||!window.WATCH_VIS)return;WATCH_VIS.setView(b.dataset.view);renderBench();});
+onTap("bCase",e=>{const b=e.target.closest("[data-case]");if(!b||!CASES[b.dataset.case])return;S.dialCase=b.dataset.case;save();visSync();});
 onTap("bLoupe",()=>{if(!window.WATCH_VIS)return;WATCH_VIS.setView(WATCH_VIS.view==="loupe"?"home":"loupe");renderBench();});
 if(window.WATCH_VIS)WATCH_VIS.onView(()=>{if(curTab==="bench")renderBench();});
