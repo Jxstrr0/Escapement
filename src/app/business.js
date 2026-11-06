@@ -130,7 +130,7 @@ const specOk=(spec,pc)=>specChecks(spec,pc).every(x=>x.ok);
 function orderPay(o){const late=Math.max(0,car().wk-o.due);return Math.round(o.budget*Math.max(.4,1-BIZ.late*late));}
 function deliver(orderId,stockId){const c=car(),o=c.orders.find(x=>x.id===+orderId),i=c.stock.findIndex(x=>x.id===+stockId);if(!o||i<0)return;
   const pc=c.stock[i],t=tplOf(o.tpl);if(pc.away||!specOk(t.spec,pc))return;const amt=orderPay(o),late=Math.max(0,c.wk-o.due);
-  c.stock.splice(i,1);c.orders=c.orders.filter(x=>x!==o);earn(amt,`${t.title} for ${o.cust}`);
+  c.stock.splice(i,1);c.orders=c.orders.filter(x=>x!==o);earn(amt,`${t.title} for ${o.cust}`);sfx("sale");
   c.sold.push(soldRow(pc,amt,o.cust,"commission"));if(c.sold.length>60)c.sold.shift();
   const tr=REP_SEG[t.seg]||"press";addRep({[tr]:REP_GAIN.commission-REP_GAIN.commissionLate*late});goal("commission");
   save();toast(`Delivered to ${o.cust}: ${fmt$(amt)}.`);}
@@ -177,7 +177,7 @@ function casePiece(caseId){const c=car(),p=c.bench,cs=CASES[caseId];if(!p||!p.ce
     thick:+(r.thickness+cs.thick).toFixed(1),r:{reserveH:r.reserveH,prestige:r.prestige,amp24:r.amp24,cost:r.cost}});
   c.bench=null;S.tgOn=null;checkGoals();save();toast(`No. ${p.no} is cased and in stock at ${fmt$(value)}.`);return true;}
 function stockBy(id){return car().stock.find(x=>x.id===+id);}
-function sellPiece(pc,price,to,how){const c=car();c.stock=c.stock.filter(x=>x!==pc);earn(price,`${pc.name} sold${to?" to "+to:""}`);
+function sellPiece(pc,price,to,how){const c=car();sfx("sale");c.stock=c.stock.filter(x=>x!==pc);earn(price,`${pc.name} sold${to?" to "+to:""}`);
   c.sold.push(soldRow(pc,price,to,how));if(c.sold.length>60)c.sold.shift();}
 
 /* ---- Close week ---- */
@@ -197,7 +197,7 @@ function closeWeek(){
         rep.push(`Repaired ${r.watch} for ${r.cust}: ${fmt$(amt)}.`);c.repairs=c.repairs.filter(x=>x!==r);if(myRepair)levelToast("assembly",gainXp("assembly",1));addRep(REP_GAIN.repair,rep);}
       else{r.tried.push(r.trying);addRep(REP_GAIN.repairWrong,rep);r.state="in";rep.push(`${r.watch[0].toUpperCase()+r.watch.slice(1)} (${r.cust}) still runs badly: it wasn't ${FAULTS[r.trying].name.toLowerCase()}. Back on the timegrapher.`);r.trying=null;}}
     if(j.kind==="trade"&&c.trade&&c.trade.id===j.ref){const t=c.trade,late=Math.max(0,c.wk-t.due),amt=Math.round(t.qty*t.price*Math.max(.4,1-BIZ.tradeLate*late));
-      earn(amt,`${t.qty} movements for ${t.brand}`);rep.push(`${t.brand} took delivery of ${t.qty} movements: ${fmt$(amt)}${late?` (${late} week${late>1?"s":""} late)`:""}.`);c.trade=null;
+      earn(amt,`${t.qty} movements for ${t.brand}`);sfx("sale");rep.push(`${t.brand} took delivery of ${t.qty} movements: ${fmt$(amt)}${late?` (${late} week${late>1?"s":""} late)`:""}.`);c.trade=null;
       addRep({trade:REP_GAIN.trade.trade-REP_GAIN.tradeLate*late},rep);}
     if(j.kind==="warranty"){const s=c.sold.find(x=>x.id===j.ref);if(s)rep.push(`${s.name} went back to ${s.to}, put right.`);}}
   /* 2. retail: this week's buyers each look at the stock and may buy the best value for its price */
@@ -226,9 +226,9 @@ function closeWeek(){
   /* 6. the new week: arrivals */
   c.wk++;const d=dateOf(c.wk),newYear=d.year!==c.year;c.year=d.year;c.week=d.week;c.used=0;
   const R2=weekRng("arrive"),nr=poisson(R2,BIZ.repairsWeek*(upOwned("shop")?BIZ.repairsShop:1)*SIM.eraMult(c.year,"repairs"));
-  for(let i=0;i<nr;i++)addRepair(R2);if(nr)rep.push(`${nr} watch${nr>1?"es":""} in for repair.`);
-  if(R2()<1/BIZ.offerEvery){const n=c.offers.length;addOffer(R2);if(c.offers.length>n)rep.push("A commission enquiry: see the Shop tab.");}
-  if(R2()<(1+.2*repTier("trade"))/BIZ.tradeEvery){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep)rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);}
+  for(let i=0;i<nr;i++)addRepair(R2);if(nr){rep.push(`${nr} watch${nr>1?"es":""} in for repair.`);sfx("door");}
+  if(R2()<1/BIZ.offerEvery){const n=c.offers.length;addOffer(R2);if(c.offers.length>n){rep.push("A commission enquiry: see the Shop tab.");sfx("door");}}
+  if(R2()<(1+.2*repTier("trade"))/BIZ.tradeEvery){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep){rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);sfx("door");}}
   if(c.wk%8===0)refreshCands(R2);
   if(newYear)rep.push(`Happy new year: ${c.year}.`);
   calWeekStart(rep);
