@@ -2,7 +2,7 @@
    The week (Close week and its report), New game (Repair bench 2000, Skip ahead 2008, or the Sandbox), the bank's loan
    and the end of a career, and the three save slots ("esc-slot1" .. "esc-slot3": a whole game each; loading one keeps
    this device's settings). The calendar, reputation, news, goals and rivals cards and the event sheets are in app/events.js
-   (PR 6); PR 7 adds R&D. */
+   (PR 6); the R&D card is app/rnd.js (PR 7). */
 function renderCareer(){const el=$("careerBody"),c=car();let h="";
   if(!c)h=`<div class="card"><h3>Start a career</h3><p>You're in the Sandbox: every part, no money. A career starts with a bench, a little cash and the rent to pay.</p><div class="row"><button class="btn pri" data-cr="new">New game</button></div></div>`;
   else if(c.over)h=`<div class="card"><h3>The workshop is closed</h3><p>It ran from ${c.start} to ${c.year}: ${c.made} piece${c.made===1?"":"s"} made, ${c.sold.length} sold. The bank wouldn't lend twice.</p><div class="row"><button class="btn pri" data-cr="new">Start again</button></div></div>`;
@@ -12,7 +12,7 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
 <div class="row"><button class="btn pri" data-cr="close">Close week</button></div>
 <p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;
-    h+=calendarCard()+repCard()+newsCard()+goalsCard()+rivalsCard();}
+    h+=rndCard()+calendarCard()+repCard()+newsCard()+goalsCard()+rivalsCard();}
   h+=slotsCard();
   if(c)h+=`<div class="row"><button class="btn ghost" data-cr="new">New game…</button></div>`;
   el.innerHTML=h;}

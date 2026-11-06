@@ -40,6 +40,7 @@ const K={
   baseParts:96,         // plates, bridges, screws, keyless works
   baseCost:60,baseHours:16,
   serviceBase:5,        // years between services for a Swiss lever at 28,800
+  calibre:{prestige:6,cost:.8,hours:.8},   // built on your own calibre (cfg.cal): collectors' points, and tooling made for it
   ret:{base:.01,shock:.07,magnet:.03,oil:.006,over:.03,max:.5},   // yearly chance a sold piece comes back
   skillStep:{beat:.18,reg:.09,poise:.07,hours:.03}                // per skill level above 1
 };
@@ -57,6 +58,7 @@ function normCfg(cfg){
   for(const s of SLOTS){
     if(MULTI[s]){const v=Array.isArray(cfg[s])?cfg[s]:[];c[s]=[...new Set(v.filter(id=>part(s,id)))];continue;}
     c[s]=part(s,cfg[s])?cfg[s]:DEFAULT_CFG[s];}
+  if(typeof cfg.cal==="string"&&/^[a-z0-9-]{1,16}$/.test(cfg.cal))c.cal=cfg.cal;   // your own calibre's id (the app checks the core matches)
   const reg=part("regulator",c.regulator),bal=part("balance",c.balance);
   if(reg.needsFreeSprung&&!bal.freeSprung){c.regulator="index";fixes.push("A free-sprung regulator needs a free-sprung balance, so it was set back to an index.");}
   if(bal.freeSprung&&!reg.needsFreeSprung){c.regulator="free-sprung";fixes.push("A free-sprung balance is regulated by its weights, so the regulator was set to free-sprung.");}
@@ -64,6 +66,8 @@ function normCfg(cfg){
     if(o.needs&&!c.complications.includes(o.needs)){c.complications=c.complications.filter(x=>x!==id);fixes.push(o.name+" needs a "+part("complications",o.needs).name.toLowerCase()+", so it was taken off.");}}
   return{cfg:c,fixes};
 }
+/* the default seed: the cfg as text, leaving out an empty in-house list so builds keep the personality they had before PR 7 */
+function seedKey(c){if(c.house.length)return JSON.stringify(c);const o=Object.assign({},c);delete o.house;return JSON.stringify(o);}
 /* the option objects for a normalised cfg */
 function pick(c){const P={};for(const s of SLOTS)P[s]=MULTI[s]?c[s].map(id=>part(s,id)):part(s,c[s]);return P;}
 
@@ -76,7 +80,7 @@ function model(cfg,skills,tools,opts){
   const overBph=P.bph.bph>P.train.maxBph;
   const friction=P.train.friction*P.jewels.mult*(overBph?K.overBphFriction:1);
   const age=Math.max(0,+opts.age||0),ageAmp=1-K.ageAmp*age*(P.escapement.lubeFree?K.lubeFreeAge:1);
-  const R=rng(opts.seed!=null?opts.seed:JSON.stringify(c));
+  const R=rng(opts.seed!=null?opts.seed:seedKey(c));
   const jit={};for(const p of POSITIONS)jit[p]=(R()*2-1)*K.posJitter;
   const posAvg=comps.reduce((a,o)=>Math.max(a,o.posAvg||0),0);
   const m={
@@ -129,7 +133,9 @@ function simulate(cfg,skills,tools,opts){
   const shock=clamp(P.shock.shockRating*(1-P.escapement.shockFragile*.6)*(P.balance.inertia>1.1?.92:1),0,1);
   const magnet=P.hairspring.magnet;
   const thickness=K.baseThick+(P.barrel.thick||0)+(P.escapement.thick||0)+P.winding.thick+comps.reduce((a,o)=>a+o.thick,0);
-  const hoursRaw=K.baseHours+sum("hours");
+  const cal=c.cal?K.calibre:{prestige:0,cost:1,hours:1};
+  const houseSave=P.house.reduce((a,o)=>a+(o.of==="base"?K.baseCost:P[o.of].cost)*o.save,0);
+  const hoursRaw=(K.baseHours+sum("hours"))*cal.hours;
   const res={
     cfg:c,fixes,
     bph:P.bph.bph,beatsPerSec:P.bph.bph/3600,
@@ -145,10 +151,10 @@ function simulate(cfg,skills,tools,opts){
     shock,magnetResist:1-magnet,
     returnRisk:0,
     thickness,parts:K.baseParts+sum("parts"),
-    cost:K.baseCost+sum("cost"),
+    cost:Math.round((K.baseCost+sum("cost")-houseSave)*cal.cost),
     hours:hoursRaw,hoursSkilled:hoursRaw*Math.pow(1-K.skillStep.hours,L("assembly")-1),
     serviceYears:K.serviceBase*(1.2/(.4+P.escapement.oilDrift*.67))/(P.bph.wearMult*(m.overBph?K.overBphWear:1)),
-    prestige:sum("prestige"),
+    prestige:sum("prestige")+cal.prestige,house:c.house.length,
     complexity:comps.reduce((a,o)=>Math.max(a,o.complexity),0),overComplex:m.overCx,
     dropCrack:P.hairspring.brittle?.6:0,
     stress:[],m

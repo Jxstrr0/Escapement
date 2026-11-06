@@ -73,10 +73,12 @@ function cyl(r,h,mat,x,y,z,seg){const m=new THREE.Mesh(new THREE.CylinderGeometr
 function movementMats(cfg){
   const M=V.mats,fin=new Set(cfg.finish||[]),own=[],texs=[],lite=V.tier==="lite",C=sRGB;
   const metal=o=>{const m=metalMat(o);own.push(m);return m;};
-  const plate=metal(fin.has("perlage")?{c:0xc9a45c,r:.34,fin:"perlage"}:{c:0xb99442,r:.5,fin:"frost"});
-  const bridge=metal(fin.has("stripes")?{c:0xcfac62,r:.26,fin:"stripes"}:{c:0xc29d4e,r:.42,fin:"frost"});
+  /* plate and bridge colours: gilt brass, or silver-white with the rhodium plating finish (PR 7) */
+  const P=fin.has("rhodium")?{perl:0xbcc1c6,plate:0xaab0b6,stripe:0xc4c9cd,bridge:0xb4b9be,edge:0xe2e5e8}:{perl:0xc9a45c,plate:0xb99442,stripe:0xcfac62,bridge:0xc29d4e,edge:0xdcbc76};
+  const plate=metal(fin.has("perlage")?{c:P.perl,r:.34,fin:"perlage"}:{c:P.plate,r:.5,fin:"frost"});
+  const bridge=metal(fin.has("stripes")?{c:P.stripe,r:.26,fin:"stripes"}:{c:P.bridge,r:.42,fin:"frost"});
   /* anglage: the bevelled edges (an extrusion's side faces) polished to a mirror */
-  const edge=fin.has("anglage")?metal({c:0xdcbc76,r:.05}):bridge;
+  const edge=fin.has("anglage")?metal({c:P.edge,r:.05}):bridge;
   const wheel=metal({c:0xd8b46a,r:.24,fin:"grain"});
   const steel=fin.has("black-polish")?metal({c:0xd6dce0,r:.04}):M.steel;
   const pinion=GEO.train[cfg.train]&&GEO.train[cfg.train].polish?(fin.has("black-polish")?steel:metal({c:0xcdd4d9,r:.1})):M.steel;

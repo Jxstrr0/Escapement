@@ -283,6 +283,12 @@ table.books td.neg,.weekd.neg{color:var(--crit)}
 .wklines{margin:0 0 14px;padding-left:18px;font-size:15px}.wklines li{margin:4px 0}.wklines li.dim{color:var(--dim);list-style:none;margin-left:-18px;margin-top:10px;font-size:13px}
 .bmake{border-color:var(--brass)}
 .tgcar h3{display:flex;align-items:baseline;flex-wrap:wrap}
+/* R&D (Career tab, PR 7) and the calibre sheet */
+.rnd .lbl{font-size:13px;font-weight:600;letter-spacing:.03em;color:var(--muted);margin:14px 0 4px}
+.rnd .kind{color:var(--dim);font-size:12px;letter-spacing:.02em}
+.rnd details.more{margin-top:6px}
+#sheetBody .lbl{font-size:13px;font-weight:600;letter-spacing:.03em;color:var(--muted);margin:12px 0 4px}.calcore{margin:0 0 12px;font-size:14px;color:var(--chalk)}
+input.txt{box-sizing:border-box;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--rule);background:var(--felt);color:var(--chalk);font:16px/1.3 var(--font)}
 /* ---- events.css: the Career tab's calendar cards (app/events.js): coming up, reputation bars, news cards, goals; the
    Kessel Peak Trial leaderboard, the saleroom, and the cracked-crystal overlay. Light theme through the shared tokens;
    reduced motion turns off the race's sliding rows and the crack's flash. ---- */
@@ -478,15 +484,16 @@ if(sv&&(sv.gfx==="ultra"||sv.gfx==="full"))document.write(ESC_LIBS.map(function(
      parts             how many parts it adds to the count
      unlock            "start" (owned from day one), "shop:<upgrade id>" (buy the tool or supplier in the Shop, PR 5)
                        or "rnd:<project id>" (research it, PR 7)
-   plus the stats that slot feeds into simulate() (sim/movement.js). Two slots, complications and finish, are lists:
-   a movement can carry several. DEFAULT_CFG is a plain manual 28,800 bph three-hand movement.
+   plus the stats that slot feeds into simulate() (sim/movement.js). Three slots, complications, finish and house, are
+   lists: a movement can carry several. DEFAULT_CFG is a plain manual 28,800 bph three-hand movement.
+   A cfg can also carry cal: the id of the player's own calibre it is built on (PR 7; K.calibre in movement.js).
    Numbers are a first pass, tuned in node with tools/sim-test.js; keep them here, never inline. */
 const WATCH_SIM=(function(){
 "use strict";
 
 /* the slots in the order the Build tab shows them, and whether a slot takes one option or a list */
-const SLOTS=["barrel","train","jewels","escapement","balance","hairspring","bph","regulator","shock","winding","complications","finish"];
-const MULTI={complications:true,finish:true};
+const SLOTS=["barrel","train","jewels","escapement","balance","hairspring","bph","regulator","shock","winding","complications","finish","house"];
+const MULTI={complications:true,finish:true,house:true};
 
 const PARTS={
   /* the mainspring barrel. torque on a 0..10 scale at full wind, falloff = share of that torque lost by the end of the
@@ -581,13 +588,23 @@ const PARTS={
     {id:"perlage",name:"Perlage",blurb:"Overlapping circles spotted onto the main plate.",cost:4,hours:4,prestige:1,parts:0,unlock:"start"},
     {id:"stripes",name:"Haldis stripes",blurb:"Straight ribbons ground across the bridges.",cost:6,hours:6,prestige:1,parts:0,unlock:"start"},
     {id:"anglage",name:"Anglage",blurb:"Every bridge edge bevelled and polished by hand.",cost:8,hours:20,prestige:3,parts:0,unlock:"start"},
-    {id:"black-polish",name:"Black polish",blurb:"Steel parts polished so flat they look black from most angles.",cost:10,hours:30,prestige:4,parts:0,unlock:"shop:polishing"}
+    {id:"black-polish",name:"Black polish",blurb:"Steel parts polished so flat they look black from most angles.",cost:10,hours:30,prestige:4,parts:0,unlock:"shop:polishing"},
+    {id:"rhodium",name:"Rhodium plating",blurb:"Plates and bridges plated silver-white instead of gilt: cool, bright, and it never tarnishes.",cost:14,hours:1,prestige:1,parts:0,unlock:"start"}
+  ],
+  /* parts made in your own workshop (any number; R&D, PR 7). of = the slot whose part you make yourself ("base" = the
+     plates and bridges, K.baseCost), save = the share of that part's cost you no longer pay a supplier. They cost bench
+     hours instead, and collectors pay for the "in-house" name (prestige) */
+  house:[
+    {id:"hairspring",name:"In-house hairsprings",blurb:"Drawn, coiled and vibrated to your balance in your own clean room.",cost:0,hours:2,prestige:2,parts:0,unlock:"rnd:house-spring",of:"hairspring",save:.6},
+    {id:"balance",name:"In-house balances",blurb:"Turned and poised on your own lathe.",cost:0,hours:2,prestige:1,parts:0,unlock:"rnd:house-balance",of:"balance",save:.5},
+    {id:"escapement",name:"In-house escapements",blurb:"Escape wheels and pallet forks cut on your own CNC.",cost:0,hours:3,prestige:2,parts:0,unlock:"rnd:house-escapement",of:"escapement",save:.5},
+    {id:"plates",name:"In-house plates and bridges",blurb:"The main plate and bridges milled from your own drawings.",cost:0,hours:4,prestige:2,parts:0,unlock:"rnd:house-plates",of:"base",save:.5}
   ]
 };
 
 /* a plain manual 28,800 bph three-hand movement */
 const DEFAULT_CFG={barrel:"single-large",train:"standard",jewels:"21",escapement:"swiss-lever",balance:"screw",hairspring:"steel-overcoil",
-  bph:"28800",regulator:"index",shock:"basic",winding:"manual",complications:[],finish:[]};
+  bph:"28800",regulator:"index",shock:"basic",winding:"manual",complications:[],finish:[],house:[]};
 
 /* look an option up; undefined if the id is not in the slot */
 function part(slot,id){const L=PARTS[slot];if(!L)return undefined;for(const o of L)if(o.id===id)return o;return undefined;}
@@ -633,6 +650,7 @@ const K={
   baseParts:96,         // plates, bridges, screws, keyless works
   baseCost:60,baseHours:16,
   serviceBase:5,        // years between services for a Swiss lever at 28,800
+  calibre:{prestige:6,cost:.8,hours:.8},   // built on your own calibre (cfg.cal): collectors' points, and tooling made for it
   ret:{base:.01,shock:.07,magnet:.03,oil:.006,over:.03,max:.5},   // yearly chance a sold piece comes back
   skillStep:{beat:.18,reg:.09,poise:.07,hours:.03}                // per skill level above 1
 };
@@ -650,6 +668,7 @@ function normCfg(cfg){
   for(const s of SLOTS){
     if(MULTI[s]){const v=Array.isArray(cfg[s])?cfg[s]:[];c[s]=[...new Set(v.filter(id=>part(s,id)))];continue;}
     c[s]=part(s,cfg[s])?cfg[s]:DEFAULT_CFG[s];}
+  if(typeof cfg.cal==="string"&&/^[a-z0-9-]{1,16}$/.test(cfg.cal))c.cal=cfg.cal;   // your own calibre's id (the app checks the core matches)
   const reg=part("regulator",c.regulator),bal=part("balance",c.balance);
   if(reg.needsFreeSprung&&!bal.freeSprung){c.regulator="index";fixes.push("A free-sprung regulator needs a free-sprung balance, so it was set back to an index.");}
   if(bal.freeSprung&&!reg.needsFreeSprung){c.regulator="free-sprung";fixes.push("A free-sprung balance is regulated by its weights, so the regulator was set to free-sprung.");}
@@ -657,6 +676,8 @@ function normCfg(cfg){
     if(o.needs&&!c.complications.includes(o.needs)){c.complications=c.complications.filter(x=>x!==id);fixes.push(o.name+" needs a "+part("complications",o.needs).name.toLowerCase()+", so it was taken off.");}}
   return{cfg:c,fixes};
 }
+/* the default seed: the cfg as text, leaving out an empty in-house list so builds keep the personality they had before PR 7 */
+function seedKey(c){if(c.house.length)return JSON.stringify(c);const o=Object.assign({},c);delete o.house;return JSON.stringify(o);}
 /* the option objects for a normalised cfg */
 function pick(c){const P={};for(const s of SLOTS)P[s]=MULTI[s]?c[s].map(id=>part(s,id)):part(s,c[s]);return P;}
 
@@ -669,7 +690,7 @@ function model(cfg,skills,tools,opts){
   const overBph=P.bph.bph>P.train.maxBph;
   const friction=P.train.friction*P.jewels.mult*(overBph?K.overBphFriction:1);
   const age=Math.max(0,+opts.age||0),ageAmp=1-K.ageAmp*age*(P.escapement.lubeFree?K.lubeFreeAge:1);
-  const R=rng(opts.seed!=null?opts.seed:JSON.stringify(c));
+  const R=rng(opts.seed!=null?opts.seed:seedKey(c));
   const jit={};for(const p of POSITIONS)jit[p]=(R()*2-1)*K.posJitter;
   const posAvg=comps.reduce((a,o)=>Math.max(a,o.posAvg||0),0);
   const m={
@@ -722,7 +743,9 @@ function simulate(cfg,skills,tools,opts){
   const shock=clamp(P.shock.shockRating*(1-P.escapement.shockFragile*.6)*(P.balance.inertia>1.1?.92:1),0,1);
   const magnet=P.hairspring.magnet;
   const thickness=K.baseThick+(P.barrel.thick||0)+(P.escapement.thick||0)+P.winding.thick+comps.reduce((a,o)=>a+o.thick,0);
-  const hoursRaw=K.baseHours+sum("hours");
+  const cal=c.cal?K.calibre:{prestige:0,cost:1,hours:1};
+  const houseSave=P.house.reduce((a,o)=>a+(o.of==="base"?K.baseCost:P[o.of].cost)*o.save,0);
+  const hoursRaw=(K.baseHours+sum("hours"))*cal.hours;
   const res={
     cfg:c,fixes,
     bph:P.bph.bph,beatsPerSec:P.bph.bph/3600,
@@ -738,10 +761,10 @@ function simulate(cfg,skills,tools,opts){
     shock,magnetResist:1-magnet,
     returnRisk:0,
     thickness,parts:K.baseParts+sum("parts"),
-    cost:K.baseCost+sum("cost"),
+    cost:Math.round((K.baseCost+sum("cost")-houseSave)*cal.cost),
     hours:hoursRaw,hoursSkilled:hoursRaw*Math.pow(1-K.skillStep.hours,L("assembly")-1),
     serviceYears:K.serviceBase*(1.2/(.4+P.escapement.oilDrift*.67))/(P.bph.wearMult*(m.overBph?K.overBphWear:1)),
-    prestige:sum("prestige"),
+    prestige:sum("prestige")+cal.prestige,house:c.house.length,
     complexity:comps.reduce((a,o)=>Math.max(a,o.complexity),0),overComplex:m.overCx,
     dropCrack:P.hairspring.brittle?.6:0,
     stress:[],m
@@ -1319,10 +1342,12 @@ function cyl(r,h,mat,x,y,z,seg){const m=new THREE.Mesh(new THREE.CylinderGeometr
 function movementMats(cfg){
   const M=V.mats,fin=new Set(cfg.finish||[]),own=[],texs=[],lite=V.tier==="lite",C=sRGB;
   const metal=o=>{const m=metalMat(o);own.push(m);return m;};
-  const plate=metal(fin.has("perlage")?{c:0xc9a45c,r:.34,fin:"perlage"}:{c:0xb99442,r:.5,fin:"frost"});
-  const bridge=metal(fin.has("stripes")?{c:0xcfac62,r:.26,fin:"stripes"}:{c:0xc29d4e,r:.42,fin:"frost"});
+  /* plate and bridge colours: gilt brass, or silver-white with the rhodium plating finish (PR 7) */
+  const P=fin.has("rhodium")?{perl:0xbcc1c6,plate:0xaab0b6,stripe:0xc4c9cd,bridge:0xb4b9be,edge:0xe2e5e8}:{perl:0xc9a45c,plate:0xb99442,stripe:0xcfac62,bridge:0xc29d4e,edge:0xdcbc76};
+  const plate=metal(fin.has("perlage")?{c:P.perl,r:.34,fin:"perlage"}:{c:P.plate,r:.5,fin:"frost"});
+  const bridge=metal(fin.has("stripes")?{c:P.stripe,r:.26,fin:"stripes"}:{c:P.bridge,r:.42,fin:"frost"});
   /* anglage: the bevelled edges (an extrusion's side faces) polished to a mirror */
-  const edge=fin.has("anglage")?metal({c:0xdcbc76,r:.05}):bridge;
+  const edge=fin.has("anglage")?metal({c:P.edge,r:.05}):bridge;
   const wheel=metal({c:0xd8b46a,r:.24,fin:"grain"});
   const steel=fin.has("black-polish")?metal({c:0xd6dce0,r:.04}):M.steel;
   const pinion=GEO.train[cfg.train]&&GEO.train[cfg.train].polish?(fin.has("black-polish")?steel:metal({c:0xcdd4d9,r:.1})):M.steel;
@@ -1945,7 +1970,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.7.2.0";
+const VERSION="0.8.0.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -2100,11 +2125,54 @@ const GOALS={
   shop:{name:"Your own shop",blurb:"A door of your own on the high street."},
   podium:{name:"Trial podium",blurb:"Top three at the Kessel Peak Trial."},
   auction:{name:"Under the hammer",blurb:"Sell a piece at an auction night."},
-  calibre:{name:"Your own calibre",blurb:"Research a calibre of your own (R&D, coming next)."},
+  calibre:{name:"Your own calibre",blurb:"Develop a calibre of your own and give it your name (R&D, Career tab)."},
   observatory:{name:"Observatory grade",blurb:"A certificate from the Kessel Peak Observatory."},
   perpetual:{name:"A perpetual calendar",blurb:"Case and stock a perpetual calendar of your own making."},
   survive:{name:"Through the slump",blurb:"Reach 2019 with staff on the payroll and nobody let go since 2015."}};
-const RND={};          // R&D projects (PR 7)
+/* R&D projects (PR 7): pay the cost up front, it is ready after the weeks (at Close week). One runs at a time; the clean
+   room or a master watchmaker on the staff lets a second run alongside (RND_SLOTS). Each unlocks "rnd:<id>" parts.
+   kind: part (an escapement, balance or spring), comp (a complication), house (make a part yourself: PARTS.house),
+   calibre (freeze your build's core as your own calibre; again = what each one after the first costs).
+   skill = levels needed; needs = Shop upgrades; after = other projects first; xp = skill XP when it is done (you learn
+   by doing it). The complications skill gate sits below each complication's complexity on purpose: you can build one
+   before you have mastered it, and pay for that in beat error and returns until you train up. */
+const RND={
+  "free-sprung":{name:"Free-sprung balance",kind:"part",cost:6000,weeks:8,skill:{poising:3},needs:["timing-six"],xp:{poising:6},
+    blurb:"A balance regulated by its own weights, with no index to drift."},
+  silicon:{name:"Silicon hairspring",kind:"part",cost:14000,weeks:10,skill:{regulating:3},needs:["spring-supplier"],xp:{regulating:6},
+    blurb:"An etched spring that ignores magnets and heat. Bought in, but you must learn to fit it."},
+  coaxial:{name:"Co-axial escapement",kind:"part",cost:28000,weeks:16,skill:{assembly:5},needs:["lathe"],xp:{assembly:10},
+    blurb:"Radial impulse: almost no sliding friction, and it barely drifts between services."},
+  detent:{name:"Detent escapement",kind:"part",cost:36000,weeks:20,skill:{assembly:6},needs:["lathe"],xp:{assembly:12},
+    blurb:"The marine chronometer's escapement, shrunk for the wrist."},
+  "power-reserve":{name:"Power reserve indicator",kind:"comp",cost:2500,weeks:4,xp:{complications:3},
+    blurb:"A hand that shows how much wind is left. A good first project."},
+  moonphase:{name:"Moonphase",kind:"comp",cost:4500,weeks:6,skill:{complications:2},xp:{complications:5},
+    blurb:"A 59-tooth moon disc, right for 122 years."},
+  chrono:{name:"Chronograph",kind:"comp",cost:16000,weeks:12,skill:{complications:3},xp:{complications:10},
+    blurb:"Column wheel, clutch and the levers for a stopwatch on the same movement."},
+  "annual-cal":{name:"Annual calendar",kind:"comp",cost:20000,weeks:14,skill:{complications:4},xp:{complications:10},
+    blurb:"A calendar that knows its 30- and 31-day months."},
+  "split-seconds":{name:"Split-seconds",kind:"comp",cost:45000,weeks:20,skill:{complications:5},after:["chrono"],xp:{complications:14},
+    blurb:"A second chronograph hand that stops on its own."},
+  "perp-cal":{name:"Perpetual calendar",kind:"comp",cost:55000,weeks:24,skill:{complications:5},after:["annual-cal"],xp:{complications:16},
+    blurb:"The program wheel that knows leap years, good until 2100."},
+  tourbillon:{name:"Tourbillon",kind:"comp",cost:70000,weeks:26,skill:{complications:5},needs:["lathe"],xp:{complications:16},
+    blurb:"The escapement in a cage that turns once a minute."},
+  repeater:{name:"Minute repeater",kind:"comp",cost:110000,weeks:36,skill:{complications:6},needs:["lathe"],after:["chrono"],xp:{complications:20},
+    blurb:"Hammers, gongs and the all-or-nothing piece: the time, struck on demand."},
+  "house-balance":{name:"In-house balances",kind:"house",cost:14000,weeks:10,skill:{assembly:4},needs:["lathe"],xp:{poising:6},
+    blurb:"Turn and poise your own balance wheels: cheaper parts, and a name collectors look for."},
+  "house-escapement":{name:"In-house escapements",kind:"house",cost:30000,weeks:16,skill:{assembly:5},needs:["cnc"],xp:{assembly:8},
+    blurb:"Cut your own escape wheels and pallet forks on the CNC."},
+  "house-plates":{name:"In-house plates and bridges",kind:"house",cost:24000,weeks:14,needs:["cnc"],xp:{finishing:6},
+    blurb:"Mill the main plate and bridges from your own drawings."},
+  "house-spring":{name:"In-house hairsprings",kind:"house",cost:42000,weeks:20,skill:{regulating:5},needs:["cleanroom"],xp:{regulating:10},
+    blurb:"Draw, coil and vibrate your own hairsprings: what only the big manufactures do."},
+  calibre:{name:"Your own calibre",kind:"calibre",cost:60000,weeks:24,skill:{assembly:5},needs:["cnc"],after:["house-plates"],xp:{assembly:10},
+    again:{cost:25000,weeks:14},
+    blurb:"Freeze your build's core (barrel to winding) as a calibre with your name on it: cheaper and quicker to make, and collectors pay for it."}};
+const RND_SLOTS={base:1,extra:["cleanroom"],extraStaff:"master",calibresMax:4};   // projects at once: 1, +1 with the clean room or a master watchmaker
 
 /* the business: rent on the shared bench, your own keep (food and the room upstairs), your own bench hours a week, the loan the bank offers once, starting cash,
    how many repairs and offers turn up (a week, on average) */
@@ -2117,7 +2185,7 @@ const BIZ={benchRent:140,keep:260,hoursWeek:45,staffHours:40,repairsWeek:1.8,rep
 const START_YEAR=2000,END_YEAR=2030;
 function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,reduce:null,sound:true,tab:"bench",
   cfg:Object.assign({},SIM.DEFAULT_CFG),career:null,
-  xp:{},piece:null,tgOn:null,tg:{pos:"DU",temp:23,wind:0,lift:52}};}   // tgOn: a customer's watch on the timegrapher ({kind:"repair",id}) instead of your piece   // xp: skill XP outside a career; piece: the movement on the timegrapher (app/test.js); tg: its settings
+  xp:{},piece:null,tgOn:null,tg:{pos:"DU",temp:23,wind:0,lift:52},cals:[]};}   // cals: the Sandbox's calibres (a career keeps its own in S.career.calibres)   // tgOn: a customer's watch on the timegrapher ({kind:"repair",id}) instead of your piece   // xp: skill XP outside a career; piece: the movement on the timegrapher (app/test.js); tg: its settings
 let S=freshState();
 
 const buObjS=o=>!!o&&typeof o==="object"&&!Array.isArray(o);
@@ -2128,7 +2196,8 @@ function hydrate(o){if(!buObjS(o)||!buObjS(o.cfg))return false;
   const n=freshState();Object.assign(n,o);n.cfg=SIM.normCfg(Object.assign({},SIM.DEFAULT_CFG,o.cfg)).cfg;
   const f=freshState();n.tg=Object.assign(f.tg,buObjS(o.tg)?o.tg:{});if(!buObjS(n.xp))n.xp={};if(!buObjS(n.piece))n.piece=null;
   n.career=n.career==null?null:normCareer(n.career);if(!buObjS(n.tgOn))n.tgOn=null;
-  S=n;return true;}
+  n.cals=normCals(n.cals);
+  S=n;calCheck(S.cfg);return true;}
 /* skills: XP lives in the career once there is one (PR 5), else in S.xp. skillLvls() is what the sim reads */
 const xpBag=()=>S.career?(S.career.xp=buObjS(S.career.xp)?S.career.xp:{}):S.xp;
 const lvlOf=xp=>{let l=1;for(let i=1;i<SKILL_XP.length;i++)if((+xp||0)>=SKILL_XP[i])l=i+1;return l;};
@@ -2554,9 +2623,11 @@ __ldGo(start);
    - The docked capsule (#bCap) sticks to the top of the panel: rate band, reserve, parts cost, bench hours, and the
      certification odds (certCell: the best grade this build reaches at your skills, and how often).
    - The stress report card lists every COMBOS line for the build, worst first.
-   - Locked options are dimmed and say what unlocks them: a Shop upgrade (PR 5) or an R&D project (PR 7). Unlock names
-     live in UNLOCK_NAME until UPGRADES and RND carry their own. Before a career exists, a Parts switch offers
-     "Workshop" (what a new bench owns) or "Everything" (try any part); S.bAll remembers it. ---- */
+   - Locked options are dimmed and say what unlocks them: a Shop upgrade (PR 5) or an R&D project (PR 7); the names come
+     from UPGRADES and RND (UNLOCK_NAME is the fallback). Before a career exists, a Parts switch offers "Workshop" (what a
+     new bench owns) or "Everything" (try any part); S.bAll remembers it.
+   - PR 7: a Calibre row on top (only once you have a calibre, or in the Sandbox) puts the build on one of your calibres
+     (withCal, app/rnd.js) or takes it off; changing a core part takes it off too. In-house parts are their own row. ---- */
 const BUILD_SECS=[
   {id:"barrel",title:"Barrel",slots:["barrel"]},
   {id:"train",title:"Train & jewels",slots:["train","jewels"]},
@@ -2565,11 +2636,14 @@ const BUILD_SECS=[
   {id:"beat",title:"Beat rate & regulation",slots:["bph","regulator"]},
   {id:"shock",title:"Shock & winding",slots:["shock","winding"]},
   {id:"comps",title:"Complications",slots:["complications"]},
-  {id:"finish",title:"Finishing",slots:["finish"]}
+  {id:"finish",title:"Finishing",slots:["finish"]},
+  {id:"house",title:"In-house parts",slots:["house"]}
 ];
+const CAL_SEC={id:"cal",title:"Calibre"};
 const SLOT_NAME={barrel:"Mainspring barrel",train:"Wheel train",jewels:"Jewels",escapement:"Escapement",balance:"Balance wheel",
   hairspring:"Hairspring",bph:"Beat rate",regulator:"Regulator",shock:"Shock protection",winding:"Winding",
-  complications:"Add as many as the case and your skill allow",finish:"Each finish adds prestige and bench hours"};
+  complications:"Add as many as the case and your skill allow",finish:"Each finish adds prestige and bench hours",
+  house:"Make it yourself: cheaper parts and prestige, for more bench hours"};
 /* what each unlock is called until PR 5 (UPGRADES) and PR 7 (RND) give the real entries a name */
 const UNLOCK_NAME={
   "shop:mill":"milling machine","shop:lathe":"watchmaker's lathe","shop:cnc":"CNC mill","shop:polishing":"polishing bench",
@@ -2578,7 +2652,7 @@ const UNLOCK_NAME={
   "rnd:power-reserve":"Power reserve indicator","rnd:moonphase":"Moonphase","rnd:chrono":"Chronograph","rnd:annual-cal":"Annual calendar",
   "rnd:perp-cal":"Perpetual calendar","rnd:tourbillon":"Tourbillon","rnd:repeater":"Minute repeater","rnd:split-seconds":"Split-seconds"};
 function unlockName(u){const [kind,id]=u.split(":"),T=kind==="shop"?UPGRADES:RND,e=T&&T[id];return (e&&e.name)||UNLOCK_NAME[u]||id;}
-function unlockText(u){return u.startsWith("shop:")?`Needs the ${unlockName(u)} (Shop)`:`Research: ${unlockName(u)} (R&D)`;}
+function unlockText(u){return u.startsWith("shop:")?`Needs the ${unlockName(u)} (Shop)`:`Research: ${unlockName(u)} (Career tab, R&D)`;}
 /* is this option available? "start" always; otherwise the career's unlocks map ({"shop:mill":true, …}, filled by PR 5 and
    PR 7), or everything while there is no career and the Parts switch says Everything */
 function hasUnlock(u){if(u==="start")return true;const c=S.career;if(!c)return !!S.bAll;return !!(c.unlocks&&c.unlocks[u]);}
@@ -2591,7 +2665,7 @@ function withOpt(cfg,slot,id){
     if(a.includes(id))a=a.filter(x=>x!==id&&SIM.part(slot,x).needs!==id);
     else{a.push(id);const o=SIM.part(slot,id);if(o.needs&&!a.includes(o.needs))a.push(o.needs);}
     c[slot]=SIM.PARTS[slot].map(o=>o.id).filter(x=>a.includes(x));}   // keep table order
-  else{c[slot]=id;
+  else{c[slot]=id;delete c.cal;   // a core part changed: no longer on its calibre
     if(slot==="balance"){if(SIM.part("balance",id).freeSprung)c.regulator="free-sprung";else if(SIM.part("regulator",c.regulator).needsFreeSprung)c.regulator="index";}
     if(slot==="regulator"&&SIM.part("regulator",id).needsFreeSprung&&!SIM.part("balance",c.balance).freeSprung)c.balance="free-sprung";}
   return SIM.normCfg(c).cfg;}
@@ -2639,8 +2713,21 @@ function secSum(sec){return sec.slots.map(sl=>{const v=S.cfg[sl];
   return SIM.part(sl,v).name;}).join(" · ");}
 
 function bOpenId(){return S.bOpen==null?"barrel":S.bOpen;}
+/* the Calibre row: your own design, or one of your calibres (its core fitted in one go) */
+const calShown=()=>!S.career||calList().length>0;
+function calOptHtml(k,base){const on=(S.cfg.cal||"")===(k?k.id:"");
+  const d=on?`<i class="fit">${k?"on this calibre":"your own design"}</i>`:deltaHtml(bSim(withCal(S.cfg,k?k.id:null)),base);
+  const blurb=k?CAL_CORE.map(s=>SIM.part(s,k.core[s]).name).slice(0,6).join(" · "):"Every part chosen freely, row by row.";
+  return `<button class="opt${on?" on":""}" data-cal="${k?k.id:""}" aria-pressed="${on}"><span class="on-dot" aria-hidden="true"></span><b>${k?k.name+" calibre":"Your own design"}</b><span class="oc"></span><small>${blurb}</small><span class="d">${d}</span></button>`;}
+function calSecHtml(base,on){const k=calOf(S.cfg.cal);
+  let h=`<div class="acc${on?" open":""}"><button class="acch" data-sec="cal" aria-expanded="${on}"><span class="t">${CAL_SEC.title}</span><span class="sum">${k?k.name:"your own design"}</span><span class="chev" aria-hidden="true"></span></button>`;
+  if(on){h+=`<div class="accb"><div class="slot"><span class="lbl">Build on one of your calibres: fewer hours, cheaper parts, more prestige</span><div class="opts">${[null].concat(calList()).map(x=>calOptHtml(x,base)).join("")}</div></div>`;
+    h+=S.career?`<p class="hint">New calibres are developed in the Career tab, under R&amp;D.</p>`:`<div class="row"><button class="btn sm" id="bCalNew"${calList().length>=RND_SLOTS.calibresMax?" disabled":""}>Save this core as a calibre…</button></div>`;
+    h+=`</div>`;}
+  return h+`</div>`;}
 function renderBuildForm(){
   const base=bSim(S.cfg),open=bOpenId();let h="";
+  if(calShown())h+=calSecHtml(base,open==="cal");
   for(const sec of BUILD_SECS){const on=sec.id===open;
     h+=`<div class="acc${on?" open":""}"><button class="acch" data-sec="${sec.id}" aria-expanded="${on}"><span class="t">${sec.title}</span><span class="sum">${secSum(sec)}</span><span class="chev" aria-hidden="true"></span></button>`;
     if(on){h+=`<div class="accb">`;
@@ -2676,11 +2763,11 @@ function renderMode(){const show=!S.career;$("bModeF").hidden=!show;if(!show)ret
     `<button data-ball="${v}" class="${(S.bAll?"1":"0")===v?"on":""}" aria-pressed="${(S.bAll?"1":"0")===v}">${t}<small>${s}</small></button>`).join("");}
 
 /* in a career: make the design you see (parts paid now, assembly into the work in hand) */
-function renderMake(){const el=$("bMake"),on=inCareer();el.hidden=!on;if(!on)return;const c=car(),r=bSim(S.cfg),busy=c.bench;
-  el.innerHTML=`<h3>Make this piece</h3><p>${busy?`No. ${busy.no} is on your bench: case it or scrap it before you start another.`:`Parts ${fmt$(r.cost)} now, then about ${Math.round(r.hours)} h of assembly. You have ${fmt$(c.cash)}.`}</p>
-<div class="row"><button class="btn pri" id="bMakeGo"${busy||c.cash<r.cost?" disabled":""}>Make it (${fmt$(r.cost)})</button></div>`;}
+function renderMake(){const el=$("bMake"),on=inCareer();el.hidden=!on;if(!on)return;const c=car(),r=bSim(S.cfg),busy=c.bench,lk=lockedParts(S.cfg);
+  el.innerHTML=`<h3>Make this piece</h3><p>${busy?`No. ${busy.no} is on your bench: case it or scrap it before you start another.`:lk.length?`Not yours yet: ${lk.map(o=>o.name.toLowerCase()).join(", ")}. Take ${lk.length>1?"them":"it"} off, or get ${lk.length>1?"them":"it"} first (${unlockText(lk[0].unlock)}).`:`Parts ${fmt$(r.cost)} now, then about ${Math.round(r.hours)} h of assembly. You have ${fmt$(c.cash)}.`}</p>
+<div class="row"><button class="btn pri" id="bMakeGo"${busy||lk.length||c.cash<r.cost?" disabled":""}>Make it (${fmt$(r.cost)})</button></div>`;}
 $("bMake").addEventListener("click",e=>{if(!e.target.closest("#bMakeGo"))return;if(makePiece()){hud();TAB_RENDER.build();}});
-TAB_RENDER.build=function(){renderMode();renderCap();renderMake();renderBuildForm();renderStress();};
+TAB_RENDER.build=function(){calCheck(S.cfg);renderMode();renderCap();renderMake();renderBuildForm();renderStress();};
 
 function buildChanged(){save();renderCap();renderMake();renderBuildForm();renderStress();visSync();}
 $("buildForm").addEventListener("click",e=>{
@@ -2689,13 +2776,17 @@ $("buildForm").addEventListener("click",e=>{
     const el=$("buildForm").querySelector(`[data-sec="${id}"]`),pn=$("panel"),cap=$("bCap").getBoundingClientRect().bottom+6,top=el.getBoundingClientRect().top;
     if(top<cap)pn.scrollTop+=top-cap;   // keep the row's header under the capsule, not behind it
     return;}
+  if(e.target.closest("#bCalNew")){calSheet();return;}
   const b=e.target.closest(".opt");if(!b)return;
+  if(b.dataset.cal!=null){const id=b.dataset.cal||null;if((S.cfg.cal||null)===id)return;S.cfg=withCal(S.cfg,id);const k=calOf(id);
+    toast(k?`On the ${k.name} calibre: its core is fitted.`:"Your own design: every part is yours to change.");buildChanged();return;}
   const slot=b.dataset.slot,id=b.dataset.id,o=SIM.part(slot,id);
   if(b.classList.contains("lock")&&!(S.cfg[slot]===id)){toast(unlockText(o.unlock)+".");return;}
   if(!SIM.MULTI[slot]&&S.cfg[slot]===id)return;
   const was=S.cfg;S.cfg=withOpt(S.cfg,slot,id);
   const nm=(sl,x)=>SIM.part(sl,x).name;
-  if(SIM.MULTI[slot]){const add=S.cfg[slot].filter(x=>x!==id&&!was[slot].includes(x)),off=was[slot].filter(x=>x!==id&&!S.cfg[slot].includes(x));
+  if(was.cal&&!S.cfg.cal)toast(`Off the ${calName(was)} calibre: you changed part of its core.`);
+  else if(SIM.MULTI[slot]){const add=S.cfg[slot].filter(x=>x!==id&&!was[slot].includes(x)),off=was[slot].filter(x=>x!==id&&!S.cfg[slot].includes(x));
     if(add.length)toast(`${nm(slot,add[0])} added: the ${o.name.toLowerCase()} needs it.`);
     else if(off.length)toast(`${nm(slot,off[0])} taken off: it needs the ${o.name.toLowerCase()}.`);}
   else if(S.cfg.regulator!==was.regulator&&slot!=="regulator")toast(`Regulator set to ${nm("regulator",S.cfg.regulator).toLowerCase()} to match.`);
@@ -3008,11 +3099,12 @@ function newCareer(kind){
   const c={kind,seed,start:st.year,year:st.year,week:1,wk:0,cash:st.cash,used:0,up:{},unlocks:{},xp:{},seq:0,
     loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
     staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",
-    rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
+    rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,
+    rnd:{done:{},run:[]},calibres:[]};
   if(kind==="shop")c.rep={collectors:6,trade:10,press:12};
   for(const id of st.up){c.up[id]=true;c.unlocks["shop:"+id]=true;}
   if(st.xp)for(const k in SKILLS)c.xp[k]=st.xp;
-  S.career=c;S.bAll=false;S.piece=null;S.tgOn=null;c.newsN=newsSkip(c);checkGoals();
+  S.career=c;S.bAll=false;S.piece=null;S.tgOn=null;calCheck(S.cfg);c.newsN=newsSkip(c);checkGoals();
   const R=weekRng("start");for(let i=0;i<2;i++)addRepair(R);addOffer(R);refreshCands(R);
   save();}
 
@@ -3033,6 +3125,8 @@ function normCareer(c){if(!buObjS(c))return null;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
   c.stock=c.stock.filter(x=>buObjS(x)&&buObjS(x.cfg)&&CASES[x.caseId]);c.jobs=c.jobs.filter(j=>buObjS(j)&&+j.h>0);
   if(c.bench&&!(buObjS(c.bench)&&buObjS(c.bench.cfg)))c.bench=null;
+  c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
+  for(const id in c.rnd.done)c.unlocks["rnd:"+id]=true;
   return c;}
 
 /* ---- money and the week ---- */
@@ -3127,6 +3221,7 @@ function acceptTrade(){const c=car(),t=c.tradeOffer;if(!t)return;if(!pay(t.qty*t
 /* ---- your pieces ---- */
 /* Make (Build tab): pay for the parts, the piece goes on your bench and its assembly into the jobs */
 function makePiece(){const c=car();if(c.bench){toast("Your bench already has a piece on it: finish, case or scrap it first.");return false;}
+  calCheck(S.cfg);const lk=lockedParts(S.cfg);if(lk.length){toast(`Not yours yet: ${lk[0].name.toLowerCase()}. ${unlockText(lk[0].unlock)}.`);return false;}
   const r=SIM.simulate(S.cfg,skillLvls()),n=c.made+1;
   if(!pay(r.cost,`parts for No. ${n}`))return false;
   c.made=n;const id=nextId();
@@ -3136,7 +3231,7 @@ function makePiece(){const c=car();if(c.bench){toast("Your bench already has a p
 function pieceJob(){const c=car();return c&&c.bench&&c.jobs.find(j=>j.kind==="piece"&&j.ref===c.bench.id);}
 function scrapPiece(){const c=car(),p=c.bench;if(!p)return;const back=Math.round(SIM.simulate(p.cfg,{}).cost*BIZ.scrap);
   c.jobs=c.jobs.filter(j=>!(j.kind==="piece"&&j.ref===p.id));c.bench=null;earn(back,`parts back from No. ${p.no}`);save();toast(`No. ${p.no} taken apart: ${fmt$(back)} of parts saved.`);}
-function pieceName(cfg,no){const P=(s,id)=>SIM.part(s,id);const bits=[cfg.winding==="automatic"?"automatic":"hand-wound"];
+function pieceName(cfg,no){const P=(s,id)=>SIM.part(s,id);const bits=[cfg.winding==="automatic"?"automatic":"hand-wound"],k=calName(cfg);if(k)bits.unshift(k+" calibre");
   for(const k of cfg.complications)bits.push(P("complications",k).name.toLowerCase());return `No. ${no} · ${bits.join(", ")}`;}
 /* a Bureau or Observatory trial: pay the fee, the piece is away for the weeks, the result comes back at Close week */
 function sendTrial(tier){const c=car(),p=c.bench,C=SIM.CERT[tier];if(!p||!p.made||p.trial)return false;
@@ -3185,6 +3280,8 @@ function closeWeek(){
     if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;addRep(REP_GAIN.cert[T.tier],rep);}
     rep.push(T.best?`No. ${p.no} is back from the ${C.body}: certified ${C.name}.`:`No. ${p.no} is back from the ${C.body}: refused. See the Test tab.`);
     p.lastTrial=T;p.trial=null;p.seen=false;}
+  /* 3b. R&D projects finishing (app/rnd.js) */
+  rndClose(rep);
   /* 4. deadlines */
   for(const r of c.repairs.filter(r=>r.state==="in"&&c.wk+1>r.due)){rep.push(`${r.cust} collected ${r.watch} unrepaired.`);}
   c.repairs=c.repairs.filter(r=>!(r.state==="in"&&c.wk+1>r.due));
@@ -3397,6 +3494,110 @@ function calWeekStart(lines){const c=car(),F=CALENDAR.fair,T=CALENDAR.trial;
   if(c.week===T.open)lines.push(`Entries for the ${T.name} are open until week ${T.close}.`);
   if(c.year===2019&&c.week===1&&c.start<=2015&&c.staff.length&&!c.slumpLetGo)goal("survive",lines);
   checkGoals(lines);}
+/* ===================== app/rnd.js: R&D and your own calibres (PR 7) =====================
+   The engine, its Career-tab card (rndCard) and the calibre sheet. RND and RND_SLOTS are in app/state.js; the in-house
+   parts are PARTS.house and the calibre bonus K.calibre in the sim.
+   - S.career.rnd = {done:{id: week it finished}, run:[{id, end, name?, core?}]}. Pay the cost up front (startRnd); the
+     project is ready at the Close week that reaches its end week (rndClose, called by closeWeek). A finished project sets
+     c.unlocks["rnd:<id>"], so the Build tab offers its parts; an in-house project also switches its part on in the build
+     you're working on; every project teaches (RND.xp). One runs at a time, two with the clean room or a master watchmaker.
+   - Calibres: {id, name, core:{slot: option id}} for the ten single-choice slots (CAL_CORE: barrel to winding). A career
+     keeps them in c.calibres, the Sandbox in S.cals. The calibre project freezes the Build tab's core and its name when it
+     starts; the calibre is yours when it is done. In the Sandbox, Save as calibre is free and instant. A cfg built on one
+     carries cal (its id), and the sim adds K.calibre; changing a core part takes the build off its calibre (withOpt).
+   - lockedParts(cfg): the parts in a build you don't own yet (Make refuses those, and so does a calibre). ---- */
+const CAL_CORE=SIM.SLOTS.filter(s=>!SIM.MULTI[s]);
+/* a calibre's name: letters, digits, spaces and . ' - only (it goes into the page as text), at most 24 characters */
+const calClean=s=>String(s==null?"":s).replace(/[^\p{L}\p{N} .'\-]/gu,"").replace(/\s+/g," ").trim().slice(0,24);
+function normCals(a){if(!Array.isArray(a))return[];const out=[];
+  for(const x of a){if(!buObjS(x)||typeof x.id!=="string"||!/^[a-z0-9-]{1,16}$/.test(x.id)||!buObjS(x.core)||out.some(y=>y.id===x.id))continue;
+    out.push({id:x.id,name:calClean(x.name)||"Calibre "+(out.length+1),core:coreOf(x.core),wk:+x.wk||0});}
+  return out.slice(0,RND_SLOTS.calibresMax);}
+const calList=()=>S.career?(Array.isArray(S.career.calibres)?S.career.calibres:(S.career.calibres=[])):(S.cals||(S.cals=[]));
+const calOf=id=>id?calList().find(k=>k.id===id):null;
+const calName=cfg=>{const k=cfg&&calOf(cfg.cal);return k?k.name:"";};
+function coreOf(cfg){const n=SIM.normCfg(Object.assign({},SIM.DEFAULT_CFG,cfg)).cfg,k={};for(const s of CAL_CORE)k[s]=n[s];return k;}
+const calFits=cfg=>{const k=calOf(cfg.cal);return !!k&&CAL_CORE.every(s=>cfg[s]===k.core[s]);};
+/* take a build off a calibre that isn't there (another game's) or whose core it no longer has */
+function calCheck(cfg){if(cfg&&cfg.cal&&!calFits(cfg))delete cfg.cal;return cfg;}
+/* the build put on a calibre (its core fitted), or taken off one (id null) */
+function withCal(cfg,id){const c=JSON.parse(JSON.stringify(cfg)),k=calOf(id);delete c.cal;if(k){Object.assign(c,k.core);c.cal=k.id;}return SIM.normCfg(c).cfg;}
+function lockedParts(cfg){const out=[];for(const s of SIM.SLOTS){const v=cfg[s],ids=Array.isArray(v)?v:[v];
+  for(const id of ids){const o=SIM.part(s,id);if(o&&!hasUnlock(o.unlock))out.push(o);}}return out;}
+
+/* ---- the projects ---- */
+function rndSt(){const c=car();if(!buObjS(c.rnd))c.rnd={};if(!buObjS(c.rnd.done))c.rnd.done={};if(!Array.isArray(c.rnd.run))c.rnd.run=[];return c.rnd;}
+function normRnd(r){const o={done:{},run:[]};if(!buObjS(r))return o;
+  if(buObjS(r.done))for(const id in r.done)if(RND[id])o.done[id]=+r.done[id]||0;
+  if(Array.isArray(r.run))for(const x of r.run)if(buObjS(x)&&RND[x.id]&&isFinite(+x.end)&&!o.run.some(y=>y.id===x.id)){
+    const y={id:x.id,end:+x.end};if(RND[x.id].kind==="calibre"){if(!buObjS(x.core))continue;y.core=coreOf(x.core);y.name=calClean(x.name)||"Calibre";}o.run.push(y);}
+  return o;}
+const rndDone=id=>{const c=car();return !!(c&&buObjS(c.rnd)&&buObjS(c.rnd.done)&&c.rnd.done[id]!=null);};
+const rndRun=id=>{const c=car();return c&&buObjS(c.rnd)&&Array.isArray(c.rnd.run)?c.rnd.run.find(r=>r.id===id)||null:null;};
+function rndSlots(){const c=car();return RND_SLOTS.base+(RND_SLOTS.extra.some(upOwned)||c.staff.some(s=>s.kind===RND_SLOTS.extraStaff)?1:0);}
+/* what it costs now: the calibre project is cheaper after the first */
+function rndTerms(id){const R=RND[id];return R.again&&rndDone(id)?R.again:{cost:R.cost,weeks:R.weeks};}
+/* why it can't start (besides the money), in words; empty = it can */
+function rndWhy(id){const R=RND[id],c=car(),out=[],L=skillLvls();
+  if(R.kind==="calibre"){if(calList().length>=RND_SLOTS.calibresMax)out.push(`you have ${RND_SLOTS.calibresMax} calibres`);}
+  else if(rndDone(id))return["done"];
+  if(rndRun(id))return["under way"];
+  for(const a of R.after||[])if(!rndDone(a))out.push(RND[a].name.toLowerCase()+" first");
+  for(const n of R.needs||[])if(!upOwned(n))out.push("the "+UPGRADES[n].name.toLowerCase()+" (Shop)");
+  for(const k in R.skill||{})if(L[k]<R.skill[k])out.push(`${SKILLS[k].name} ${R.skill[k]} (you're at ${L[k]})`);
+  if(!out.length&&rndSt().run.length>=rndSlots())out.push(rndSlots()>1?"both R&D benches are busy":"your R&D bench is busy (the clean room or a master watchmaker makes room for a second)");
+  return out;}
+function startRnd(id,extra){const R=RND[id],c=car();if(!R||!c||rndWhy(id).length)return false;const T=rndTerms(id);
+  if(!pay(T.cost,"R&D: "+R.name.toLowerCase()))return false;
+  rndSt().run.push(Object.assign({id,end:c.wk+T.weeks},extra||{}));save();
+  toast(`${extra&&extra.name?extra.name:R.name}: under way, ready ${whenTxt(c.wk+T.weeks)}.`);return true;}
+function stopRnd(id){const st=rndSt();st.run=st.run.filter(r=>r.id!==id);save();toast("Stopped. The money spent on it is gone.");}
+/* at Close week (before the week turns): finished projects unlock their parts and teach */
+function rndClose(rep){const c=car(),st=rndSt();
+  for(const r of st.run.slice()){if(c.wk+1<r.end)continue;const R=RND[r.id];
+    st.run=st.run.filter(x=>x!==r);if(st.done[r.id]==null)st.done[r.id]=c.wk+1;c.unlocks["rnd:"+r.id]=true;
+    for(const k in R.xp||{})levelToast(k,gainXp(k,R.xp[k]));
+    if(R.kind==="calibre"){const id="c"+nextId();calList().push({id,name:r.name,core:r.core,wk:c.wk+1});
+      rep.push(`R&D: the ${r.name} calibre is ready. Pick it at the top of the Build tab.`);goal("calibre",rep);continue;}
+    if(R.kind==="house"){const o=SIM.PARTS.house.find(x=>x.unlock==="rnd:"+r.id);
+      if(o&&!S.cfg.house.includes(o.id))S.cfg=SIM.normCfg(Object.assign({},S.cfg,{house:S.cfg.house.concat(o.id)})).cfg;
+      rep.push(`R&D: ${R.name.toLowerCase()} are ready, and on in your build (Build tab, In-house parts).`);continue;}
+    const o=SIM.SLOTS.map(s=>SIM.PARTS[s].find(x=>x.unlock==="rnd:"+r.id)).find(Boolean);
+    rep.push(`R&D: the ${R.name.toLowerCase()} is ready${o?`: it's in the Build tab`:""}.`);}}
+
+/* ---- the Career tab card: what is under way, what you can start now, then (folded) what needs something first and what
+   is done. Kept short for a phone ---- */
+const RND_KIND={comp:"Complication",part:"Movement part",house:"In-house",calibre:"Calibre"};
+function rndCard(){const c=car(),st=rndSt(),ids=Object.keys(RND),done=ids.filter(id=>RND[id].kind!=="calibre"&&rndDone(id));
+  const ready=[],later=[];for(const id of ids){if(rndRun(id)||done.includes(id))continue;const why=rndWhy(id);(why.length?later:ready).push([id,why]);}
+  const terms=id=>{const T=rndTerms(id);return `${fmt$(T.cost)} · ${T.weeks} weeks`;};
+  let h=`<details class="card rnd" open><summary><h3>R&amp;D<span class="cnt">${st.run.length} of ${rndSlots()} under way · ${done.length} done</span></h3></summary>`;
+  if(st.run.length)h+=`<ul class="shlist">${st.run.map(r=>`<li><div><b>${RND[r.id].kind==="calibre"?r.name+" calibre":RND[r.id].name}</b><br><small>Ready ${whenTxt(r.end)} (week ${dateOf(r.end).week}, ${dateOf(r.end).year})</small></div><div class="acts"><button class="btn sm ghost" data-rd="stop" data-id="${r.id}">Stop</button></div></li>`).join("")}</ul>`;
+  else h+=`<p class="hint">Pay up front; the project is ready after its weeks, and it teaches you something too.</p>`;
+  if(ready.length)h+=`<p class="lbl">Ready to start</p><ul class="shlist">${ready.map(([id])=>{const R=RND[id],T=rndTerms(id),cal=R.kind==="calibre";
+    return `<li><div><b>${cal&&rndDone(id)?"Another calibre":R.name}</b> <small class="kind">${RND_KIND[R.kind]}</small><br><small>${R.blurb}</small><br><small>${terms(id)}</small></div>
+<div class="acts"><button class="btn sm" data-rd="${cal?"cal":"go"}" data-id="${id}"${c.cash<T.cost?" disabled":""}>Start</button></div></li>`;}).join("")}</ul>`;
+  else if(!st.run.length)h+=`<p class="hint">Nothing you can start yet: see what each project needs below.</p>`;
+  if(later.length)h+=`<details class="more"><summary>Needs something first (${later.length})</summary><ul class="shlist">${later.map(([id,why])=>{const R=RND[id];
+    return `<li><div><b>${R.kind==="calibre"&&rndDone(id)?"Another calibre":R.name}</b> <small class="kind">${RND_KIND[R.kind]}</small><br><small>${terms(id)}</small><br><small class="lockt">Needs ${why.join(", ")}</small></div></li>`;}).join("")}</ul></details>`;
+  if(done.length)h+=`<p class="hint">Done: ${done.map(id=>RND[id].name).join(", ")}.</p>`;
+  const ks=calList();if(ks.length)h+=`<p class="hint">Your calibres: ${ks.map(k=>k.name).join(", ")}. Pick one at the top of the Build tab.</p>`;
+  return h+`</details>`;}
+$("careerBody").addEventListener("click",e=>{const b=e.target.closest("[data-rd]");if(!b)return;const k=b.dataset.rd,id=b.dataset.id,R=RND[id];if(!R)return;
+  if(k==="go"){const T=rndTerms(id);confirmSheet(`Start ${R.name.toLowerCase()}?`,`${fmt$(T.cost)} now; it's ready ${whenTxt(car().wk+T.weeks)}.`,`Start (${fmt$(T.cost)})`,()=>{if(startRnd(id)){hud();renderCareer();}});}
+  if(k==="cal")calSheet();
+  if(k==="stop")confirmSheet(`Stop ${R.kind==="calibre"?"the calibre":R.name.toLowerCase()}?`,"The money already spent on it is not refunded.","Stop it",()=>{stopRnd(id);renderCareer();});});
+
+/* ---- naming a calibre: freezes the Build tab's core ---- */
+function calSheet(){const c=car(),T=c?rndTerms("calibre"):null,core=coreOf(S.cfg),lk=lockedParts(core),n=calList().length+1;
+  const rows=CAL_CORE.map(s=>SIM.part(s,core[s]).name).join(" · ");
+  openSheet(c?"Develop a calibre":"Save as a calibre",`<p style="margin-top:0">${c?`The core of the build in the Build tab (below) becomes your calibre: ${fmt$(T.cost)} now, ready ${whenTxt(c.wk+T.weeks)}. Set the Build tab up first if this isn't the core you want.`:"The core of your build (below) becomes a calibre you can pick at the top of the Build tab."} Built on it, a piece takes ${Math.round((1-SIM.K.calibre.hours)*100)}% fewer hours, its parts cost ${Math.round((1-SIM.K.calibre.cost)*100)}% less, and collectors count ${SIM.K.calibre.prestige} more prestige. Complications, finishes and in-house parts stay free to choose.</p>
+<div class="field"><label for="calName">Its name</label><input id="calName" class="txt" maxlength="24" autocomplete="off" autocapitalize="words" spellcheck="false" value="Haldis ${n}"></div>
+<p class="lbl">Its core</p><p class="calcore">${rows}</p>${lk.length?`<p class="lockt">Not yours yet: ${lk.map(o=>o.name.toLowerCase()).join(", ")}. Change the build first.</p>`:""}
+<div class="row"><button class="btn pri" id="calGo"${lk.length||(c&&c.cash<T.cost)?" disabled":""}>${c?`Develop it (${fmt$(T.cost)})`:"Save it"}</button></div>`);
+  $("calGo").addEventListener("click",()=>{const name=calClean($("calName").value);if(!name){toast("Give it a name first.");return;}
+    if(c){if(startRnd("calibre",{name,core})){closeSheet();hud();renderCareer();}return;}
+    const id="s"+Date.now().toString(36).slice(-6);calList().push({id,name,core,wk:0});S.cfg=withCal(S.cfg,id);save();closeSheet();toast(`The ${name} calibre: your build is on it.`);if(TAB_RENDER[curTab])TAB_RENDER[curTab]();});}
 /* ===================== app/shop.js: the Shop tab =====================
    Everything you sell and buy in a career (the engine is app/business.js): this week (cash, hours, Close week), the work
    in hand, repairs, your stock, commissions and trade, upgrades, staff and the books. In the Sandbox it offers a career.
@@ -3526,7 +3727,7 @@ $("importSave").addEventListener("click",buRestoreOpen);
    The week (Close week and its report), New game (Repair bench 2000, Skip ahead 2008, or the Sandbox), the bank's loan
    and the end of a career, and the three save slots ("esc-slot1" .. "esc-slot3": a whole game each; loading one keeps
    this device's settings). The calendar, reputation, news, goals and rivals cards and the event sheets are in app/events.js
-   (PR 6); PR 7 adds R&D. */
+   (PR 6); the R&D card is app/rnd.js (PR 7). */
 function renderCareer(){const el=$("careerBody"),c=car();let h="";
   if(!c)h=`<div class="card"><h3>Start a career</h3><p>You're in the Sandbox: every part, no money. A career starts with a bench, a little cash and the rent to pay.</p><div class="row"><button class="btn pri" data-cr="new">New game</button></div></div>`;
   else if(c.over)h=`<div class="card"><h3>The workshop is closed</h3><p>It ran from ${c.start} to ${c.year}: ${c.made} piece${c.made===1?"":"s"} made, ${c.sold.length} sold. The bank wouldn't lend twice.</p><div class="row"><button class="btn pri" data-cr="new">Start again</button></div></div>`;
@@ -3536,7 +3737,7 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
 <div class="row"><button class="btn pri" data-cr="close">Close week</button></div>
 <p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;
-    h+=calendarCard()+repCard()+newsCard()+goalsCard()+rivalsCard();}
+    h+=rndCard()+calendarCard()+repCard()+newsCard()+goalsCard()+rivalsCard();}
   h+=slotsCard();
   if(c)h+=`<div class="row"><button class="btn ghost" data-cr="new">New game…</button></div>`;
   el.innerHTML=h;}
