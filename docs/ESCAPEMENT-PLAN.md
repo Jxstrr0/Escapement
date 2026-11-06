@@ -288,5 +288,5 @@ Quartz or smartwatch products of your own, multiplayer, real brand names, watch 
 - [x] PR 5: Shop, repairs, commissions, upgrades, staff, saves (0.6.0.0)
 - [x] PR 6: Calendar, reputation, fairs, trials, auctions, smartwatch shift (0.7.0.0)
 - [x] PR 7: R&D, complications, own calibre (0.8.0.0)
-- [ ] PR 8: Tutorial, goals cards, photo mode, settings
+- [x] PR 8: Tutorial, goals cards, photo mode, settings (0.9.0.0)
 - [ ] PR 9: Blender props on Full/Ultra
