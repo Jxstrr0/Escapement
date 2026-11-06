@@ -78,6 +78,7 @@ h1,h2,h3{margin:0;font-weight:700;text-wrap:balance;letter-spacing:.005em}
 .btn:disabled{opacity:.5;cursor:default}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .row>.btn{flex:1}
+.row+.row{margin-top:10px}
 .seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;padding:4px;border-radius:12px;background:var(--panel2);border:1px solid var(--rule)}
 .seg button{min-height:44px;border-radius:9px;font-size:14px;font-weight:500;color:var(--muted);line-height:1.15;padding:4px 6px}
 .seg button small{display:block;font-size:11px;font-weight:400;color:var(--dim)}
@@ -109,11 +110,11 @@ textarea.code{width:100%;min-height:120px;resize:vertical;padding:10px;border-ra
 #intro .btn{width:100%}
 #intro .credit{margin-top:22px;font-size:12px;color:var(--dim)}
 
-/* ---- "New version ready" bar (app/pwa.js) ---- */
-#pwaBar{position:absolute;left:50%;bottom:calc(var(--tabh) + 18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(16px);z-index:60;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100% - 24px);padding:8px 8px 8px 14px;border-radius:12px;background:#19201c;color:#f2efe6;border:1px solid var(--brass);box-shadow:var(--shadow);font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
-#pwaBar.on{opacity:1;transform:translateX(-50%);pointer-events:auto}
-#pwaBar .btn{flex:0 0 auto}
-#pwaBar .pwalater{min-height:44px;min-width:44px;padding:0 10px;border-radius:8px;color:#b3bab4;font-weight:500}
+/* ---- "New version ready" bar (app/pwa.js) and the backup reminder bar (#buBar, app/savecode.js) ---- */
+#pwaBar,#buBar{position:absolute;left:50%;bottom:calc(var(--tabh) + 18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(16px);z-index:60;display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100% - 24px);padding:8px 8px 8px 14px;border-radius:12px;background:#19201c;color:#f2efe6;border:1px solid var(--brass);box-shadow:var(--shadow);font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+#pwaBar.on,#buBar.on{opacity:1;transform:translateX(-50%);pointer-events:auto}
+#pwaBar .btn,#buBar .btn{flex:0 0 auto}
+#pwaBar .pwalater,#buBar .pwalater{min-height:44px;min-width:44px;padding:0 10px;border-radius:8px;color:#b3bab4;font-weight:500}
 
 /* ---- wider screens: centre the column, give the view a bit more room ---- */
 @media (min-width:700px){#app{border-left:1px solid var(--rule);border-right:1px solid var(--rule)}#view{flex-basis:42%}}
