@@ -2,6 +2,11 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.0.0.0: the release
+
+- The plan (`docs/ESCAPEMENT-PLAN.md`) is built: PRs 0 to 9, the balance pass (0.10.1.0) and the polish pass (0.10.2.0). No game changes in 1.0 itself; the version shows at the bottom of Settings and under the intro ("Escapement 1.0.0.0"), and installed copies get the "New version ready" bar as usual.
+- Saves from every earlier version load as they are (the same four keys, `ESC1:` codes).
+
 ## 0.10.2.0: polish
 
 - **Upright numerals:** Roman numerals from IIII to VIII used to point their feet at the centre, so they read upside down at the bottom of the dial. They are now turned half round to read upright: printed on the enamel dial (`dialCanvas`, `src/vis/watch.js`) and applied on the guilloché dial (`tools/blender/dials.py`, `models/dial-guilloche.glb` remade).
