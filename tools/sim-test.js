@@ -33,7 +33,8 @@ const TEST_BUILDS = {
   "steel chrono, no shock": { barrel: "high-torque", hairspring: "steel-flat", shock: "none", winding: "automatic", complications: ["chrono", "date"] },
   "detent, basic shock": { escapement: "detent", hairspring: "alloy-overcoil", shock: "basic" },
   "silicon free-sprung": { balance: "free-sprung", hairspring: "silicon", regulator: "free-sprung", shock: "premium", escapement: "coaxial-style" },
-  "grand complication": { barrel: "high-torque", train: "fine-pitch", jewels: "31", balance: "free-sprung", hairspring: "alloy-overcoil", shock: "premium", complications: ["tourbillon", "perp-cal", "moonphase"], finish: ["anglage", "black-polish", "perlage"] }
+  "grand complication": { barrel: "high-torque", train: "fine-pitch", jewels: "31", balance: "free-sprung", hairspring: "alloy-overcoil", shock: "premium", complications: ["tourbillon", "perp-cal", "moonphase"], finish: ["anglage", "black-polish", "perlage"] },
+  "in-house, on a calibre (PR 7)": { barrel: "double", train: "polished-pivots", jewels: "25", escapement: "hi-eff-lever", hairspring: "alloy-overcoil", regulator: "micro-adjust", shock: "premium", house: ["hairspring", "balance", "escapement", "plates"], cal: "c1", finish: ["perlage", "stripes", "rhodium"] }
 };
 const f1 = x => (x >= 0 ? "+" : "") + x.toFixed(1);
 const args = process.argv.slice(2), brief = args.includes("--brief"), json = args.includes("--json");

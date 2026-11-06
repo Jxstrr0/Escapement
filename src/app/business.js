@@ -26,11 +26,12 @@ function newCareer(kind){
   const c={kind,seed,start:st.year,year:st.year,week:1,wk:0,cash:st.cash,used:0,up:{},unlocks:{},xp:{},seq:0,
     loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
     staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",
-    rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
+    rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,
+    rnd:{done:{},run:[]},calibres:[]};
   if(kind==="shop")c.rep={collectors:6,trade:10,press:12};
   for(const id of st.up){c.up[id]=true;c.unlocks["shop:"+id]=true;}
   if(st.xp)for(const k in SKILLS)c.xp[k]=st.xp;
-  S.career=c;S.bAll=false;S.piece=null;S.tgOn=null;c.newsN=newsSkip(c);checkGoals();
+  S.career=c;S.bAll=false;S.piece=null;S.tgOn=null;calCheck(S.cfg);c.newsN=newsSkip(c);checkGoals();
   const R=weekRng("start");for(let i=0;i<2;i++)addRepair(R);addOffer(R);refreshCands(R);
   save();}
 
@@ -51,6 +52,8 @@ function normCareer(c){if(!buObjS(c))return null;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
   c.stock=c.stock.filter(x=>buObjS(x)&&buObjS(x.cfg)&&CASES[x.caseId]);c.jobs=c.jobs.filter(j=>buObjS(j)&&+j.h>0);
   if(c.bench&&!(buObjS(c.bench)&&buObjS(c.bench.cfg)))c.bench=null;
+  c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
+  for(const id in c.rnd.done)c.unlocks["rnd:"+id]=true;
   return c;}
 
 /* ---- money and the week ---- */
@@ -145,6 +148,7 @@ function acceptTrade(){const c=car(),t=c.tradeOffer;if(!t)return;if(!pay(t.qty*t
 /* ---- your pieces ---- */
 /* Make (Build tab): pay for the parts, the piece goes on your bench and its assembly into the jobs */
 function makePiece(){const c=car();if(c.bench){toast("Your bench already has a piece on it: finish, case or scrap it first.");return false;}
+  calCheck(S.cfg);const lk=lockedParts(S.cfg);if(lk.length){toast(`Not yours yet: ${lk[0].name.toLowerCase()}. ${unlockText(lk[0].unlock)}.`);return false;}
   const r=SIM.simulate(S.cfg,skillLvls()),n=c.made+1;
   if(!pay(r.cost,`parts for No. ${n}`))return false;
   c.made=n;const id=nextId();
@@ -154,7 +158,7 @@ function makePiece(){const c=car();if(c.bench){toast("Your bench already has a p
 function pieceJob(){const c=car();return c&&c.bench&&c.jobs.find(j=>j.kind==="piece"&&j.ref===c.bench.id);}
 function scrapPiece(){const c=car(),p=c.bench;if(!p)return;const back=Math.round(SIM.simulate(p.cfg,{}).cost*BIZ.scrap);
   c.jobs=c.jobs.filter(j=>!(j.kind==="piece"&&j.ref===p.id));c.bench=null;earn(back,`parts back from No. ${p.no}`);save();toast(`No. ${p.no} taken apart: ${fmt$(back)} of parts saved.`);}
-function pieceName(cfg,no){const P=(s,id)=>SIM.part(s,id);const bits=[cfg.winding==="automatic"?"automatic":"hand-wound"];
+function pieceName(cfg,no){const P=(s,id)=>SIM.part(s,id);const bits=[cfg.winding==="automatic"?"automatic":"hand-wound"],k=calName(cfg);if(k)bits.unshift(k+" calibre");
   for(const k of cfg.complications)bits.push(P("complications",k).name.toLowerCase());return `No. ${no} · ${bits.join(", ")}`;}
 /* a Bureau or Observatory trial: pay the fee, the piece is away for the weeks, the result comes back at Close week */
 function sendTrial(tier){const c=car(),p=c.bench,C=SIM.CERT[tier];if(!p||!p.made||p.trial)return false;
@@ -203,6 +207,8 @@ function closeWeek(){
     if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;addRep(REP_GAIN.cert[T.tier],rep);}
     rep.push(T.best?`No. ${p.no} is back from the ${C.body}: certified ${C.name}.`:`No. ${p.no} is back from the ${C.body}: refused. See the Test tab.`);
     p.lastTrial=T;p.trial=null;p.seen=false;}
+  /* 3b. R&D projects finishing (app/rnd.js) */
+  rndClose(rep);
   /* 4. deadlines */
   for(const r of c.repairs.filter(r=>r.state==="in"&&c.wk+1>r.due)){rep.push(`${r.cust} collected ${r.watch} unrepaired.`);}
   c.repairs=c.repairs.filter(r=>!(r.state==="in"&&c.wk+1>r.due));

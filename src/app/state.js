@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.7.2.0";
+const VERSION="0.8.0.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -162,11 +162,54 @@ const GOALS={
   shop:{name:"Your own shop",blurb:"A door of your own on the high street."},
   podium:{name:"Trial podium",blurb:"Top three at the Kessel Peak Trial."},
   auction:{name:"Under the hammer",blurb:"Sell a piece at an auction night."},
-  calibre:{name:"Your own calibre",blurb:"Research a calibre of your own (R&D, coming next)."},
+  calibre:{name:"Your own calibre",blurb:"Develop a calibre of your own and give it your name (R&D, Career tab)."},
   observatory:{name:"Observatory grade",blurb:"A certificate from the Kessel Peak Observatory."},
   perpetual:{name:"A perpetual calendar",blurb:"Case and stock a perpetual calendar of your own making."},
   survive:{name:"Through the slump",blurb:"Reach 2019 with staff on the payroll and nobody let go since 2015."}};
-const RND={};          // R&D projects (PR 7)
+/* R&D projects (PR 7): pay the cost up front, it is ready after the weeks (at Close week). One runs at a time; the clean
+   room or a master watchmaker on the staff lets a second run alongside (RND_SLOTS). Each unlocks "rnd:<id>" parts.
+   kind: part (an escapement, balance or spring), comp (a complication), house (make a part yourself: PARTS.house),
+   calibre (freeze your build's core as your own calibre; again = what each one after the first costs).
+   skill = levels needed; needs = Shop upgrades; after = other projects first; xp = skill XP when it is done (you learn
+   by doing it). The complications skill gate sits below each complication's complexity on purpose: you can build one
+   before you have mastered it, and pay for that in beat error and returns until you train up. */
+const RND={
+  "free-sprung":{name:"Free-sprung balance",kind:"part",cost:6000,weeks:8,skill:{poising:3},needs:["timing-six"],xp:{poising:6},
+    blurb:"A balance regulated by its own weights, with no index to drift."},
+  silicon:{name:"Silicon hairspring",kind:"part",cost:14000,weeks:10,skill:{regulating:3},needs:["spring-supplier"],xp:{regulating:6},
+    blurb:"An etched spring that ignores magnets and heat. Bought in, but you must learn to fit it."},
+  coaxial:{name:"Co-axial escapement",kind:"part",cost:28000,weeks:16,skill:{assembly:5},needs:["lathe"],xp:{assembly:10},
+    blurb:"Radial impulse: almost no sliding friction, and it barely drifts between services."},
+  detent:{name:"Detent escapement",kind:"part",cost:36000,weeks:20,skill:{assembly:6},needs:["lathe"],xp:{assembly:12},
+    blurb:"The marine chronometer's escapement, shrunk for the wrist."},
+  "power-reserve":{name:"Power reserve indicator",kind:"comp",cost:2500,weeks:4,xp:{complications:3},
+    blurb:"A hand that shows how much wind is left. A good first project."},
+  moonphase:{name:"Moonphase",kind:"comp",cost:4500,weeks:6,skill:{complications:2},xp:{complications:5},
+    blurb:"A 59-tooth moon disc, right for 122 years."},
+  chrono:{name:"Chronograph",kind:"comp",cost:16000,weeks:12,skill:{complications:3},xp:{complications:10},
+    blurb:"Column wheel, clutch and the levers for a stopwatch on the same movement."},
+  "annual-cal":{name:"Annual calendar",kind:"comp",cost:20000,weeks:14,skill:{complications:4},xp:{complications:10},
+    blurb:"A calendar that knows its 30- and 31-day months."},
+  "split-seconds":{name:"Split-seconds",kind:"comp",cost:45000,weeks:20,skill:{complications:5},after:["chrono"],xp:{complications:14},
+    blurb:"A second chronograph hand that stops on its own."},
+  "perp-cal":{name:"Perpetual calendar",kind:"comp",cost:55000,weeks:24,skill:{complications:5},after:["annual-cal"],xp:{complications:16},
+    blurb:"The program wheel that knows leap years, good until 2100."},
+  tourbillon:{name:"Tourbillon",kind:"comp",cost:70000,weeks:26,skill:{complications:5},needs:["lathe"],xp:{complications:16},
+    blurb:"The escapement in a cage that turns once a minute."},
+  repeater:{name:"Minute repeater",kind:"comp",cost:110000,weeks:36,skill:{complications:6},needs:["lathe"],after:["chrono"],xp:{complications:20},
+    blurb:"Hammers, gongs and the all-or-nothing piece: the time, struck on demand."},
+  "house-balance":{name:"In-house balances",kind:"house",cost:14000,weeks:10,skill:{assembly:4},needs:["lathe"],xp:{poising:6},
+    blurb:"Turn and poise your own balance wheels: cheaper parts, and a name collectors look for."},
+  "house-escapement":{name:"In-house escapements",kind:"house",cost:30000,weeks:16,skill:{assembly:5},needs:["cnc"],xp:{assembly:8},
+    blurb:"Cut your own escape wheels and pallet forks on the CNC."},
+  "house-plates":{name:"In-house plates and bridges",kind:"house",cost:24000,weeks:14,needs:["cnc"],xp:{finishing:6},
+    blurb:"Mill the main plate and bridges from your own drawings."},
+  "house-spring":{name:"In-house hairsprings",kind:"house",cost:42000,weeks:20,skill:{regulating:5},needs:["cleanroom"],xp:{regulating:10},
+    blurb:"Draw, coil and vibrate your own hairsprings: what only the big manufactures do."},
+  calibre:{name:"Your own calibre",kind:"calibre",cost:60000,weeks:24,skill:{assembly:5},needs:["cnc"],after:["house-plates"],xp:{assembly:10},
+    again:{cost:25000,weeks:14},
+    blurb:"Freeze your build's core (barrel to winding) as a calibre with your name on it: cheaper and quicker to make, and collectors pay for it."}};
+const RND_SLOTS={base:1,extra:["cleanroom"],extraStaff:"master",calibresMax:4};   // projects at once: 1, +1 with the clean room or a master watchmaker
 
 /* the business: rent on the shared bench, your own keep (food and the room upstairs), your own bench hours a week, the loan the bank offers once, starting cash,
    how many repairs and offers turn up (a week, on average) */
@@ -179,7 +222,7 @@ const BIZ={benchRent:140,keep:260,hoursWeek:45,staffHours:40,repairsWeek:1.8,rep
 const START_YEAR=2000,END_YEAR=2030;
 function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,reduce:null,sound:true,tab:"bench",
   cfg:Object.assign({},SIM.DEFAULT_CFG),career:null,
-  xp:{},piece:null,tgOn:null,tg:{pos:"DU",temp:23,wind:0,lift:52}};}   // tgOn: a customer's watch on the timegrapher ({kind:"repair",id}) instead of your piece   // xp: skill XP outside a career; piece: the movement on the timegrapher (app/test.js); tg: its settings
+  xp:{},piece:null,tgOn:null,tg:{pos:"DU",temp:23,wind:0,lift:52},cals:[]};}   // cals: the Sandbox's calibres (a career keeps its own in S.career.calibres)   // tgOn: a customer's watch on the timegrapher ({kind:"repair",id}) instead of your piece   // xp: skill XP outside a career; piece: the movement on the timegrapher (app/test.js); tg: its settings
 let S=freshState();
 
 const buObjS=o=>!!o&&typeof o==="object"&&!Array.isArray(o);
@@ -190,7 +233,8 @@ function hydrate(o){if(!buObjS(o)||!buObjS(o.cfg))return false;
   const n=freshState();Object.assign(n,o);n.cfg=SIM.normCfg(Object.assign({},SIM.DEFAULT_CFG,o.cfg)).cfg;
   const f=freshState();n.tg=Object.assign(f.tg,buObjS(o.tg)?o.tg:{});if(!buObjS(n.xp))n.xp={};if(!buObjS(n.piece))n.piece=null;
   n.career=n.career==null?null:normCareer(n.career);if(!buObjS(n.tgOn))n.tgOn=null;
-  S=n;return true;}
+  n.cals=normCals(n.cals);
+  S=n;calCheck(S.cfg);return true;}
 /* skills: XP lives in the career once there is one (PR 5), else in S.xp. skillLvls() is what the sim reads */
 const xpBag=()=>S.career?(S.career.xp=buObjS(S.career.xp)?S.career.xp:{}):S.xp;
 const lvlOf=xp=>{let l=1;for(let i=1;i<SKILL_XP.length;i++)if((+xp||0)>=SKILL_XP[i])l=i+1;return l;};

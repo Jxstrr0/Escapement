@@ -32,6 +32,7 @@ app/test.js
 app/bench.js
 app/business.js
 app/calendar.js
+app/rnd.js
 app/shop.js
 app/career.js
 app/events.js
