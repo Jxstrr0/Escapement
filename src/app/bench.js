@@ -6,14 +6,22 @@
    dial up (watchSpec sends setWatch: the case to try, S.dialCase, the complications, the words on the dial). Under it, This week (renderBenchTodo):
    repairs waiting, your piece, stock, and buttons to the tab for each and to Close week.
    roomSync() tells the vis what the workshop round the bench looks like (setRoom): the career stage and the machines
-   owned. It runs from visSync and from every save(), and costs nothing when nothing changed (the vis compares). */
+   owned. It runs from visSync and from every save(), and costs nothing when nothing changed (the vis compares).
+   It also calls wsSync(), which tells the workshop sounds (sound/workshop.js) the setting, whether the ambience may play
+   and whether the cleaning machine is in the room; sfx(name) plays one of its one-shots. */
 function roomSpec(){const c=car();
   if(!c||c.over)return{stage:c?"corner":"shop",has:c?{timing:"basic"}:{timing:"lab",cleaning:true,lathe:true,polishing:true}};   // the Sandbox: a well-kitted shop
   const u=upOwned,shop=c.kind==="shop"||u("shop");
   const stage=u("cnc")&&u("cleanroom")?"manufacture":shop&&(u("mill")||u("cnc")||u("bench2"))?"workshop":shop?"shop":"corner";
   return{stage,has:{timing:u("timing-lab")?"lab":u("timing-six")?"six":"basic",cleaning:u("cleaning"),lathe:u("lathe"),polishing:u("polishing"),
     mill:u("mill"),cnc:u("cnc"),bench2:u("bench2"),window:u("window"),climate:u("climate"),cleanroom:u("cleanroom")}};}
-function roomSync(){if(!window.WATCH_VIS||!WATCH_VIS.setRoom)return;try{WATCH_VIS.setRoom(roomSpec());}catch(e){}}
+function roomSync(){wsSync();if(!window.WATCH_VIS||!WATCH_VIS.setRoom)return;try{WATCH_VIS.setRoom(roomSpec());}catch(e){}}
+/* the workshop sounds (sound/workshop.js): on with the setting; the ambience rests while the page is hidden and under the
+   timegrapher's tick on the Test tab; the cleaning machine runs once you own one. sfx(name) plays a one-shot */
+function wsSync(){if(typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.set({on:S.wsound!==false,amb:!document.hidden&&!(curTab==="test"&&S.sound),room:{cleaning:!!roomSpec().has.cleaning}});}catch(e){}}
+function sfx(name){if(S.wsound===false||typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.play(name);}catch(e){}}
+document.addEventListener("visibilitychange",wsSync);
+document.addEventListener("pointerdown",()=>{if(S.wsound!==false&&typeof WORKSHOP_SOUND!=="undefined"){WORKSHOP_SOUND.unlock();wsSync();}},{passive:true,capture:true});
 function visSync(){
   if(!window.WATCH_VIS)return;
   roomSync();

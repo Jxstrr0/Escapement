@@ -121,7 +121,7 @@ function renderTest(){
     $("tgRead").innerHTML=`<div${gA("rate")}><span>Rate</span><b>${d||sgn(st.rate,0)}<small> s/d</small></b></div><div${gA("amplitude")}><span>Amplitude</span><b>${d||Math.round(st.amp)}<small>°</small></b></div>`+
       `<div${gA("beat")}><span>Beat error</span><b>${d||st.beat.toFixed(1)}<small> ms</small></b></div><div${gA("bph")}><span>Beat</span><b>${live?(st.bph/1000).toFixed(1):"—"}<small>k bph</small></b></div>`;
     $("tgMach").textContent=`${T.name} · ${POS_NAME[st.pos].toLowerCase()}${st.mode==="repair"?" · a customer's watch":" · nothing running"}`;
-    $("tgSnd").textContent=S.sound?"Sound on":"Sound off";
+    $("tgSnd").textContent=S.sound?"Tick on":"Tick off";
     $("tgPos").innerHTML=segBtns(SIM.POSITIONS.map(k=>[k,k]),st.pos,"pos",v=>!T.positions.includes(v));$("tgPosHint").hidden=true;$("tgTempF").hidden=true;
     $("tgWind").innerHTML=segBtns([[0,"Full wind"],[24,"After 24 h"]],st.t,"wind");$("tgLift").innerHTML=segBtns(LIFTS.map(v=>[v,v+"°"]),S.tg.lift,"lift");
     $("simOut").textContent=st.r?`A customer's ${st.r.cfg.winding==="automatic"?"automatic":"hand-wound"} at ${st.r.bph.toLocaleString("en-GB")} bph.`:"Nothing on the machine.";
@@ -134,7 +134,7 @@ function renderTest(){
     `<div${gA("beat")}><span>Beat error</span><b>${st.beat.toFixed(T.timingRes>1?2:1)}<small> ms</small></b></div>`+
     `<div${gA("bph")}><span>Beat</span><b>${(st.bph/1000).toFixed(1)}<small>k bph</small></b></div>`;
   $("tgMach").textContent=`${T.name} · ${POS_NAME[st.pos].toLowerCase()} · ${st.temp} °C · ${st.t?"24 h after winding":"full wind"}`;
-  $("tgSnd").textContent=S.sound?"Sound on":"Sound off";$("tgSnd").setAttribute("aria-pressed",!!S.sound);
+  $("tgSnd").textContent=S.sound?"Tick on":"Tick off";$("tgSnd").setAttribute("aria-pressed",!!S.sound);
   $("tgPos").innerHTML=segBtns(SIM.POSITIONS.map(k=>[k,k]),st.pos,"pos",v=>!T.positions.includes(v));
   const posHint=$("tgPosHint");posHint.hidden=T.positions.length>1;
   if(T.positions.length===1){const six=toolFor(t=>t.positions.length>1);posHint.textContent=`Your ${T.name.toLowerCase()} reads dial up only. The other positions need the ${six.name.toLowerCase()} (Shop), but the trial tests five of them.`;}

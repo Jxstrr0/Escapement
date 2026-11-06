@@ -129,7 +129,7 @@ function lotRun(lot,mine){const c=car(),R=SIM.rng(`${c.seed}|sale|${c.sale.wk}|$
 /* settle a lot once its bidding is over */
 function lotSettle(lot,res,lines){const c=car(),sl=c.sale,F=CALENDAR.fee;let line;
   if(lot.kind==="mine"){const pc=stockBy(lot.id);if(!pc)return;pc.lot=null;
-    if(res.sold){const net=Math.round(res.hammer*(1-F));c.stock=c.stock.filter(x=>x!==pc);earn(net,`${pc.name} at ${CALENDAR.house} (hammer ${fmt$(res.hammer)}, less ${Math.round(F*100)}%)`);
+    if(res.sold){const net=Math.round(res.hammer*(1-F));c.stock=c.stock.filter(x=>x!==pc);sfx("sale");earn(net,`${pc.name} at ${CALENDAR.house} (hammer ${fmt$(res.hammer)}, less ${Math.round(F*100)}%)`);
       c.sold.push(soldRow(pc,res.hammer,res.buyer,"auction"));addRep(REP_GAIN.auction,lines);goal("auction",lines);
       line=`${pc.name}: sold to ${res.buyer} for ${fmt$(res.hammer)} (${fmt$(net)} to you).`;}
     else line=`${pc.name}: bought in at ${fmt$(res.hammer)}, below your reserve. It's back in stock.`;}

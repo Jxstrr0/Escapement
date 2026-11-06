@@ -17,6 +17,7 @@ sim/trial.js
 sim/market.js
 html/ld-sim.html
 sound/tick.js
+sound/workshop.js
 vis/core.js
 vis/studio.js
 vis/finish.js
