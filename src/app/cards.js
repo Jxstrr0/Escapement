@@ -18,9 +18,9 @@ const CD={W:1080,H:1350,max:40};
 const CD_F='"Space Grotesk",-apple-system,"Segoe UI",sans-serif',CD_M='"JetBrains Mono",ui-monospace,Menlo,monospace';
 const CD_LBL={mean:"Mean daily rate",maxVar:"Greatest day-to-day change",posSpread:"Spread between positions",thermal:"Temperature (per °C)",beat:"Beat error",amp24:"Amplitude after 24 h"};
 const CD_INK={chronometer:{ink:"#2b3f8c",short:"BCH",ring:"HALDIS CHRONOMETRY BUREAU",grade:"Chronometer certificate",
-    law:"Timed for fifteen days in five positions and at three temperatures, this movement met every limit the Bureau sets for a chronometer."},
+    law:"Timed for fifteen days in five positions and at 8, 23 and 38 °C, this movement met every limit the Bureau sets for a chronometer."},
   observatory:{ink:"#8a2630",short:"KPO",ring:"KESSEL PEAK OBSERVATORY",grade:"Observatory grade certificate",
-    law:"Timed for fifteen days on the mountain, in five positions and at three temperatures, this movement met the Observatory's limits."}};
+    law:"Timed for fifteen days on Kessel Peak, in five positions and at 8, 23 and 38 °C, this movement met every limit for the Observatory grade."}};
 const cdTxt=(s,n)=>String(s==null?"":s).replace(/[<>&"`]/g,"").slice(0,n||90);
 const cdSg=x=>(x>=0?"+":"−")+Math.abs(+x||0).toFixed(1);
 
