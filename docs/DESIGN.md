@@ -2,6 +2,41 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 0.4.0.0: timegrapher, adjustment, certification, tick (PR 3)
+
+- **The piece.** The Test tab holds one movement of the current build. Each piece has its own personality (first rate,
+  position pattern); change the build and a fresh piece goes on with nothing adjusted.
+- **Timegrapher.** A dark instrument screen in both themes. Each beat is a dot, the tick line brass and the tock line
+  blue; the slope is the rate (falling to the right = losing), the gap is beat error; the screen wraps every 8 ms, like a
+  real one. About 12 s across. A thin line and a label mark every change (a regulator nudge shows its effect in s/day).
+  Readouts: rate, amplitude, beat error, beat. Lite runs the trace at 30 fps with every other beat pair.
+- **Timing machines** (`TOOLS`): basic (dial up only), six-position, laboratory (six positions and 8 / 23 / 38 °C).
+  Locked positions are hatched and say what they need. Outside a career the Build tab's Parts switch also picks the
+  machine: Workshop = basic, Everything = laboratory. Wind: full or after 24 h. Lift angle 38 / 44 / 50 / 52°: the
+  amplitude readout uses it, so a wrong setting reads wrong (Swiss lever 52, high-efficiency 50, detent 44, co-axial 38).
+- **Adjust.** Regulate in notches of the fitted regulator (index 2 s/day, micro-adjust 0.5, free-sprung 0.25; ×1 or ×5),
+  landing a little off by skill; Adjust beat (0.5 h) takes out part of the beat error, down to a floor set by the
+  regulator and regulating skill; Poise (2 h) takes out part of the position error, up to 95%. Each press adds bench
+  hours to the piece and XP: regulating for Regulate and Adjust beat, poising for Poise. A trial's first run gives
+  assembly XP, plus complications and finishing XP for what the piece carries. Levels 1–10 (`SKILL_XP`).
+- **Certify.** Bench check, the Haldis Chronometry Bureau (BCH) and the Kessel Peak Observatory. Fifteen days: two each
+  in five positions, then cold / room / warm, then two recovery days. Checks: mean rate, greatest day-to-day change,
+  spread between positions, temperature per °C, beat error, amplitude after 24 h. The sheet gives the verdict in plain
+  English (the first failure and what fixes it), every check against its limit, and the fifteen days. A pass stamps the
+  piece (best grade kept). Fees and weeks are shown but not charged until careers (PR 5 / PR 6).
+
+  | Grade | Mean | Day to day | Positions | Temp /°C | Beat | Amp 24 h |
+  |---|---|---|---|---|---|---|
+  | Bench pass | ±30 | | | | ≤ 2.0 ms | ≥ 180° |
+  | Chronometer (BCH) | −4 / +6 | ≤ 5 | ≤ 6 | ≤ 0.6 | ≤ 0.8 ms | ≥ 220° |
+  | Observatory | −1 / +2 | ≤ 2 | ≤ 3 | ≤ 0.3 | ≤ 0.3 ms | ≥ 240° |
+
+- **Build capsule** Cert odds: the best grade a careful hand gets this build through at your skills (eight pieces, each
+  regulated, beat set, poised four times), e.g. "BCH 100%" or "Obs 35%".
+- **Tick.** Web Audio, one short noise-and-ring burst per beat (tick and tock sound different), at the piece's beat rate.
+  Beat error delays every other tick, exaggerated four times so 2.6 ms limps audibly. Starts on the first tap on the Test
+  tab, stops when you leave it or hide the page. Sound on / off on the trace and in Settings.
+
 ## 0.3.0.0: the Build tab (PR 2)
 
 - **Capsule** docked at the top of the Build tab while you scroll: the rate band (slowest to fastest over six positions,

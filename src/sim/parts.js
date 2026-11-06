@@ -46,12 +46,13 @@ const PARTS={
     {id:"31",name:"31 jewels",blurb:"More jewels than strictly needed. Collectors notice; physics barely does.",cost:62,hours:3,prestige:2,parts:31,unlock:"shop:jewel-supplier",mult:.88}
   ],
   /* the escapement. efficiency 0..1 = share of the train's torque delivered to the balance; oilDrift = rate lost per year
-     since service as the oil ages (s/day/year); shockFragile 0..1; lubeFree = needs no oil on the pallets */
+     since service as the oil ages (s/day/year); shockFragile 0..1; lubeFree = needs no oil on the pallets; lift = the lift
+     angle in degrees (a timegrapher needs it to read amplitude right) */
   escapement:[
-    {id:"swiss-lever",name:"Swiss lever",blurb:"The standard for a century. Reliable, needs oil, loses a little as it ages.",cost:44,hours:0,prestige:0,parts:6,unlock:"start",efficiency:.38,oilDrift:1.2,shockFragile:.2,lubeFree:false,thick:0},
-    {id:"hi-eff-lever",name:"High-efficiency lever",blurb:"Lighter pallets and optimised geometry: more amplitude from the same spring.",cost:72,hours:3,prestige:1,parts:6,unlock:"shop:cnc",efficiency:.41,oilDrift:1.0,shockFragile:.25,lubeFree:false,thick:0},
-    {id:"coaxial-style",name:"Co-axial style",blurb:"Radial impulse with almost no sliding friction. Barely drifts between services.",cost:230,hours:10,prestige:4,parts:9,unlock:"rnd:coaxial",efficiency:.44,oilDrift:.3,shockFragile:.2,lubeFree:false,thick:.15},
-    {id:"detent",name:"Detent (chronometer)",blurb:"A marine chronometer escapement: superb efficiency, no oil, and it hates a knock.",cost:390,hours:18,prestige:6,parts:7,unlock:"rnd:detent",efficiency:.48,oilDrift:.15,shockFragile:.8,lubeFree:true,thick:.2}
+    {id:"swiss-lever",name:"Swiss lever",blurb:"The standard for a century. Reliable, needs oil, loses a little as it ages.",cost:44,hours:0,prestige:0,parts:6,unlock:"start",efficiency:.38,oilDrift:1.2,shockFragile:.2,lubeFree:false,thick:0,lift:52},
+    {id:"hi-eff-lever",name:"High-efficiency lever",blurb:"Lighter pallets and optimised geometry: more amplitude from the same spring.",cost:72,hours:3,prestige:1,parts:6,unlock:"shop:cnc",efficiency:.41,oilDrift:1.0,shockFragile:.25,lubeFree:false,thick:0,lift:51},
+    {id:"coaxial-style",name:"Co-axial style",blurb:"Radial impulse with almost no sliding friction. Barely drifts between services.",cost:230,hours:10,prestige:4,parts:9,unlock:"rnd:coaxial",efficiency:.44,oilDrift:.3,shockFragile:.2,lubeFree:false,thick:.15,lift:38},
+    {id:"detent",name:"Detent (chronometer)",blurb:"A marine chronometer escapement: superb efficiency, no oil, and it hates a knock.",cost:390,hours:18,prestige:6,parts:7,unlock:"rnd:detent",efficiency:.48,oilDrift:.15,shockFragile:.8,lubeFree:true,thick:.2,lift:44}
   ],
   /* the balance wheel. inertia (1 = a normal 10 mm balance) soaks up torque; poise 0..1 = how well it is balanced out of the box */
   balance:[
@@ -63,8 +64,8 @@ const PARTS={
   /* the hairspring. tempCoeff = rate change per degree C away from 23 (s/day/C); magnet 0..1 susceptibility; overcoil 0..1
      (how much it centres the breathing, which cuts the amplitude error); brittle = cracks rather than bends in a drop */
   hairspring:[
-    {id:"steel-flat",name:"Steel, flat",blurb:"Plain carbon steel. Swings badly with temperature and loves a magnet.",cost:8,hours:0,prestige:0,parts:1,unlock:"start",tempCoeff:.62,magnet:.9,overcoil:0,brittle:false},
-    {id:"steel-overcoil",name:"Steel, Breguet overcoil",blurb:"The outer coil lifted and bent in: breathes concentrically, still steel.",cost:18,hours:4,prestige:1,parts:1,unlock:"start",tempCoeff:.62,magnet:.9,overcoil:.55,brittle:false},
+    {id:"steel-flat",name:"Steel, flat",blurb:"Plain carbon steel. Swings badly with temperature and loves a magnet.",cost:8,hours:0,prestige:0,parts:1,unlock:"start",tempCoeff:.7,magnet:.9,overcoil:0,brittle:false},
+    {id:"steel-overcoil",name:"Steel, Breguet overcoil",blurb:"The outer coil lifted and bent in: breathes concentrically, still steel.",cost:18,hours:4,prestige:1,parts:1,unlock:"start",tempCoeff:.7,magnet:.9,overcoil:.55,brittle:false},
     {id:"alloy-flat",name:"Self-compensating alloy, flat",blurb:"A nickel-iron alloy that barely notices temperature.",cost:32,hours:0,prestige:1,parts:1,unlock:"shop:spring-supplier",tempCoeff:.12,magnet:.45,overcoil:0,brittle:false},
     {id:"alloy-overcoil",name:"Alloy, Breguet overcoil",blurb:"Compensating alloy with an overcoil: the classic chronometer spring.",cost:48,hours:4,prestige:2,parts:1,unlock:"shop:spring-supplier",tempCoeff:.12,magnet:.45,overcoil:.55,brittle:false},
     {id:"silicon",name:"Silicon",blurb:"Etched, not drawn: ignores magnets and heat. Shatters in a hard drop.",cost:125,hours:0,prestige:3,parts:1,unlock:"rnd:silicon",tempCoeff:.03,magnet:0,overcoil:.65,brittle:true}

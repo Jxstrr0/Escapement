@@ -35,10 +35,29 @@
     <!-- TEST: timegrapher, adjustment, certification -->
     <section class="tabpage" id="tab-test" aria-labelledby="h-test">
       <h2 id="h-test">Test</h2>
-      <p class="lede">Put the movement on the timegrapher, read the trace, then regulate, adjust the beat and poise it.</p>
-      <div class="card"><h3>Timegrapher<span class="soon">PR 3</span></h3><p>Two scrolling dot lines. The gap between them is beat error; their slope is the rate.</p></div>
-      <div class="card"><h3>Certification<span class="soon">PR 3</span></h3><p>Bench pass, Chronometer and Observatory grades, each tested over 15 days across positions and temperatures.</p></div>
-      <div class="card"><h3>Movement on the bench</h3><p>Raw numbers from the watch maths until the timegrapher arrives.</p><pre class="mono simout" id="simOut" hidden></pre></div>
+      <p class="lede">The movement on the timegrapher. Two dotted lines: their slope is the rate, the gap between them is beat error.</p>
+      <div class="tgbox">
+        <div class="tgread" id="tgRead"></div>
+        <canvas id="tgCv" aria-label="Timegrapher trace" role="img"></canvas>
+        <div class="tgfoot"><span id="tgMach"></span><button class="btn sm ghost" id="tgSnd" aria-pressed="true"></button></div>
+      </div>
+      <div class="field"><span class="lbl">Position</span><div class="seg tgpos" id="tgPos" role="group" aria-label="Position"></div><p class="hint" id="tgPosHint" hidden></p></div>
+      <div class="field" id="tgTempF" hidden><span class="lbl">Temperature</span><div class="seg" id="tgTemp" role="group" aria-label="Temperature"></div></div>
+      <div class="card" id="adjCard"><h3>Adjust<span class="cnt" id="adjHrs"></span></h3>
+        <div class="slot"><span class="lbl">Regulate <small id="regRes"></small></span><div class="seg" id="regBtns" role="group" aria-label="Regulate"></div></div>
+        <div class="row adjrow"><button class="btn" id="adjBeat"></button><button class="btn" id="adjPoise"></button></div>
+        <p class="hint" id="adjSkills"></p>
+      </div>
+      <div class="card" id="certCard"><h3>Certify<span class="cnt" id="certNow"></span></h3>
+        <p>Fifteen days in five positions and three temperatures. The result shows every check against its limit.</p>
+        <div class="certs" id="certBtns"></div>
+      </div>
+      <div class="card" id="tgSetCard"><h3>Timing machine</h3>
+        <div class="field"><span class="lbl">Wind</span><div class="seg" id="tgWind" role="group" aria-label="Wind"></div></div>
+        <div class="field"><span class="lbl">Lift angle</span><div class="seg" id="tgLift" role="group" aria-label="Lift angle"></div>
+          <p class="hint">The machine works amplitude out from the lift angle you give it. Set it wrong and the amplitude reads wrong; the rate doesn't care.</p></div>
+        <details class="raw"><summary>All the numbers</summary><pre class="mono simout" id="simOut"></pre></details>
+      </div>
     </section>
 
     <!-- SHOP: money, upgrades, staff, saves -->

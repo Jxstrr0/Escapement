@@ -34,16 +34,17 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `html/head.html` | doctype, meta and PWA tags, inline critical style, `<title>`, the `#boot` loading splash and its loader script (`__ld`, `__ldGo`, `__ldDone`), Google Fonts (non-blocking), the opening `<style>` |
 | `css/style.css` | the base page CSS: theme tokens (dark felt + brass, light workshop), layout (3D view, panel, tab bar), cards, buttons, segmented pickers, sheet, toast, intro, the update bar, reduced motion / transparency |
 | `css/build.css` | the Build tab: the docked capsule, accordion rows, option buttons and their delta chips, the stress report list |
+| `css/test.css` | the Test tab: the timegrapher box (dark in both themes), readouts, adjust and certify buttons, the trial sheet's check table |
 | `html/body.html` | `</style>`, all of the markup (`#app`, `#view` with the `#gl` canvas and HUD, five `.tabpage` sections, `#tabs`, sheet, toast, intro), the three.js r128 tag and the `ESC_LIBS` on-demand loader (`window.__escPost`) |
 | `html/ld-libs.html`, `ld-sim.html`, `ld-vis.html` | one-line `<script>__ld(fraction,"message")</script>` loading-bar steps after the block they report |
 | **WATCH_SIM** (maths, runs in node) | |
 | `sim/parts.js` | `<script>`, header, IIFE open; `SLOTS`, `MULTI`, `PARTS` (12 slots), `DEFAULT_CFG`, `part(slot,id)` |
 | `sim/movement.js` | `POSITIONS`, `TEMPS`, the `K` table, `normCfg` (fills and fixes a cfg), `model`, `ampAt` / `beatAt` / `rateAt`, `simulate(cfg, skills, tools, opts)` |
 | `sim/combos.js` | `COMBOS`: stress rules with `when`, optional `pre` (changes the model) / `post` (changes the result), and `text` |
-| `sim/trial.js` | `CERT`, `CERT_MULT`, `runTrial` (PR 3) |
+| `sim/trial.js` | `CERT` (bench / chronometer / observatory), `CERT_ORDER`, `CERT_MULT`, `TRIAL` (the 15 days), `runTrial`, `verdict`, `ADJ` + `adjustPiece` + `hoursFor` (Regulate / Adjust beat / Poise), `certOdds` |
 | `sim/market.js` | `MARKET_ERA`, demand and pricing (PR 5 / 6); **the WATCH_SIM export object**, `module.exports`, `</script>` |
 | **WATCH_SOUND** | |
-| `sound/tick.js` | the whole block: the synthesized tick (PR 3; a stub now) |
+| `sound/tick.js` | the whole block: `WATCH_SOUND` (`unlock`, `set({bph, beatMs, on})`, `stop`): two baked tick/tock buffers and a look-ahead scheduler |
 | **WATCH_VIS** (three.js) | |
 | `vis/core.js` | `<script>`, IIFE open, module state `V`, renderer, tiers, the studio reflection, materials (`makeMats`) |
 | `vis/movement.js` | the movement mesh; now `buildPlaceholder()` (cock, screw balance, hairspring); PR 4 makes it parametric |
@@ -56,7 +57,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/pwa.js` | service worker registration, the "New version ready" bar, `PWA.canInstall` / `install` / `iosTip` |
 | `app/boot.js` | `TABS`, `TAB_RENDER`, `showTab`, the Settings sheet, intro, `start()` (scheduled with `__ldGo`) |
 | `app/build.js` | the Build tab: `BUILD_SECS`, `UNLOCK_NAME` / `hasUnlock`, `withOpt` (fit or toggle an option with its partners), `bSim` (cached simulate), the delta line, capsule, stress report |
-| `app/test.js` | the Test tab: timegrapher, adjustment, certification (PR 3); for now the sim result as text |
+| `app/test.js` | the Test tab: the piece on the machine (`S.piece`, `curPiece`, `pieceSim`), `ownedTool`, the scrolling trace (`TG`, `tgStart` / `tgStop`), readouts, adjust and certify handlers, the trial sheet |
 | `app/shop.js` | the Shop tab (PR 5); now the Saves card buttons |
 | `app/career.js` | the Career tab (PR 6) |
 | `app/help.js` | tutorial and help (PR 8); last app file, `</script>` |
