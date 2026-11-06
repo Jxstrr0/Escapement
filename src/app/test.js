@@ -118,8 +118,8 @@ function renderTest(){
   $("adjCard").hidden=$("certCard").hidden=st.mode!=="piece";
   if(st.mode!=="piece"){
     const d=st.stopped?"—":null;
-    $("tgRead").innerHTML=`<div><span>Rate</span><b>${d||sgn(st.rate,0)}<small> s/d</small></b></div><div><span>Amplitude</span><b>${d||Math.round(st.amp)}<small>°</small></b></div>`+
-      `<div><span>Beat error</span><b>${d||st.beat.toFixed(1)}<small> ms</small></b></div><div><span>Beat</span><b>${live?(st.bph/1000).toFixed(1):"—"}<small>k bph</small></b></div>`;
+    $("tgRead").innerHTML=`<div${gA("rate")}><span>Rate</span><b>${d||sgn(st.rate,0)}<small> s/d</small></b></div><div${gA("amplitude")}><span>Amplitude</span><b>${d||Math.round(st.amp)}<small>°</small></b></div>`+
+      `<div${gA("beat")}><span>Beat error</span><b>${d||st.beat.toFixed(1)}<small> ms</small></b></div><div${gA("bph")}><span>Beat</span><b>${live?(st.bph/1000).toFixed(1):"—"}<small>k bph</small></b></div>`;
     $("tgMach").textContent=`${T.name} · ${POS_NAME[st.pos].toLowerCase()}${st.mode==="repair"?" · a customer's watch":" · nothing running"}`;
     $("tgSnd").textContent=S.sound?"Sound on":"Sound off";
     $("tgPos").innerHTML=segBtns(SIM.POSITIONS.map(k=>[k,k]),st.pos,"pos",v=>!T.positions.includes(v));$("tgPosHint").hidden=true;$("tgTempF").hidden=true;
@@ -129,10 +129,10 @@ function renderTest(){
   const p=curPiece();
   const certTxt=p.cert?`${SIM.CERT[p.cert].name}${SIM.CERT[p.cert].stamp?" · "+SIM.CERT[p.cert].stamp:""}`:"";
   $("tgRead").innerHTML=
-    `<div><span>Rate</span><b class="${Math.abs(st.rate)<=6?"ok":""}">${sgn(st.rate,T.timingRes>1?1:0)}<small> s/d</small></b></div>`+
-    `<div><span>Amplitude</span><b>${Math.round(st.amp)}<small>°</small></b></div>`+
-    `<div><span>Beat error</span><b>${st.beat.toFixed(T.timingRes>1?2:1)}<small> ms</small></b></div>`+
-    `<div><span>Beat</span><b>${(st.bph/1000).toFixed(1)}<small>k bph</small></b></div>`;
+    `<div${gA("rate")}><span>Rate</span><b class="${Math.abs(st.rate)<=6?"ok":""}">${sgn(st.rate,T.timingRes>1?1:0)}<small> s/d</small></b></div>`+
+    `<div${gA("amplitude")}><span>Amplitude</span><b>${Math.round(st.amp)}<small>°</small></b></div>`+
+    `<div${gA("beat")}><span>Beat error</span><b>${st.beat.toFixed(T.timingRes>1?2:1)}<small> ms</small></b></div>`+
+    `<div${gA("bph")}><span>Beat</span><b>${(st.bph/1000).toFixed(1)}<small>k bph</small></b></div>`;
   $("tgMach").textContent=`${T.name} · ${POS_NAME[st.pos].toLowerCase()} · ${st.temp} °C · ${st.t?"24 h after winding":"full wind"}`;
   $("tgSnd").textContent=S.sound?"Sound on":"Sound off";$("tgSnd").setAttribute("aria-pressed",!!S.sound);
   $("tgPos").innerHTML=segBtns(SIM.POSITIONS.map(k=>[k,k]),st.pos,"pos",v=>!T.positions.includes(v));
@@ -209,7 +209,7 @@ ${res.checks.map(c=>`<tr class="${c.ok?"ok":"no"}"><td>${c.label}</td><td>${c.va
 </tbody></table>
 <details class="raw"><summary>The fifteen days</summary><table class="checks days"><tbody>${days}</tbody></table></details>
 <div class="row" style="margin-top:14px"><button class="btn pri" id="certOk">Back to the bench</button></div>`);
-  $("certOk").addEventListener("click",closeSheet);}
+  $("certOk").addEventListener("click",closeSheet);certSheetBtn(t,id);}
 onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
   const id=b.dataset.cert,C=SIM.CERT[id],p=curPiece(),tool=ownedTool();
   if(inCareer()&&id!=="bench"){

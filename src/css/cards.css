@@ -1,0 +1,7 @@
+/* ---- cards.css: the certificate and trophy cards (app/cards.js): the picture in its sheet, the Trophy buttons on the
+   Goals card and the Certificates list. The picture itself is the same in both themes; its frame follows the tokens. ---- */
+.cdpic{display:grid;place-items:center;min-height:200px;margin:0 0 4px}
+.cdpic img{display:block;width:100%;max-width:420px;height:auto;max-height:62vh;object-fit:contain;border-radius:6px;border:1px solid var(--rule);box-shadow:var(--shadow);background:var(--panel2)}
+.shlist.goals li>div:not(.acts){flex:1;min-width:0}
+.shlist.certs li b{overflow-wrap:anywhere}
+:root[data-theme=light] .cdpic img{box-shadow:0 6px 18px rgba(40,34,20,.16)}
