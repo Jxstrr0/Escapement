@@ -24,9 +24,12 @@
     <!-- BUILD: part-by-part movement design -->
     <section class="tabpage" id="tab-build" aria-labelledby="h-build">
       <h2 id="h-build">Build</h2>
-      <p class="lede">Design a movement part by part. Every choice shows what it does to amplitude, reserve, accuracy, thickness, cost and hours.</p>
-      <div class="card"><h3>Parts<span class="soon">PR 2</span></h3><p>Barrel · Train &amp; jewels · Escapement · Balance &amp; hairspring · Beat rate &amp; regulation · Shock &amp; winding · Complications · Finishing</p></div>
-      <div class="card"><h3>Stress report<span class="soon">PR 2</span></h3><p>Plain English about what will go wrong with a build, and why.</p></div>
+      <p class="lede">Design a movement part by part. Each option shows what it would change; the capsule keeps the totals in view.</p>
+      <div class="bcap" id="bCap"></div>
+      <div class="field" id="bModeF" hidden><span class="lbl">Parts</span><div class="seg" id="bMode" role="group" aria-label="Which parts to offer"></div></div>
+      <div id="buildForm"></div>
+      <div class="card" id="bStress"><h3>Stress report</h3><ul class="stress" id="bStressList"></ul></div>
+      <div class="row"><button class="btn ghost" id="bReset">Start over: a plain movement</button></div>
     </section>
 
     <!-- TEST: timegrapher, adjustment, certification -->

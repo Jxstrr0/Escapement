@@ -32,7 +32,8 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | file | what is in it |
 |---|---|
 | `html/head.html` | doctype, meta and PWA tags, inline critical style, `<title>`, the `#boot` loading splash and its loader script (`__ld`, `__ldGo`, `__ldDone`), Google Fonts (non-blocking), the opening `<style>` |
-| `css/style.css` | the whole page CSS: theme tokens (dark felt + brass, light workshop), layout (3D view, panel, tab bar), cards, buttons, segmented pickers, sheet, toast, intro, the update bar, reduced motion / transparency |
+| `css/style.css` | the base page CSS: theme tokens (dark felt + brass, light workshop), layout (3D view, panel, tab bar), cards, buttons, segmented pickers, sheet, toast, intro, the update bar, reduced motion / transparency |
+| `css/build.css` | the Build tab: the docked capsule, accordion rows, option buttons and their delta chips, the stress report list |
 | `html/body.html` | `</style>`, all of the markup (`#app`, `#view` with the `#gl` canvas and HUD, five `.tabpage` sections, `#tabs`, sheet, toast, intro), the three.js r128 tag and the `ESC_LIBS` on-demand loader (`window.__escPost`) |
 | `html/ld-libs.html`, `ld-sim.html`, `ld-vis.html` | one-line `<script>__ld(fraction,"message")</script>` loading-bar steps after the block they report |
 | **WATCH_SIM** (maths, runs in node) | |
@@ -54,7 +55,7 @@ One place: `src/app/state.js`, `const VERSION="x.y.z.w";`.
 | `app/savecode.js` | Back up / Restore: `buCode`, `buRead`, `buWrite`, the two sheets; save safety: backup files, `buPersist`, the storage line, the reminder bar |
 | `app/pwa.js` | service worker registration, the "New version ready" bar, `PWA.canInstall` / `install` / `iosTip` |
 | `app/boot.js` | `TABS`, `TAB_RENDER`, `showTab`, the Settings sheet, intro, `start()` (scheduled with `__ldGo`) |
-| `app/build.js` | the Build tab (PR 2) |
+| `app/build.js` | the Build tab: `BUILD_SECS`, `UNLOCK_NAME` / `hasUnlock`, `withOpt` (fit or toggle an option with its partners), `bSim` (cached simulate), the delta line, capsule, stress report |
 | `app/test.js` | the Test tab: timegrapher, adjustment, certification (PR 3); for now the sim result as text |
 | `app/shop.js` | the Shop tab (PR 5); now the Saves card buttons |
 | `app/career.js` | the Career tab (PR 6) |

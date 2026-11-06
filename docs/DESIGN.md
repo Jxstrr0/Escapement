@@ -2,6 +2,22 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 0.3.0.0: the Build tab (PR 2)
+
+- **Capsule** docked at the top of the Build tab while you scroll: the rate band (slowest to fastest over six positions,
+  three temperatures, full wind and 24 h), reserve, parts cost, bench hours, and a Cert cell that PR 3 fills in.
+- **Eight rows**, one open at a time (remembered): Barrel; Train & jewels; Escapement; Balance & hairspring; Beat rate &
+  regulation; Shock & winding; Complications; Finishing. A closed row shows what is fitted.
+- **Every option** shows its parts cost, a one-line description and a delta line from a real simulation: up to three of
+  amplitude, reserve, accuracy band, thickness and prestige (green helps, red hurts), then cost and bench hours, then a
+  stress line it would add (red ✖ serious, amber ▲ to watch) or clear (green ✓). The fitted option says "fitted".
+  Complications and finishes are tick boxes; split-seconds brings a chronograph with it and a free-sprung balance brings
+  its regulator, each with a toast.
+- **Locked** options are dashed and dimmed and say what unlocks them ("Needs the CNC mill (Shop)", "Research:
+  Silicon hairspring (R&D)"); tapping one says the same. Until careers arrive (PR 5) a **Parts** switch chooses
+  Workshop (what a new bench owns) or Everything (try any part).
+- **Stress report** card under the rows: every line for the build, worst first. **Start over** puts back the plain movement.
+
 ## 0.2.0.0: the movement sim (PR 1)
 
 The watch maths (`WATCH_SIM`), all in tables. A movement is one choice in each of ten slots (barrel, train, jewels,

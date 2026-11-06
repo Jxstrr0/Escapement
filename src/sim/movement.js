@@ -150,8 +150,8 @@ function simulate(cfg,skills,tools,opts){
     stress:[],m
   };
   res.returnRisk=clamp(K.ret.base+(1-shock)*K.ret.shock+magnet*K.ret.magnet+P.escapement.oilDrift*K.ret.oil+m.overCx*K.ret.over,0,K.ret.max);
-  for(const f of fixes)res.stress.push({id:"fixed",sev:"info",text:f});
-  COMBOS.forEach(r=>{if(r.pre?fired.has(r):r.when({c,P,m,r:res,opts})){if(r.post)r.post(res,{c,P});res.stress.push({id:r.id,sev:r.sev,text:typeof r.text==="function"?r.text({c,P,m,r:res,opts}):r.text});}});
+  for(const f of fixes)res.stress.push({id:"fixed",tag:"fixed",sev:"info",text:f});
+  COMBOS.forEach(r=>{if(r.pre?fired.has(r):r.when({c,P,m,r:res,opts})){if(r.post)r.post(res,{c,P});res.stress.push({id:r.id,tag:r.tag,sev:r.sev,text:typeof r.text==="function"?r.text({c,P,m,r:res,opts}):r.text});}});
   if(opts.caseMax&&res.thickness>opts.caseMax+1e-9)res.tooThick=true;
   const ord={bad:0,warn:1,info:2};res.stress.sort((a,b)=>ord[a.sev]-ord[b.sev]);
   return res;
