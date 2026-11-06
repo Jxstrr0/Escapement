@@ -81,8 +81,8 @@ const buNum=v=>typeof v==="number"&&isFinite(v);
 function buSaveOk(o){
   if(!buObj(o)||!buObj(o.cfg))return false;
   if("career" in o&&o.career!=null){const c=o.career;if(!buObj(c))return false;
-    if("log" in c&&!Array.isArray(c.log))return false;
-    for(const k of ["owned","staff","rnd","skills","rep","goals"])if(k in c&&!buObj(c[k]))return false;
+    for(const k of ["log","staff","jobs","repairs","stock","orders","offers","sold","books","cands"])if(k in c&&!Array.isArray(c[k]))return false;
+    for(const k of ["owned","up","unlocks","xp","certs","rnd","skills","rep","goals"])if(k in c&&!buObj(c[k]))return false;
     for(const k of ["cash","year","week"])if(k in c&&!buNum(c[k]))return false;}
   return buTry(o);}
 /* load a copy the way the game would (hydrate), then put the running game back exactly as it was */
