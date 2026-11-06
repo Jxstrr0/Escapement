@@ -42,3 +42,16 @@ table.checks tr.no td:nth-child(2){color:var(--crit)}
 table.checks.days td{padding:4px 6px 4px 0;font-size:13px}
 details.raw{margin-top:12px}
 details.raw summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:14px;font-weight:600;color:var(--muted)}
+
+/* the trial sheet's "Where to fix it": one row per failed check, a button to each place that fixes it */
+.fixes{margin:14px 0 4px}.fixes h4{margin:0 0 6px;font-size:14px;color:var(--brass2)}
+.fixrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:6px 0;border-top:1px solid var(--rule)}
+.fixrow>span{flex:1 1 9em;font-size:13.5px}.fixrow .row{margin:0;gap:6px;flex-wrap:wrap}.fixrow .btn{white-space:nowrap}
+:root[data-theme=light] .fixes h4{color:#7a5a17}
+/* the place a fix button led to: a brass ring for a moment (a Build row scrolls to its top, clear of the docked capsule) */
+#buildForm .acc,#buildForm .slot{scroll-margin-top:96px}
+.fixhi{outline:2px solid var(--brass2);outline-offset:3px;border-radius:10px;animation:fixPulse 1.2s ease-in-out 2}
+@keyframes fixPulse{50%{outline-offset:6px;outline-color:rgba(224,192,126,.4)}}
+:root[data-theme=light] .fixhi{outline-color:#9a7424}
+html.reduce .fixhi{animation:none}
+@media (prefers-reduced-motion:reduce){.fixhi{animation:none}}
