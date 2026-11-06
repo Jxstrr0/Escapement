@@ -200,6 +200,30 @@ onTap("tgLift",e=>{const b=e.target.closest("[data-lift]");if(!b)return;S.tg.lif
 onTap("tgSnd",()=>{S.sound=!S.sound;save();renderTest();tickSet();});
 
 /* ---------- certification ---------- */
+/* where each failed check gets fixed: a control on this tab (this piece), a Build row (the next piece) or a Shop upgrade.
+   label is the button; when() leaves a target out (an upgrade you own, the Shop in the Sandbox) */
+const CERT_FIX={
+  mean:[{tab:"test",sel:"#regBtns",label:"Regulate"}],
+  maxVar:[{tab:"build",sec:"beat",slot:"regulator",label:"Regulator"},{tab:"build",sec:"beat",slot:"bph",label:"Beat rate"}],
+  posSpread:[{tab:"test",sel:"#adjPoise",label:"Poise"},{tab:"shop",up:"timing-six",label:"Six-position timing machine",when:()=>inCareer()&&!upOwned("timing-six")}],
+  thermal:[{tab:"build",sec:"balance",slot:"hairspring",label:"Hairspring"}],
+  beat:[{tab:"test",sel:"#adjBeat",label:"Adjust beat"},{tab:"build",sec:"beat",slot:"regulator",label:"Regulator"}],
+  amp24:[{tab:"build",sec:"barrel",label:"Barrel"},{tab:"build",sec:"train",label:"Train & jewels"},{tab:"build",sec:"balance",slot:"balance",label:"Balance"}]
+};
+const certFixes=k=>(CERT_FIX[k]||[]).filter(f=>!f.when||f.when());
+/* go there: switch tab, open the row or the upgrades list, scroll it to the middle and ring it for a moment */
+function goFix(f){closeSheet();showTab(f.tab);
+  if(f.sec){S.bOpen=f.sec;save();renderBuildForm();}
+  requestAnimationFrame(()=>{let el=null;
+    if(f.sec){const h=document.querySelector(`#buildForm [data-sec="${f.sec}"]`);el=f.slot&&document.querySelector(`#buildForm [data-slot="${f.slot}"]`)||h&&h.closest(".acc");}
+    else if(f.up){const d=document.querySelector("#shopBody details.shup");if(d)d.open=true;el=document.querySelector(`#shopBody [data-upid="${f.up}"]`);}
+    else el=document.querySelector(f.sel);
+    if(!el)return;el.scrollIntoView({block:f.sec?"start":"center",behavior:reduced()?"auto":"smooth"});
+    el.classList.remove("fixhi");void el.offsetWidth;el.classList.add("fixhi");setTimeout(()=>el.classList.remove("fixhi"),2400);});}
+function fixHtml(res){const bad=res.checks.filter(c=>!c.ok&&certFixes(c.k).length);if(!bad.length)return"";
+  const later=inCareer()&&bad.some(c=>certFixes(c.k).some(f=>f.tab==="build"));
+  return `<div class="fixes"><h4>Where to fix it</h4>${bad.map(c=>`<div class="fixrow"><span>${c.label}</span><div class="row">${certFixes(c.k).map((f,i)=>`<button type="button" class="btn sm" data-fix="${c.k}:${i}">${f.label} →</button>`).join("")}</div></div>`).join("")}
+${later?`<p class="hint">Build rows change your next piece: this one's parts are fixed. Regulate, Adjust beat and Poise work on this one.</p>`:""}</div>`;}
 function trialSheet(t,id){const C=SIM.CERT[id],res=t.tiers[id];
   const days=t.days.map((d,i)=>`<tr><td>${i+1}</td><td>${POS_NAME[d.pos]}</td><td>${d.temp} °C</td><td>${sgn(d.rate)}</td></tr>`).join("");
   openSheet(id==="bench"?"Bench check":`${C.name} trial`,`
@@ -207,9 +231,11 @@ function trialSheet(t,id){const C=SIM.CERT[id],res=t.tiers[id];
 <table class="checks"><thead><tr><th>Check</th><th>Result</th><th>Limit</th><th></th></tr></thead><tbody>
 ${res.checks.map(c=>`<tr class="${c.ok?"ok":"no"}"><td>${c.label}</td><td>${c.val}</td><td>${c.lim}</td><td>${c.ok?"✓":"✖"}</td></tr>`).join("")}
 </tbody></table>
+${res.pass?"":fixHtml(res)}
 <details class="raw"><summary>The fifteen days</summary><table class="checks days"><tbody>${days}</tbody></table></details>
 <div class="row" style="margin-top:14px"><button class="btn pri" id="certOk">Back to the bench</button></div>`);
-  $("certOk").addEventListener("click",closeSheet);certSheetBtn(t,id);}
+  $("certOk").addEventListener("click",closeSheet);certSheetBtn(t,id);
+  document.querySelectorAll("[data-fix]").forEach(b=>b.addEventListener("click",()=>{const [k,i]=b.dataset.fix.split(":");goFix(certFixes(k)[+i]);}));}
 onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
   const id=b.dataset.cert,C=SIM.CERT[id],p=curPiece(),tool=ownedTool();
   if(inCareer()&&id!=="bench"){
