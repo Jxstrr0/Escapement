@@ -5,6 +5,7 @@ css/build.css
 css/test.css
 css/shop.css
 css/events.css
+css/help.css
 html/body.html
 html/ld-libs.html
 sim/parts.js
