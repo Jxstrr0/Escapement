@@ -80,14 +80,14 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 
 ## Decisions made so far (besides the plan's section 1)
 
-- Valley: **the Haldis**, a high valley in an invented alpine country (country name not chosen yet; ask before it first appears in game text).
+- Setting: **the Haldis**, a high watchmaking valley in the north of **Velmark**, an invented alpine country.
 - Palette: **dark felt + brass + steel**; the light theme is a pale workshop. UI font Space Grotesk, readouts **JetBrains Mono**.
-- Money: no currency sign yet. Ask what the Haldis uses before PR 5.
+- Money: the Velmark **thaler** (`Th 4,850`; 100 pfennig to a thaler), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (0.1.0.1)
+## Current status (0.1.0.2)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
-- 0.1.0.1: save safety (backup files, storage protection, backup reminder; see Save codes).
+- 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
 - Next: PR 1, the movement sim (text only).
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
