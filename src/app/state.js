@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="0.1.0.0";
+const VERSION="0.1.0.1";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -56,7 +56,7 @@ if(mqLight&&mqLight.addEventListener)mqLight.addEventListener("change",()=>{if(S
 if(mqReduce&&mqReduce.addEventListener)mqReduce.addEventListener("change",applyReduce);
 
 /* ---- formatting ---- */
-const fmt$=n=>Math.round(n).toLocaleString("en-GB");   // no currency sign yet: what the Haldis uses for money gets asked before PR 5
+const fmt$=n=>(n<0?"−":"")+"Th "+Math.round(Math.abs(n)).toLocaleString("en-GB");   // Velmark thaler (100 pfennig); prices sized like Swiss francs
 const fmtN=(n,d)=>Number(n).toFixed(d||0);
 
 /* ---- the header over the 3D view ---- */
