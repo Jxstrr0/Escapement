@@ -33,7 +33,7 @@ const GLOSS={
   prestige:{t:"Prestige",g:"Movement",d:"How much a collector cares about what's inside: fine finishing, complications, in-house parts, your own calibre. It raises the price a buyer will pay."},
   cost:{t:"Parts cost",g:"Business",d:"What the parts for one movement cost you, paid when you press Make. Your own in-house parts and calibre bring it down."},
   hours:{t:"Bench hours",g:"Business",d:"The work to assemble one movement. You have so many hours a week; staff add theirs. Close week puts the hours into the work in hand, in order."},
-  certodds:{t:"Cert odds",g:"Business",d:"A rough chance of passing each certificate with this build, before any adjusting. Adjusting on the Test tab raises it a lot."},
+  certodds:{t:"Cert odds",g:"Business",d:"The chance a carefully adjusted piece of this build passes each grade (regulated to the middle of the window, beat set, poised). Your skills raise it; the parts set its ceiling."},
   cert:{t:"Certificates",g:"Business",d:"The Haldis Chronometry Bureau (stamp BCH) tests a movement for fifteen days in five positions and three temperatures and grants Chronometer. The Kessel Peak Observatory grants the stricter Observatory grade. Both multiply a piece's value."},
   week:{t:"Close week",g:"Business",d:"Nothing moves until you close the week: you act first (repairs, adjusting, buying), then Close week does the work, brings customers and pays the rent."},
   rep:{t:"Reputation",g:"Business",d:"Three names to make: with collectors, with the trade, and in the press. Good work, sales and prizes raise them; they fade a little each week. Better commissions open as they grow."},
@@ -67,19 +67,43 @@ const TUT=[
     text:()=>tutIn()?"A customer has left a watch that isn't running right. Tap <b>Timegrapher</b> to put it on the machine.":"No watches are in just now. Close week and customers bring some in.",
     done:()=>(S.tgOn&&S.tgOn.kind==="repair")||!!tutFixing()},
   {tab:"test",sel:"#tgRead",title:"Read the trace",next:"Got it",
-    text:"Each dot is one tick. Lines climbing to the right run fast; falling, slow. Two lines far apart is beat error; a low amplitude means a tired spring or dirty oil. Tap a readout to learn more.",
+    text:"Each dot is one tick. Lines climbing to the right run fast; falling, slow. Two lines far apart is beat error. The four numbers above the trace say the same in figures: here is what each one means.",
+    done:()=>!!tutFixing()},
+  /* the four readouts, one card each (the numbers every check and fault is judged by) */
+  {tab:"test",sel:"#tgRead > div:nth-child(1)",title:"Rate",next:"Next",
+    text:"Seconds a day the watch gains (+) or loses (−). A sold piece needs to be within ±30 s/d; a Chronometer certificate −4 to +6; the Observatory −1 to +2. <b>Regulate</b> moves it in small notches.",
+    done:()=>!!tutFixing()},
+  {tab:"test",sel:"#tgRead > div:nth-child(2)",title:"Amplitude",next:"Next",
+    text:"How far the balance swings each way, in degrees. 270° to 310° fully wound is healthy. Low means a tired mainspring, dirty oil or friction. A Chronometer must still swing 220° after a day off the winder.",
+    done:()=>!!tutFixing()},
+  {tab:"test",sel:"#tgRead > div:nth-child(3)",title:"Beat error",next:"Next",
+    text:"How uneven the tick and the tock are, in milliseconds: the gap between the two lines. Under 0.5 ms is good, over 2 ms it limps. A Chronometer needs 0.8 or less. <b>Adjust beat</b> brings it down.",
+    done:()=>!!tutFixing()},
+  {tab:"test",sel:"#tgRead > div:nth-child(4)",title:"Beat",next:"Got it",
+    text:"Ticks an hour, in thousands: 28.8k is eight ticks a second. A faster beat keeps steadier time but wears the parts and uses the spring up sooner. Tap any readout later to see this again.",
     done:()=>!!tutFixing()},
   {tab:"test",sel:{test:'[data-tc="fix"]',shop:'[data-sh="fix"]'},go:()=>S.tgOn?"test":"shop",title:"Diagnose it",
     text:"Match what you saw to a fault: tap <b>Diagnose and fix</b> and pick the one that fits. Each says how it shows on the trace.",
     done:()=>!!tutFixing()},
-  {tab:"shop",sel:{shop:'[data-sh="close"]',career:'[data-cr="close"]'},title:"Close the week",
+  {id:"close",tab:"shop",sel:{shop:'[data-sh="close"]',career:'[data-cr="close"]'},title:"Close the week",
     text:"The fix is in your work in hand. Tap <b>Close week</b> and your bench hours go into it. Nothing moves until you do.",
     done:()=>car().tutRep!=null&&tutResult()!=="fixing"},
   {tab:null,title:()=>tutResult()==="wrong"?"Not that one":"Paid",next:()=>tutResult()==="wrong"?"Try again":"Next",
     text:()=>tutResult()==="wrong"?"It wasn't that fault, so the watch is back in Repairs, still wrong. You know one thing it isn't: put it on the timegrapher again and choose another fix.":"The watch went back working and the customer paid. Repairs pay the rent while you learn.",
-    then:()=>tutResult()==="wrong"?0:5},
-  {tab:"build",sel:"#bCap",title:"Make your own",next:"Next",
-    text:"Between repairs, design a movement here, part by part: every option shows what it would change. <b>Make this piece</b> puts it on your bench; adjust it on the Test tab and sell it from the Shop."},
+    then:()=>tutResult()==="wrong"?0:tutIdx("make")},
+  {id:"make",tab:"build",sel:"#bCap",title:"Make your own",next:"Next",
+    text:"Between repairs, design a movement here, part by part: every option shows what it would change. The numbers on top are the design as it stands; here is what they mean."},
+  /* the Build capsule, cell by cell */
+  {tab:"build",sel:"#bCap > div:nth-child(1)",title:"Rate",next:"Next",
+    text:"The slowest and fastest this design runs across every position, temperature and state of wind, in s/d, before regulating. A narrow band is a steady design: regulating moves the whole band, it can't narrow it."},
+  {tab:"build",sel:"#bCap > div:nth-child(2)",title:"Reserve",next:"Next",
+    text:"Hours it runs from a full wind. 40 h is ordinary, 70 h and more is a selling point. A bigger barrel adds hours; a faster beat or heavy complications use them up."},
+  {tab:"build",sel:"#bCap > div:nth-child(3)",title:"Parts and hours",next:"Next",
+    text:"<b>Parts</b> is what the parts cost you, paid when you make it. <b>Hours</b> is bench time to assemble it: your hours each week go into it at Close week."},
+  {tab:"build",sel:"#bCap > div:nth-child(5)",title:"Cert odds",next:"Next",
+    text:"The chance a carefully adjusted piece of this design passes each grade: your Bench, the Bureau's Chronometer, the Observatory. When a trial fails, the result sheet has a button for each check that failed, straight to the part or control that fixes it."},
+  {tab:"build",sel:"#bMake",title:"Make it",next:"Next",
+    text:"<b>Make this piece</b> puts it on your bench. Adjust it on the Test tab and sell it from the Shop."},
   {tab:null,sel:"#setOpen",title:"That's the bench",next:"Finish",
     text:"Each week: repairs in, work on your piece, then Close week. Goals on the Career tab point the way. Help, a glossary and this tour are under the cog."},
 ];
@@ -98,6 +122,7 @@ function tutDom(){if(tutEl)return;
   $("panel").addEventListener("scroll",()=>{if(tutOn())tutPlace();},{passive:true});
   addEventListener("resize",()=>{if(tutOn())tutPlace();});}
 const tutVal=v=>typeof v==="function"?v():v;
+const tutIdx=id=>TUT.findIndex(T=>T.id===id);   // steps are found by id, so cards can be added without renumbering
 function tutSel(T){if(!T.sel)return null;if(typeof T.sel==="string")return T.sel;return T.sel[curTab]||null;}
 function tutTarget(T){const s=tutSel(T);if(!s)return null;const el=document.querySelector(s);if(!el||!el.getClientRects().length)return null;
   if(el.closest(".tabpage")&&!el.closest(".tabpage.on"))return null;return el;}
@@ -107,7 +132,7 @@ function tutTo(n){const c=car();c.tutStep=Math.max(0,Math.min(TUT.length-1,n));t
 function tutHide(){if(tutEl){tutEl.hidden=true;tutSpotEl.hidden=true;$("view").classList.remove("coach");}clearInterval(tutTimer);tutTimer=0;}
 /* after any save(): move on while the current step's done() holds (a step can be done before you reach it) */
 function tutKick(){if(!tutReady)return;if(!tutOn())return tutHide();const c=car();
-  if(c.tutStep<3){const f=tutFixing();if(f)c.tutRep=f.id;}   // the watch whose fix the tour follows
+  if(c.tutStep<tutIdx("close")){const f=tutFixing();if(f)c.tutRep=f.id;}   // the watch whose fix the tour follows
   let n=c.tutStep,g=0;while(n<TUT.length&&TUT[n].done&&TUT[n].done()&&g++<TUT.length)n++;
   if(n!==c.tutStep){c.tutStep=Math.min(n,TUT.length-1);tutScrolled=-1;}
   if(tutTab!==curTab){tutTab=curTab;tutScrolled=-1;}

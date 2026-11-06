@@ -93,7 +93,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: the Velmark **thaler** (`Th 4,850`; 100 pfennig to a thaler), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (1.0.1.0)
+## Current status (1.0.2.0)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
@@ -116,6 +116,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - 1.0.0.1: Ultra tone-maps once (the bloom's copy to the screen no longer tone-maps again), so it shows Full's colours.
 - 1.0.0.2: speed pass. The 3D view draws at most 60 times a second (`FRAME` in `vis/bench.js`) and the shadow every other frame (`shadowMap.autoUpdate` off; set `needsUpdate` before any extra render that needs a fresh one, as `photoGrab` does).
 - 1.0.1.0: workshop sounds. CC0 recordings in `sounds/` (`sounds/CREDITS.md`), `WORKSHOP_SOUND` in `src/sound/workshop.js` (its own script block); app side `wsSync()` / `sfx(name)` in `app/bench.js`. Bell on arrivals, till on sales, a chime at Close week, a quiet ambience (clock, valley, the cleaning machine's cycles). Settings: Tick and Workshop sounds switches (`S.sound`, `S.wsound`, in `esc-save`). Top-level `const`s are not `window` properties: test them with `typeof`.
+- 1.0.2.0: the tour explains the numbers (four Test cards: rate, amplitude, beat error, beat; four Build capsule cards: rate band, reserve, parts and hours, cert odds; steps found by `id` through `tutIdx`), and a failed trial's sheet has "Where to fix it" buttons (`CERT_FIX`, `goFix` in `src/app/test.js`) that open the Test control, Build slot or Shop upgrade and ring it (`.fixhi`).
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)

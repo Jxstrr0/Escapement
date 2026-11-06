@@ -116,7 +116,7 @@ function renderBuildForm(){
   for(const sec of BUILD_SECS){const on=sec.id===open;
     h+=`<div class="acc${on?" open":""}"><button class="acch" data-sec="${sec.id}" aria-expanded="${on}"><span class="t">${sec.title}</span><span class="sum">${secSum(sec)}</span><span class="chev" aria-hidden="true"></span></button>`;
     if(on){h+=`<div class="accb">`;
-      for(const sl of sec.slots)h+=`<div class="slot"><span class="lbl">${SLOT_NAME[sl]}</span><div class="opts">${SIM.PARTS[sl].map(o=>optHtml(sl,o,base)).join("")}</div></div>`;
+      for(const sl of sec.slots)h+=`<div class="slot" data-slot="${sl}"><span class="lbl">${SLOT_NAME[sl]}</span><div class="opts">${SIM.PARTS[sl].map(o=>optHtml(sl,o,base)).join("")}</div></div>`;
       h+=`</div>`;}
     h+=`</div>`;}
   $("buildForm").innerHTML=h;}
