@@ -2,6 +2,11 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.0.2.0: the numbers in the tour, fix buttons on trial results
+
+- The tour (`TUT` in `src/app/help.js`, now 16 steps) stops on each timegrapher readout (Rate, Amplitude, Beat error, Beat) after "Read the trace", and on the Build capsule (Rate band, Reserve, Parts and hours, Cert odds) before "Make it". Each card says what the number is, what is good, what a certificate needs and which control moves it. Steps that other code jumps to carry an `id` (`close`, `make`) and are found with `tutIdx`, so adding cards does not break old saves' `tutStep` checks.
+- A failed trial's result sheet has a **Where to fix it** block: one row per failed check, with buttons from `CERT_FIX` (`src/app/test.js`). Mean rate goes to Regulate; rate spread to the regulator and beat rate slots; position spread to Poise (and the Six-position timing upgrade in the Shop when a career hasn't bought it); temperature to the hairspring; beat error to Adjust beat and the regulator; amplitude to the barrel, train and balance. A button closes the sheet, opens the tab (and the Build accordion row or Shop upgrades), scrolls there and rings the target for a couple of seconds (`.fixhi`; no pulse with reduced motion). In a career, a note says Build changes count for the next piece made.
+
 ## 1.0.1.0: workshop sounds
 
 - Real recordings, all CC0 (`sounds/`, credited in `sounds/CREDITS.md`), played by `WORKSHOP_SOUND` (`src/sound/workshop.js`) on the tick's AudioContext. They are fetched the first time they are needed (about 430 KB in all) and the service worker keeps them for offline.

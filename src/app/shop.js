@@ -54,7 +54,7 @@ function tradeCard(){const c=car(),t=c.trade,o=c.tradeOffer;if(!t&&!o)return "";
 <div class="row"><button class="btn sm" data-sh="trade">Take it on</button></div></div>`;}
 function upgradesCard(){const ids=Object.keys(UPGRADES),have=ids.filter(upOwned),c=car();
   return `<details class="card shup"><summary><h3>Workshop upgrades<span class="cnt">${have.length} of ${ids.length}</span></h3></summary><ul class="shlist">${ids.map(id=>{const U=UPGRADES[id],own=upOwned(id),need=upNeeds(id);
-    return `<li class="${own?"own":""}"><div><b>${U.name}</b><br><small>${U.blurb}</small>${need.length&&!own?`<br><small class="lockt">Needs: ${need.map(n=>UPGRADES[n].name.toLowerCase()).join(", ")}</small>`:""}</div>
+    return `<li class="${own?"own":""}" data-upid="${id}"><div><b>${U.name}</b><br><small>${U.blurb}</small>${need.length&&!own?`<br><small class="lockt">Needs: ${need.map(n=>UPGRADES[n].name.toLowerCase()).join(", ")}</small>`:""}</div>
 <div class="acts">${own?`<span class="tick">Owned</span>`:`<button class="btn sm" data-sh="buy" data-id="${id}"${need.length||c.cash<U.cost?" disabled":""}>${fmt$(U.cost)}</button>`}</div></li>`;}).join("")}</ul></details>`;}
 function staffCard(){const c=car(),cap=staffCap();
   return `<details class="card"><summary><h3>Staff<span class="cnt">${c.staff.length} of ${cap}</span></h3></summary>
