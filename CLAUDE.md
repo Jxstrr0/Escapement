@@ -124,3 +124,12 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 ## Longlight brand (studio pieces only)
 
 The game keeps its own look (felt and brass). The Longlight brand applies only to studio pieces: the studio logo or splash, the "Longlight Interactive" credit line, the studio block on a credits or about screen, and any link back to the studio site (https://jxstrr0.github.io/Kelbo.Website/). Use the official logo files from `Jxstrr0/Kelbo.Website` (`assets/press/longlight-logo-dark` / `-light`); copy them in, never hotlink, redraw or recolour them. Studio colours inside studio pieces only: Clay `#D97757`, Purple `#7B3FC4`, Slate `#141413`, Ivory `#FAF9F5`, Lilac `#B48CE8`.
+
+## Studio catalogue
+
+`LONGLIGHT-STUDIO.md` (repo root) covers every Longlight game: looks, names
+already taken, storage and cache prefixes on the shared origin, a reuse map and
+improvement ideas. Read it before pitching new ideas, names or looks, and
+before building a system another Longlight game may already have. This file
+wins where the two disagree. Don't edit the copy here: the master is
+`.github/LONGLIGHT-STUDIO.md` in Jxstrr0/Kelbo.Website; it gets recopied.
