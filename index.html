@@ -1099,12 +1099,14 @@ function runContest(cfg,skills,tools,opts){
    ECON            the pricing numbers: labour per bench hour, the markup (more for prestige), case markup, how a price
                    above or below value changes a buyer's mind, the trade batch rates.
    pieceValue(r, cert, cs)   r = simulate(); cert = best certificate; cs = the case row ({cost, mult}) or null.
-   buyChance(value, price)   the chance one buyer who likes it pays this price.
+   buyChance(value, price, cap)   the chance one buyer who likes it pays this price (above cap, much less).
+   walkInCap(tier, year)     what walk-in buyers will pay at most, by press tier: the rest is for auctions.
    tradeTerms(r, batch)      a trade movement: {hours, parts, price} each; batch multiplies the hours (CNC).
    MARKET_ERA      the smartwatch years (2015-2018: trade, retail and repairs down, the press less taken with accuracy)
                    and the collectors' return after (from 2019: collector money up, finishing worth more).
    eraMult(year, kind)       the market era's factor for "retail", "trade", "repairs", "collector", "press", "finish". ---- */
-const ECON={labour:42,markup:1.45,markupPrestige:.11,caseMarkup:1.5,buyBase:.7,elastic:3,buyMax:.95,
+const ECON={labour:42,markup:1.45,markupPrestige:.05,caseMarkup:1.5,buyBase:.7,elastic:3,buyMax:.95,
+  walkIn:{cap:15000,perTier:.35},   // walk-in buyers rarely pay above cap (x (1 + perTier x press tier)): dearer pieces go to auction
   trade:{eff:.5,labour:18,margin:1.12}};
 const MARKET_ERA=[
   {from:2015,to:2018,trade:.65,retail:.8,repairs:.6,press:.7},
@@ -1112,11 +1114,13 @@ const MARKET_ERA=[
 function pieceValue(r,cert,cs){
   const base=(r.cost+r.hours*ECON.labour)*(ECON.markup+ECON.markupPrestige*r.prestige)*(CERT_MULT[cert||"none"]||1);
   return Math.round((base+(cs?cs.cost*ECON.caseMarkup:0))*(cs&&cs.mult||1)/10)*10;}
-function buyChance(value,price){return Math.max(0,Math.min(ECON.buyMax,ECON.buyBase*Math.pow(value/Math.max(1,price),ECON.elastic)));}
+function buyChance(value,price,cap){const p=Math.max(1,price),f=cap&&p>cap?Math.pow(cap/p,2):1;
+  return Math.max(0,Math.min(ECON.buyMax,ECON.buyBase*Math.pow(value/p,ECON.elastic)*f));}
+function walkInCap(tier,year){return ECON.walkIn.cap*(1+ECON.walkIn.perTier*(tier||0))*eraMult(year,"retail");}
 function tradeTerms(r,batch){const hours=r.hours*ECON.trade.eff*(batch||1);
   return{hours,parts:r.cost,price:Math.round((r.cost+hours*ECON.trade.labour)*ECON.trade.margin/5)*5};}
 function eraMult(year,kind){let f=1;for(const e of MARKET_ERA)if(year>=e.from&&year<=e.to&&e[kind])f*=e[kind];return f;}
-return{SLOTS,MULTI,PARTS,DEFAULT_CFG,part,normCfg,POSITIONS,TEMPS,SKILL_NAMES,K,simulate,ampAt,rateAt,beatAt,hashStr,rng,COMBOS,prepModel,CERT,CERT_ORDER,CERT_MULT,TRIAL,ADJ,runTrial,verdict,adjustPiece,hoursFor,certOdds,CONTEST,contestIndex,runContest,MARKET_ERA,ECON,pieceValue,buyChance,tradeTerms,eraMult};
+return{SLOTS,MULTI,PARTS,DEFAULT_CFG,part,normCfg,POSITIONS,TEMPS,SKILL_NAMES,K,simulate,ampAt,rateAt,beatAt,hashStr,rng,COMBOS,prepModel,CERT,CERT_ORDER,CERT_MULT,TRIAL,ADJ,runTrial,verdict,adjustPiece,hoursFor,certOdds,CONTEST,contestIndex,runContest,MARKET_ERA,ECON,pieceValue,buyChance,walkInCap,tradeTerms,eraMult};
 })();
 if(typeof module!=="undefined"&&module.exports)module.exports=WATCH_SIM;
 </script>
@@ -2654,7 +2658,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.0.2.1";
+const VERSION="1.0.2.2";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -2666,7 +2670,7 @@ const SKILLS={
   poising:{name:"Poising",blurb:"Each Poise takes out more of the difference between positions."},
   finishing:{name:"Finishing",blurb:"Perlage, stripes and anglage done faster and better (PR 5 prices it)."},
   complications:{name:"Complications",blurb:"Build calendars, chronographs and tourbillons without extra beat error."}};
-const SKILL_XP=[0,10,25,45,70,100,140,190,250,320];   // total XP to reach level 1, 2, … 10
+const SKILL_XP=[0,10,25,45,75,115,170,250,360,520];   // total XP to reach level 1, 2, … 10 (the top levels take years)
 /* timing machines: which positions and temperatures you can see while adjusting, and how finely they read the beat
    (timingRes feeds the sim: a better machine lets you set a lower beat error). The best one owned is used. */
 const TOOLS={
@@ -2687,7 +2691,7 @@ const UPGRADES={
   lathe:{name:"Watchmaker's lathe",cost:2400,blurb:"Polished pivots; re-pivoting takes half the time.",fix:{pivot:.5}},
   polishing:{name:"Polishing bench",cost:1500,blurb:"Black polish for steel parts."},
   mill:{name:"Milling machine",cost:4800,blurb:"Cut your own barrel bridges: twin barrels."},
-  shop:{name:"Own shop on the high street",cost:6500,rent:620,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent Th 620 a week."},
+  shop:{name:"Own shop on the high street",cost:6500,rent:520,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent Th 520 a week."},
   window:{name:"Display window",cost:1400,needs:["shop"],demand:1.3,blurb:"Pieces in the window: more buyers stop."},
   bench2:{name:"Second bench",cost:2200,needs:["shop"],staff:1,blurb:"Room for one more watchmaker."},
   climate:{name:"Climate control",cost:3200,needs:["shop"],blurb:"A steady workshop. Needed for the laboratory timing machine."},
@@ -2821,49 +2825,49 @@ const GOALS={
    by doing it). The complications skill gate sits below each complication's complexity on purpose: you can build one
    before you have mastered it, and pay for that in beat error and returns until you train up. */
 const RND={
-  "free-sprung":{name:"Free-sprung balance",kind:"part",cost:3600,weeks:8,skill:{poising:3},needs:["timing-six"],xp:{poising:6},
+  "free-sprung":{name:"Free-sprung balance",kind:"part",cost:3600,weeks:12,skill:{poising:3},needs:["timing-six"],xp:{poising:6},
     blurb:"A balance regulated by its own weights, with no index to drift."},
-  silicon:{name:"Silicon hairspring",kind:"part",cost:8500,weeks:10,skill:{regulating:3},needs:["spring-supplier"],xp:{regulating:6},
+  silicon:{name:"Silicon hairspring",kind:"part",cost:8500,weeks:15,skill:{regulating:3},needs:["spring-supplier"],xp:{regulating:6},
     blurb:"An etched spring that ignores magnets and heat. Bought in, but you must learn to fit it."},
-  coaxial:{name:"Co-axial escapement",kind:"part",cost:17000,weeks:16,skill:{assembly:5},needs:["lathe"],xp:{assembly:10},
+  coaxial:{name:"Co-axial escapement",kind:"part",cost:17000,weeks:24,skill:{assembly:5},needs:["lathe"],xp:{assembly:10},
     blurb:"Radial impulse: almost no sliding friction, and it barely drifts between services."},
-  detent:{name:"Detent escapement",kind:"part",cost:22000,weeks:20,skill:{assembly:6},needs:["lathe"],xp:{assembly:12},
+  detent:{name:"Detent escapement",kind:"part",cost:22000,weeks:30,skill:{assembly:6},needs:["lathe"],xp:{assembly:12},
     blurb:"The marine chronometer's escapement, shrunk for the wrist."},
-  "power-reserve":{name:"Power reserve indicator",kind:"comp",cost:1500,weeks:4,xp:{complications:3},
+  "power-reserve":{name:"Power reserve indicator",kind:"comp",cost:1500,weeks:6,xp:{complications:3},
     blurb:"A hand that shows how much wind is left. A good first project."},
-  moonphase:{name:"Moonphase",kind:"comp",cost:2700,weeks:6,skill:{complications:2},xp:{complications:5},
+  moonphase:{name:"Moonphase",kind:"comp",cost:2700,weeks:9,skill:{complications:2},xp:{complications:5},
     blurb:"A 59-tooth moon disc, right for 122 years."},
-  chrono:{name:"Chronograph",kind:"comp",cost:9500,weeks:12,skill:{complications:3},xp:{complications:10},
+  chrono:{name:"Chronograph",kind:"comp",cost:9500,weeks:18,skill:{complications:3},xp:{complications:10},
     blurb:"Column wheel, clutch and the levers for a stopwatch on the same movement."},
-  "annual-cal":{name:"Annual calendar",kind:"comp",cost:12000,weeks:14,skill:{complications:4},xp:{complications:10},
+  "annual-cal":{name:"Annual calendar",kind:"comp",cost:12000,weeks:21,skill:{complications:4},xp:{complications:10},
     blurb:"A calendar that knows its 30- and 31-day months."},
-  "split-seconds":{name:"Split-seconds",kind:"comp",cost:27000,weeks:20,skill:{complications:5},after:["chrono"],xp:{complications:14},
+  "split-seconds":{name:"Split-seconds",kind:"comp",cost:27000,weeks:30,skill:{complications:5},after:["chrono"],xp:{complications:14},
     blurb:"A second chronograph hand that stops on its own."},
-  "perp-cal":{name:"Perpetual calendar",kind:"comp",cost:33000,weeks:24,skill:{complications:5},after:["annual-cal"],xp:{complications:16},
+  "perp-cal":{name:"Perpetual calendar",kind:"comp",cost:33000,weeks:36,skill:{complications:5},after:["annual-cal"],xp:{complications:16},
     blurb:"The program wheel that knows leap years, good until 2100."},
-  tourbillon:{name:"Tourbillon",kind:"comp",cost:42000,weeks:26,skill:{complications:5},needs:["lathe"],xp:{complications:16},
+  tourbillon:{name:"Tourbillon",kind:"comp",cost:42000,weeks:39,skill:{complications:5},needs:["lathe"],xp:{complications:16},
     blurb:"The escapement in a cage that turns once a minute."},
-  repeater:{name:"Minute repeater",kind:"comp",cost:66000,weeks:36,skill:{complications:6},needs:["lathe"],after:["chrono"],xp:{complications:20},
+  repeater:{name:"Minute repeater",kind:"comp",cost:66000,weeks:54,skill:{complications:6},needs:["lathe"],after:["chrono"],xp:{complications:20},
     blurb:"Hammers, gongs and the all-or-nothing piece: the time, struck on demand."},
-  "house-balance":{name:"In-house balances",kind:"house",cost:8500,weeks:10,skill:{assembly:4},needs:["lathe"],xp:{poising:6},
+  "house-balance":{name:"In-house balances",kind:"house",cost:8500,weeks:15,skill:{assembly:4},needs:["lathe"],xp:{poising:6},
     blurb:"Turn and poise your own balance wheels: cheaper parts, and a name collectors look for."},
-  "house-escapement":{name:"In-house escapements",kind:"house",cost:18000,weeks:16,skill:{assembly:5},needs:["cnc"],xp:{assembly:8},
+  "house-escapement":{name:"In-house escapements",kind:"house",cost:18000,weeks:24,skill:{assembly:5},needs:["cnc"],xp:{assembly:8},
     blurb:"Cut your own escape wheels and pallet forks on the CNC."},
-  "house-plates":{name:"In-house plates and bridges",kind:"house",cost:14500,weeks:14,needs:["cnc"],xp:{finishing:6},
+  "house-plates":{name:"In-house plates and bridges",kind:"house",cost:14500,weeks:21,needs:["cnc"],xp:{finishing:6},
     blurb:"Mill the main plate and bridges from your own drawings."},
-  "house-spring":{name:"In-house hairsprings",kind:"house",cost:25000,weeks:20,skill:{regulating:5},needs:["cleanroom"],xp:{regulating:10},
+  "house-spring":{name:"In-house hairsprings",kind:"house",cost:25000,weeks:30,skill:{regulating:5},needs:["cleanroom"],xp:{regulating:10},
     blurb:"Draw, coil and vibrate your own hairsprings: what only the big manufactures do."},
-  calibre:{name:"Your own calibre",kind:"calibre",cost:36000,weeks:24,skill:{assembly:5},needs:["cnc"],after:["house-plates"],xp:{assembly:10},
-    again:{cost:15000,weeks:14},
+  calibre:{name:"Your own calibre",kind:"calibre",cost:36000,weeks:36,skill:{assembly:5},needs:["cnc"],after:["house-plates"],xp:{assembly:10},
+    again:{cost:15000,weeks:21},
     blurb:"Freeze your build's core (barrel to winding) as a calibre with your name on it: cheaper and quicker to make, and collectors pay for it."}};
 const RND_SLOTS={base:1,extra:["cleanroom"],extraStaff:"master",calibresMax:4};   // projects at once: 1, +1 with the clean room or a master watchmaker
 
 /* the business: rent on the shared bench, your own keep (food and the room upstairs), your own bench hours a week, the loan the bank offers once, starting cash,
    how many repairs and offers turn up (a week, on average) */
 const BIZ={benchRent:140,keep:260,hoursWeek:45,staffHours:40,repairsWeek:1.8,repairsShop:1.6,repairWait:4,repairQueue:6,
-  offerEvery:3,offerKeep:3,tradeEvery:6,late:.1,lateCancel:6,tradeLate:.15,dealer:.55,scrap:.3,
-  loan:{rate:.08,weeks:52,min:4000,round:500},
-  starts:{bench:{year:2000,cash:2500,up:[],xp:0},shop:{year:2008,cash:18000,up:["shop","timing-six","cleaning"],xp:25}}};
+  offerEvery:3,offerKeep:3,tradeEvery:6,tradeStaff:.5,late:.1,lateCancel:6,tradeLate:.15,dealer:.55,scrap:.3,
+  loan:{rate:.08,weeks:52,min:4000,round:500,cover:12},   // cover: the loan also pays this many weeks of costs
+  starts:{bench:{year:2000,cash:2500,up:[],xp:0},shop:{year:2008,cash:28000,up:["shop","timing-six","cleaning"],xp:25}}};
 
 /* ---- state ---- */
 const START_YEAR=2000,END_YEAR=2030;
@@ -4017,6 +4021,10 @@ function rent(){let r=BIZ.benchRent;for(const id in UPGRADES)if(upOwned(id)&&UPG
 function wages(){return car().staff.reduce((a,s)=>a+STAFF[s.kind].wage,0);}
 function weeklyCosts(){const c=car();return rent()+BIZ.keep+wages()+(c.loan?c.loan.pay:0);}
 function staffCap(){let n=0;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].staff)n+=UPGRADES[id].staff;return n;}
+function walkCap(){return SIM.walkInCap(repTier("press"),car().year);}   // the most walk-in buyers like to pay
+function staffHrs(){return car().staff.reduce((a,s)=>a+BIZ.staffHours*STAFF[s.kind].eff,0);}
+/* hours of repairs and trade work waiting that staff could take */
+function staffWork(){return car().jobs.filter(j=>j.staff).reduce((a,j)=>a+j.h,0);}
 function demand(){let d=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].demand)d*=UPGRADES[id].demand;return .2*d*(1+.12*repTier("press"))*SIM.eraMult(car().year,"retail");}
 function fixMult(cls){let f=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].fix&&UPGRADES[id].fix[cls])f*=UPGRADES[id].fix[cls];return f;}
 function batchMult(){let f=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].batch)f*=UPGRADES[id].batch;return f;}
@@ -4083,7 +4091,7 @@ const TRADE_BRANDS=["Varn & Söhne","Ostmark","Tavan","Kessler","Brenner","Lindq
 const TRADE_CFGS=[{},{winding:"automatic",complications:["date"]},{bph:"21600",jewels:"17",shock:"basic"}];
 function addTradeOffer(R){const c=car();if(c.trade||c.tradeOffer)return;
   const cfg=SIM.normCfg(Object.assign({},SIM.DEFAULT_CFG,pick(R,TRADE_CFGS))).cfg,r=SIM.simulate(cfg,{},null,{seed:"trade"}),T=SIM.tradeTerms(r,1);
-  const tt=repTier("trade"),Q=[8,12,16,20,24,30,40],qty=Q[Math.min(Q.length-1,Math.floor(R()*4)+Math.floor(tt/2)+(tt>=4?1:0))];
+  const tt=repTier("trade"),Q=[8,12,16,20,24,30,40],qty=Q[Math.min(Q.length-1,Math.floor(R()*4)+Math.floor(tt/2)+(tt>=4?1:0)+Math.round(staffHrs()/80))];
   const price=Math.round(T.price*(1+.03*tt)*SIM.eraMult(c.year,"trade")*(.95+.1*R())/5)*5;
   c.tradeOffer={id:nextId(),brand:pick(R,TRADE_BRANDS),cfg,qty,price,parts:T.parts,hoursEach:T.hours,weeks:Math.ceil(qty*T.hours/BIZ.hoursWeek)+3,until:c.wk+BIZ.offerKeep};}
 function tradeLine(t){const r=SIM.simulate(t.cfg,{},null,{seed:"trade"});return `${t.qty} × ${r.cfg.winding==="automatic"?"automatic":"hand-wound"}${r.cfg.complications.length?" date":""} at ${(+r.cfg.bph).toLocaleString("en-GB")} bph`;}
@@ -4128,7 +4136,7 @@ function sellPiece(pc,price,to,how){const c=car();sfx("sale");c.stock=c.stock.fi
 function closeWeek(){
   const c=car();if(!c||c.over)return null;const rep=[],R=weekRng("close");calFx={};
   /* 1. the work: staff on repairs and trade, then your hours on everything in order */
-  let staffH=c.staff.reduce((a,s)=>a+BIZ.staffHours*STAFF[s.kind].eff,0),mine=hoursLeft(),myRepair=false;
+  let staffH=staffHrs(),mine=hoursLeft(),myRepair=false;
   for(const j of c.jobs){if(j.staff&&staffH>0){const d=Math.min(staffH,j.h);j.h-=d;staffH-=d;}}
   for(const j of c.jobs){if(mine<=0)break;if(j.h>0){const d=Math.min(mine,j.h);j.h-=d;mine-=d;if(j.kind==="repair")myRepair=true;}}
   const done=c.jobs.filter(j=>j.h<=1e-6);c.jobs=c.jobs.filter(j=>j.h>1e-6);
@@ -4147,7 +4155,7 @@ function closeWeek(){
   /* 2. retail: this week's buyers each look at the stock and may buy the best value for its price */
   const buyers=poisson(R,demand());
   for(let b=0;b<buyers;b++){let best=null,bv=0;for(const pc of c.stock){if(!pieceFree(pc))continue;const v=pc.value/pc.price;if(v>bv){bv=v;best=pc;}}
-    if(best&&R()<SIM.buyChance(best.value,best.price)){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);addRep(saleGain(best),rep);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
+    if(best&&R()<SIM.buyChance(best.value,best.price,walkCap())){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);addRep(saleGain(best),rep);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
   /* 3. trials coming back */
   const p=c.bench;if(p&&p.trial&&c.wk+1>=p.trial.back){const T=p.trial,C=SIM.CERT[T.tier];
     if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;addRep(REP_GAIN.cert[T.tier],rep);certLog(p,T);}
@@ -4172,14 +4180,14 @@ function closeWeek(){
   const R2=weekRng("arrive"),nr=poisson(R2,BIZ.repairsWeek*(upOwned("shop")?BIZ.repairsShop:1)*SIM.eraMult(c.year,"repairs"));
   for(let i=0;i<nr;i++)addRepair(R2);if(nr){rep.push(`${nr} watch${nr>1?"es":""} in for repair.`);sfx("door");}
   if(R2()<1/BIZ.offerEvery){const n=c.offers.length;addOffer(R2);if(c.offers.length>n){rep.push("A commission enquiry: see the Shop tab.");sfx("door");}}
-  if(R2()<(1+.2*repTier("trade"))/BIZ.tradeEvery){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep){rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);sfx("door");}}
+  if(R2()<Math.min(.8,(1+.2*repTier("trade"))*(1+BIZ.tradeStaff*staffHrs()/BIZ.staffHours)/BIZ.tradeEvery)){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep){rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);sfx("door");}}
   if(c.wk%8===0)refreshCands(R2);
   if(newYear)rep.push(`Happy new year: ${c.year}.`);
   calWeekStart(rep);
   save();
   return{lines:rep,cash:c.cash,broke:c.cash<0};}
 /* below zero: the bank, once; then the end */
-function loanOffer(){const c=car(),need=-c.cash+4*weeklyCosts(),L=BIZ.loan;return Math.max(L.min,Math.ceil(need/L.round)*L.round);}
+function loanOffer(){const c=car(),L=BIZ.loan,need=-c.cash+L.cover*weeklyCosts();return Math.max(L.min,Math.ceil(need/L.round)*L.round);}
 function takeLoan(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=amt*(1+L.rate);
   c.loan={amt,left:total,pay:Math.ceil(total/L.weeks)};c.loanUsed=true;earn(amt,"bank loan");save();}
 function goBroke(){const c=car();c.over=true;save();}
@@ -4199,7 +4207,7 @@ function goBroke(){const c=car();c.over=true;save();}
 const REP_SEG={private:"press",trade:"trade",collector:"collectors",press:"press"};
 /* who earns what. acc: an accuracy honour (the press cares less about those in the smartwatch years: MARKET_ERA press) */
 const REP_GAIN={
-  repair:{press:.1},repairWrong:{press:-.5},
+  repair:{press:.1},repairWrong:{press:-.2},
   sale:{collectors:.3},salePrestige:.12,             // a retail sale: collectors, plus this much per point of prestige
   cert:{chronometer:{press:1,collectors:1,acc:1},observatory:{press:4,collectors:3,acc:1}},
   commission:2,commissionLate:1,                     // on the segment's track; minus this per week late
@@ -4241,7 +4249,7 @@ function fairClose(lines,R){const c=car(),F=CALENDAR.fair;if(!c.fair||c.fair.yea
   lines.push(`The ${F.name}: a busy week on your stand.`);addRep(REP_GAIN.fair,lines);
   for(const id of c.fair.ids){const pc=stockBy(id);if(!pc||pc.away)continue;
     if(pc.cfg.finish.length||pc.cfg.complications.length)addRep(REP_GAIN.fairPiece,lines);
-    if(R()<Math.min(.95,SIM.buyChance(pc.value,pc.price)*F.buy)){const who=pick(R,CUSTOMERS);pc.lot=null;sellPiece(pc,pc.price,who+" at the fair");addRep(saleGain(pc),lines);lines.push(`Sold ${pc.name} at the fair to ${who}: ${fmt$(pc.price)}.`);}}
+    if(R()<Math.min(.95,SIM.buyChance(pc.value,pc.price,1.5*walkCap())*F.buy)){const who=pick(R,CUSTOMERS);pc.lot=null;sellPiece(pc,pc.price,who+" at the fair");addRep(saleGain(pc),lines);lines.push(`Sold ${pc.name} at the fair to ${who}: ${fmt$(pc.price)}.`);}}
   const n=c.offers.length;addOffer(R,4);addOffer(R,4);if(c.offers.length>n)lines.push(`${c.offers.length-n} commission enquir${c.offers.length-n>1?"ies":"y"} from the fair.`);
   if(!c.trade&&!c.tradeOffer){addTradeOffer(R);if(c.tradeOffer)lines.push(`${c.tradeOffer.brand} stopped by the stand about a trade batch.`);}
   c.fair=null;c.fairs=(+c.fairs||0)+1;}
@@ -4501,7 +4509,7 @@ ${p.made&&!p.trial?`<div class="row">${p.cert?`<button class="btn pri" data-sh="
   return `<div class="card"><h3>On your bench</h3>${t}</div>`;}
 function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand(),sn=saleNext(),cc=canConsign();
   return `<div class="card"><h3>In stock<span class="cnt">${c.stock.length}</span></h3><ul class="shlist stk">${c.stock.map(x=>{const pr=x.price/x.value-1;
-    const odds=SIM.buyChance(x.value,x.price)*Math.min(1,d);
+    const odds=SIM.buyChance(x.value,x.price,walkCap())*Math.min(1,d);
     const state=x.away?`<small class="lockt">At the ${CALENDAR.trial.name} until week ${CALENDAR.trial.back}.</small>`
       :x.lot?`<small class="lockt">Consigned to the ${sn.name} (${sn.now?"this week":"week "+sn.week}), ${RESERVES.find(r=>r[0]===x.lot.reserve)[1].toLowerCase()}. Walk-in buyers don't see it.</small>`
       :`<div class="seg sm" data-stk="${x.id}">${PRICE_STEPS.map(([f,l])=>`<button type="button" data-pf="${f}" class="${Math.abs(pr-f)<.01?"on":""}">${l}</button>`).join("")}</div>
@@ -4509,7 +4517,7 @@ function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand()
     return `<li><div><b>${x.name}</b><br><small>${x.cert&&x.cert!=="bench"?SIM.CERT[x.cert].name+" · ":""}${CASES[x.caseId].name.split(",")[0]} · ${x.thick} mm · value ${fmt$(x.value)}</small>
 ${state}</div>
 <div class="acts">${x.away?"":x.lot?(!(c.sale&&c.sale.wk===c.wk&&c.sale.opened)?`<button class="btn sm" data-sh="unlot" data-id="${x.id}">Withdraw</button>`:""):`<button class="btn sm" data-sh="dealer" data-id="${x.id}">Dealer ${fmt$(dealerPrice(x))}</button>${cc?`<button class="btn sm" data-sh="lot" data-id="${x.id}">Auction…</button>`:""}`}</div></li>`;}).join("")}</ul>
-<p class="hint">${upOwned("shop")?"Walk-in buyers":"Buyers who find a shared bench"} see your stock each week and take the best value for its price. The dealer in town pays at once, but only ${Math.round(BIZ.dealer*100)}%.${cc?` The ${sn.name} at ${CALENDAR.house} (${sn.now?"this week":"week "+sn.week}) takes consignments now.`:""}</p></div>`;}
+<p class="hint">${upOwned("shop")?"Walk-in buyers":"Buyers who find a shared bench"} see your stock each week and take the best value for its price, but rarely pay more than about ${fmt$(Math.round(walkCap()/1000)*1000)}: sell dearer pieces at auction. The dealer in town pays at once, but only ${Math.round(BIZ.dealer*100)}%.${cc?` The ${sn.name} at ${CALENDAR.house} (${sn.now?"this week":"week "+sn.week}) takes consignments now.`:""}</p></div>`;}
 function ordersCard(){const c=car();if(!c.orders.length&&!c.offers.length)return "";
   const specLine=(t,pc)=>specChecks(t.spec,pc||{cfg:{complications:[],finish:[]},r:{reserveH:0},thick:99,cert:null});
   const specTxt=t=>specLine(t).map(x=>x.label).join(" · ");
@@ -4532,6 +4540,7 @@ function upgradesCard(){const ids=Object.keys(UPGRADES),have=ids.filter(upOwned)
 function staffCard(){const c=car(),cap=staffCap();
   return `<details class="card"><summary><h3>Staff<span class="cnt">${c.staff.length} of ${cap}</span></h3></summary>
 ${c.staff.length?`<ul class="shlist">${c.staff.map((s,i)=>`<li><div><b>${s.name}</b><br><small>${STAFF[s.kind].name} · ${fmt$(STAFF[s.kind].wage)} a week · ${Math.round(BIZ.staffHours*STAFF[s.kind].eff)} h of work</small></div><div class="acts"><button class="btn sm ghost" data-sh="fire" data-i="${i}">Let go</button></div></li>`).join("")}</ul>`:""}
+${cap?`<p class="hint">Staff only take repairs and trade batches; your pieces stay yours. Work waiting for them: ${fmtN(staffWork(),0)} h${c.staff.length?` · they do ${fmtN(staffHrs(),0)} h a week`:""}.${c.staff.length&&staffWork()<staffHrs()?` <span class="lockt">Not enough work: idle staff are still paid. Take on trade batches (brands offer more, and bigger, when you have staff).</span>`:""} A new hand only pays for themselves with about 30 h of that work a week each.</p>`:""}
 <p class="hint">${cap?"Looking for work:":"A shared bench has no room for staff. Your own shop makes room for two."}</p>
 ${cap?`<ul class="shlist">${c.cands.map((x,i)=>{const K=STAFF[x.kind];return `<li><div><b>${x.name}</b><br><small>${K.name} · ${fmt$(K.wage)} a week${K.hire?` · ${fmt$(K.hire)} to sign`:""} · ${K.blurb}</small></div><div class="acts"><button class="btn sm" data-sh="hire" data-i="${i}"${c.staff.length>=cap?" disabled":""}>Hire</button></div></li>`;}).join("")}</ul>`:""}</details>`;}
 function booksCard(){const c=car(),B=c.books.slice(-8).reverse();
