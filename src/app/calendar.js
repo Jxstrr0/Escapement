@@ -14,7 +14,7 @@
 const REP_SEG={private:"press",trade:"trade",collector:"collectors",press:"press"};
 /* who earns what. acc: an accuracy honour (the press cares less about those in the smartwatch years: MARKET_ERA press) */
 const REP_GAIN={
-  repair:{press:.1},repairWrong:{press:-.5},
+  repair:{press:.1},repairWrong:{press:-.2},
   sale:{collectors:.3},salePrestige:.12,             // a retail sale: collectors, plus this much per point of prestige
   cert:{chronometer:{press:1,collectors:1,acc:1},observatory:{press:4,collectors:3,acc:1}},
   commission:2,commissionLate:1,                     // on the segment's track; minus this per week late
@@ -56,7 +56,7 @@ function fairClose(lines,R){const c=car(),F=CALENDAR.fair;if(!c.fair||c.fair.yea
   lines.push(`The ${F.name}: a busy week on your stand.`);addRep(REP_GAIN.fair,lines);
   for(const id of c.fair.ids){const pc=stockBy(id);if(!pc||pc.away)continue;
     if(pc.cfg.finish.length||pc.cfg.complications.length)addRep(REP_GAIN.fairPiece,lines);
-    if(R()<Math.min(.95,SIM.buyChance(pc.value,pc.price)*F.buy)){const who=pick(R,CUSTOMERS);pc.lot=null;sellPiece(pc,pc.price,who+" at the fair");addRep(saleGain(pc),lines);lines.push(`Sold ${pc.name} at the fair to ${who}: ${fmt$(pc.price)}.`);}}
+    if(R()<Math.min(.95,SIM.buyChance(pc.value,pc.price,1.5*walkCap())*F.buy)){const who=pick(R,CUSTOMERS);pc.lot=null;sellPiece(pc,pc.price,who+" at the fair");addRep(saleGain(pc),lines);lines.push(`Sold ${pc.name} at the fair to ${who}: ${fmt$(pc.price)}.`);}}
   const n=c.offers.length;addOffer(R,4);addOffer(R,4);if(c.offers.length>n)lines.push(`${c.offers.length-n} commission enquir${c.offers.length-n>1?"ies":"y"} from the fair.`);
   if(!c.trade&&!c.tradeOffer){addTradeOffer(R);if(c.tradeOffer)lines.push(`${c.tradeOffer.brand} stopped by the stand about a trade batch.`);}
   c.fair=null;c.fairs=(+c.fairs||0)+1;}

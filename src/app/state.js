@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.0.2.1";
+const VERSION="1.0.2.2";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -19,7 +19,7 @@ const SKILLS={
   poising:{name:"Poising",blurb:"Each Poise takes out more of the difference between positions."},
   finishing:{name:"Finishing",blurb:"Perlage, stripes and anglage done faster and better (PR 5 prices it)."},
   complications:{name:"Complications",blurb:"Build calendars, chronographs and tourbillons without extra beat error."}};
-const SKILL_XP=[0,10,25,45,70,100,140,190,250,320];   // total XP to reach level 1, 2, … 10
+const SKILL_XP=[0,10,25,45,75,115,170,250,360,520];   // total XP to reach level 1, 2, … 10 (the top levels take years)
 /* timing machines: which positions and temperatures you can see while adjusting, and how finely they read the beat
    (timingRes feeds the sim: a better machine lets you set a lower beat error). The best one owned is used. */
 const TOOLS={
@@ -40,7 +40,7 @@ const UPGRADES={
   lathe:{name:"Watchmaker's lathe",cost:2400,blurb:"Polished pivots; re-pivoting takes half the time.",fix:{pivot:.5}},
   polishing:{name:"Polishing bench",cost:1500,blurb:"Black polish for steel parts."},
   mill:{name:"Milling machine",cost:4800,blurb:"Cut your own barrel bridges: twin barrels."},
-  shop:{name:"Own shop on the high street",cost:6500,rent:620,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent Th 620 a week."},
+  shop:{name:"Own shop on the high street",cost:6500,rent:520,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent Th 520 a week."},
   window:{name:"Display window",cost:1400,needs:["shop"],demand:1.3,blurb:"Pieces in the window: more buyers stop."},
   bench2:{name:"Second bench",cost:2200,needs:["shop"],staff:1,blurb:"Room for one more watchmaker."},
   climate:{name:"Climate control",cost:3200,needs:["shop"],blurb:"A steady workshop. Needed for the laboratory timing machine."},
@@ -174,49 +174,49 @@ const GOALS={
    by doing it). The complications skill gate sits below each complication's complexity on purpose: you can build one
    before you have mastered it, and pay for that in beat error and returns until you train up. */
 const RND={
-  "free-sprung":{name:"Free-sprung balance",kind:"part",cost:3600,weeks:8,skill:{poising:3},needs:["timing-six"],xp:{poising:6},
+  "free-sprung":{name:"Free-sprung balance",kind:"part",cost:3600,weeks:12,skill:{poising:3},needs:["timing-six"],xp:{poising:6},
     blurb:"A balance regulated by its own weights, with no index to drift."},
-  silicon:{name:"Silicon hairspring",kind:"part",cost:8500,weeks:10,skill:{regulating:3},needs:["spring-supplier"],xp:{regulating:6},
+  silicon:{name:"Silicon hairspring",kind:"part",cost:8500,weeks:15,skill:{regulating:3},needs:["spring-supplier"],xp:{regulating:6},
     blurb:"An etched spring that ignores magnets and heat. Bought in, but you must learn to fit it."},
-  coaxial:{name:"Co-axial escapement",kind:"part",cost:17000,weeks:16,skill:{assembly:5},needs:["lathe"],xp:{assembly:10},
+  coaxial:{name:"Co-axial escapement",kind:"part",cost:17000,weeks:24,skill:{assembly:5},needs:["lathe"],xp:{assembly:10},
     blurb:"Radial impulse: almost no sliding friction, and it barely drifts between services."},
-  detent:{name:"Detent escapement",kind:"part",cost:22000,weeks:20,skill:{assembly:6},needs:["lathe"],xp:{assembly:12},
+  detent:{name:"Detent escapement",kind:"part",cost:22000,weeks:30,skill:{assembly:6},needs:["lathe"],xp:{assembly:12},
     blurb:"The marine chronometer's escapement, shrunk for the wrist."},
-  "power-reserve":{name:"Power reserve indicator",kind:"comp",cost:1500,weeks:4,xp:{complications:3},
+  "power-reserve":{name:"Power reserve indicator",kind:"comp",cost:1500,weeks:6,xp:{complications:3},
     blurb:"A hand that shows how much wind is left. A good first project."},
-  moonphase:{name:"Moonphase",kind:"comp",cost:2700,weeks:6,skill:{complications:2},xp:{complications:5},
+  moonphase:{name:"Moonphase",kind:"comp",cost:2700,weeks:9,skill:{complications:2},xp:{complications:5},
     blurb:"A 59-tooth moon disc, right for 122 years."},
-  chrono:{name:"Chronograph",kind:"comp",cost:9500,weeks:12,skill:{complications:3},xp:{complications:10},
+  chrono:{name:"Chronograph",kind:"comp",cost:9500,weeks:18,skill:{complications:3},xp:{complications:10},
     blurb:"Column wheel, clutch and the levers for a stopwatch on the same movement."},
-  "annual-cal":{name:"Annual calendar",kind:"comp",cost:12000,weeks:14,skill:{complications:4},xp:{complications:10},
+  "annual-cal":{name:"Annual calendar",kind:"comp",cost:12000,weeks:21,skill:{complications:4},xp:{complications:10},
     blurb:"A calendar that knows its 30- and 31-day months."},
-  "split-seconds":{name:"Split-seconds",kind:"comp",cost:27000,weeks:20,skill:{complications:5},after:["chrono"],xp:{complications:14},
+  "split-seconds":{name:"Split-seconds",kind:"comp",cost:27000,weeks:30,skill:{complications:5},after:["chrono"],xp:{complications:14},
     blurb:"A second chronograph hand that stops on its own."},
-  "perp-cal":{name:"Perpetual calendar",kind:"comp",cost:33000,weeks:24,skill:{complications:5},after:["annual-cal"],xp:{complications:16},
+  "perp-cal":{name:"Perpetual calendar",kind:"comp",cost:33000,weeks:36,skill:{complications:5},after:["annual-cal"],xp:{complications:16},
     blurb:"The program wheel that knows leap years, good until 2100."},
-  tourbillon:{name:"Tourbillon",kind:"comp",cost:42000,weeks:26,skill:{complications:5},needs:["lathe"],xp:{complications:16},
+  tourbillon:{name:"Tourbillon",kind:"comp",cost:42000,weeks:39,skill:{complications:5},needs:["lathe"],xp:{complications:16},
     blurb:"The escapement in a cage that turns once a minute."},
-  repeater:{name:"Minute repeater",kind:"comp",cost:66000,weeks:36,skill:{complications:6},needs:["lathe"],after:["chrono"],xp:{complications:20},
+  repeater:{name:"Minute repeater",kind:"comp",cost:66000,weeks:54,skill:{complications:6},needs:["lathe"],after:["chrono"],xp:{complications:20},
     blurb:"Hammers, gongs and the all-or-nothing piece: the time, struck on demand."},
-  "house-balance":{name:"In-house balances",kind:"house",cost:8500,weeks:10,skill:{assembly:4},needs:["lathe"],xp:{poising:6},
+  "house-balance":{name:"In-house balances",kind:"house",cost:8500,weeks:15,skill:{assembly:4},needs:["lathe"],xp:{poising:6},
     blurb:"Turn and poise your own balance wheels: cheaper parts, and a name collectors look for."},
-  "house-escapement":{name:"In-house escapements",kind:"house",cost:18000,weeks:16,skill:{assembly:5},needs:["cnc"],xp:{assembly:8},
+  "house-escapement":{name:"In-house escapements",kind:"house",cost:18000,weeks:24,skill:{assembly:5},needs:["cnc"],xp:{assembly:8},
     blurb:"Cut your own escape wheels and pallet forks on the CNC."},
-  "house-plates":{name:"In-house plates and bridges",kind:"house",cost:14500,weeks:14,needs:["cnc"],xp:{finishing:6},
+  "house-plates":{name:"In-house plates and bridges",kind:"house",cost:14500,weeks:21,needs:["cnc"],xp:{finishing:6},
     blurb:"Mill the main plate and bridges from your own drawings."},
-  "house-spring":{name:"In-house hairsprings",kind:"house",cost:25000,weeks:20,skill:{regulating:5},needs:["cleanroom"],xp:{regulating:10},
+  "house-spring":{name:"In-house hairsprings",kind:"house",cost:25000,weeks:30,skill:{regulating:5},needs:["cleanroom"],xp:{regulating:10},
     blurb:"Draw, coil and vibrate your own hairsprings: what only the big manufactures do."},
-  calibre:{name:"Your own calibre",kind:"calibre",cost:36000,weeks:24,skill:{assembly:5},needs:["cnc"],after:["house-plates"],xp:{assembly:10},
-    again:{cost:15000,weeks:14},
+  calibre:{name:"Your own calibre",kind:"calibre",cost:36000,weeks:36,skill:{assembly:5},needs:["cnc"],after:["house-plates"],xp:{assembly:10},
+    again:{cost:15000,weeks:21},
     blurb:"Freeze your build's core (barrel to winding) as a calibre with your name on it: cheaper and quicker to make, and collectors pay for it."}};
 const RND_SLOTS={base:1,extra:["cleanroom"],extraStaff:"master",calibresMax:4};   // projects at once: 1, +1 with the clean room or a master watchmaker
 
 /* the business: rent on the shared bench, your own keep (food and the room upstairs), your own bench hours a week, the loan the bank offers once, starting cash,
    how many repairs and offers turn up (a week, on average) */
 const BIZ={benchRent:140,keep:260,hoursWeek:45,staffHours:40,repairsWeek:1.8,repairsShop:1.6,repairWait:4,repairQueue:6,
-  offerEvery:3,offerKeep:3,tradeEvery:6,late:.1,lateCancel:6,tradeLate:.15,dealer:.55,scrap:.3,
-  loan:{rate:.08,weeks:52,min:4000,round:500},
-  starts:{bench:{year:2000,cash:2500,up:[],xp:0},shop:{year:2008,cash:18000,up:["shop","timing-six","cleaning"],xp:25}}};
+  offerEvery:3,offerKeep:3,tradeEvery:6,tradeStaff:.5,late:.1,lateCancel:6,tradeLate:.15,dealer:.55,scrap:.3,
+  loan:{rate:.08,weeks:52,min:4000,round:500,cover:12},   // cover: the loan also pays this many weeks of costs
+  starts:{bench:{year:2000,cash:2500,up:[],xp:0},shop:{year:2008,cash:28000,up:["shop","timing-six","cleaning"],xp:25}}};
 
 /* ---- state ---- */
 const START_YEAR=2000,END_YEAR=2030;

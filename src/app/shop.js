@@ -28,7 +28,7 @@ ${p.made&&!p.trial?`<div class="row">${p.cert?`<button class="btn pri" data-sh="
   return `<div class="card"><h3>On your bench</h3>${t}</div>`;}
 function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand(),sn=saleNext(),cc=canConsign();
   return `<div class="card"><h3>In stock<span class="cnt">${c.stock.length}</span></h3><ul class="shlist stk">${c.stock.map(x=>{const pr=x.price/x.value-1;
-    const odds=SIM.buyChance(x.value,x.price)*Math.min(1,d);
+    const odds=SIM.buyChance(x.value,x.price,walkCap())*Math.min(1,d);
     const state=x.away?`<small class="lockt">At the ${CALENDAR.trial.name} until week ${CALENDAR.trial.back}.</small>`
       :x.lot?`<small class="lockt">Consigned to the ${sn.name} (${sn.now?"this week":"week "+sn.week}), ${RESERVES.find(r=>r[0]===x.lot.reserve)[1].toLowerCase()}. Walk-in buyers don't see it.</small>`
       :`<div class="seg sm" data-stk="${x.id}">${PRICE_STEPS.map(([f,l])=>`<button type="button" data-pf="${f}" class="${Math.abs(pr-f)<.01?"on":""}">${l}</button>`).join("")}</div>
@@ -36,7 +36,7 @@ function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand()
     return `<li><div><b>${x.name}</b><br><small>${x.cert&&x.cert!=="bench"?SIM.CERT[x.cert].name+" · ":""}${CASES[x.caseId].name.split(",")[0]} · ${x.thick} mm · value ${fmt$(x.value)}</small>
 ${state}</div>
 <div class="acts">${x.away?"":x.lot?(!(c.sale&&c.sale.wk===c.wk&&c.sale.opened)?`<button class="btn sm" data-sh="unlot" data-id="${x.id}">Withdraw</button>`:""):`<button class="btn sm" data-sh="dealer" data-id="${x.id}">Dealer ${fmt$(dealerPrice(x))}</button>${cc?`<button class="btn sm" data-sh="lot" data-id="${x.id}">Auction…</button>`:""}`}</div></li>`;}).join("")}</ul>
-<p class="hint">${upOwned("shop")?"Walk-in buyers":"Buyers who find a shared bench"} see your stock each week and take the best value for its price. The dealer in town pays at once, but only ${Math.round(BIZ.dealer*100)}%.${cc?` The ${sn.name} at ${CALENDAR.house} (${sn.now?"this week":"week "+sn.week}) takes consignments now.`:""}</p></div>`;}
+<p class="hint">${upOwned("shop")?"Walk-in buyers":"Buyers who find a shared bench"} see your stock each week and take the best value for its price, but rarely pay more than about ${fmt$(Math.round(walkCap()/1000)*1000)}: sell dearer pieces at auction. The dealer in town pays at once, but only ${Math.round(BIZ.dealer*100)}%.${cc?` The ${sn.name} at ${CALENDAR.house} (${sn.now?"this week":"week "+sn.week}) takes consignments now.`:""}</p></div>`;}
 function ordersCard(){const c=car();if(!c.orders.length&&!c.offers.length)return "";
   const specLine=(t,pc)=>specChecks(t.spec,pc||{cfg:{complications:[],finish:[]},r:{reserveH:0},thick:99,cert:null});
   const specTxt=t=>specLine(t).map(x=>x.label).join(" · ");
@@ -59,6 +59,7 @@ function upgradesCard(){const ids=Object.keys(UPGRADES),have=ids.filter(upOwned)
 function staffCard(){const c=car(),cap=staffCap();
   return `<details class="card"><summary><h3>Staff<span class="cnt">${c.staff.length} of ${cap}</span></h3></summary>
 ${c.staff.length?`<ul class="shlist">${c.staff.map((s,i)=>`<li><div><b>${s.name}</b><br><small>${STAFF[s.kind].name} · ${fmt$(STAFF[s.kind].wage)} a week · ${Math.round(BIZ.staffHours*STAFF[s.kind].eff)} h of work</small></div><div class="acts"><button class="btn sm ghost" data-sh="fire" data-i="${i}">Let go</button></div></li>`).join("")}</ul>`:""}
+${cap?`<p class="hint">Staff only take repairs and trade batches; your pieces stay yours. Work waiting for them: ${fmtN(staffWork(),0)} h${c.staff.length?` · they do ${fmtN(staffHrs(),0)} h a week`:""}.${c.staff.length&&staffWork()<staffHrs()?` <span class="lockt">Not enough work: idle staff are still paid. Take on trade batches (brands offer more, and bigger, when you have staff).</span>`:""} A new hand only pays for themselves with about 30 h of that work a week each.</p>`:""}
 <p class="hint">${cap?"Looking for work:":"A shared bench has no room for staff. Your own shop makes room for two."}</p>
 ${cap?`<ul class="shlist">${c.cands.map((x,i)=>{const K=STAFF[x.kind];return `<li><div><b>${x.name}</b><br><small>${K.name} · ${fmt$(K.wage)} a week${K.hire?` · ${fmt$(K.hire)} to sign`:""} · ${K.blurb}</small></div><div class="acts"><button class="btn sm" data-sh="hire" data-i="${i}"${c.staff.length>=cap?" disabled":""}>Hire</button></div></li>`;}).join("")}</ul>`:""}</details>`;}
 function booksCard(){const c=car(),B=c.books.slice(-8).reverse();
