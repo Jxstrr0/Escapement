@@ -73,6 +73,10 @@ function rent(){let r=BIZ.benchRent;for(const id in UPGRADES)if(upOwned(id)&&UPG
 function wages(){return car().staff.reduce((a,s)=>a+STAFF[s.kind].wage,0);}
 function weeklyCosts(){const c=car();return rent()+BIZ.keep+wages()+(c.loan?c.loan.pay:0);}
 function staffCap(){let n=0;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].staff)n+=UPGRADES[id].staff;return n;}
+function walkCap(){return SIM.walkInCap(repTier("press"),car().year);}   // the most walk-in buyers like to pay
+function staffHrs(){return car().staff.reduce((a,s)=>a+BIZ.staffHours*STAFF[s.kind].eff,0);}
+/* hours of repairs and trade work waiting that staff could take */
+function staffWork(){return car().jobs.filter(j=>j.staff).reduce((a,j)=>a+j.h,0);}
 function demand(){let d=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].demand)d*=UPGRADES[id].demand;return .2*d*(1+.12*repTier("press"))*SIM.eraMult(car().year,"retail");}
 function fixMult(cls){let f=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].fix&&UPGRADES[id].fix[cls])f*=UPGRADES[id].fix[cls];return f;}
 function batchMult(){let f=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].batch)f*=UPGRADES[id].batch;return f;}
@@ -139,7 +143,7 @@ const TRADE_BRANDS=["Varn & Söhne","Ostmark","Tavan","Kessler","Brenner","Lindq
 const TRADE_CFGS=[{},{winding:"automatic",complications:["date"]},{bph:"21600",jewels:"17",shock:"basic"}];
 function addTradeOffer(R){const c=car();if(c.trade||c.tradeOffer)return;
   const cfg=SIM.normCfg(Object.assign({},SIM.DEFAULT_CFG,pick(R,TRADE_CFGS))).cfg,r=SIM.simulate(cfg,{},null,{seed:"trade"}),T=SIM.tradeTerms(r,1);
-  const tt=repTier("trade"),Q=[8,12,16,20,24,30,40],qty=Q[Math.min(Q.length-1,Math.floor(R()*4)+Math.floor(tt/2)+(tt>=4?1:0))];
+  const tt=repTier("trade"),Q=[8,12,16,20,24,30,40],qty=Q[Math.min(Q.length-1,Math.floor(R()*4)+Math.floor(tt/2)+(tt>=4?1:0)+Math.round(staffHrs()/80))];
   const price=Math.round(T.price*(1+.03*tt)*SIM.eraMult(c.year,"trade")*(.95+.1*R())/5)*5;
   c.tradeOffer={id:nextId(),brand:pick(R,TRADE_BRANDS),cfg,qty,price,parts:T.parts,hoursEach:T.hours,weeks:Math.ceil(qty*T.hours/BIZ.hoursWeek)+3,until:c.wk+BIZ.offerKeep};}
 function tradeLine(t){const r=SIM.simulate(t.cfg,{},null,{seed:"trade"});return `${t.qty} × ${r.cfg.winding==="automatic"?"automatic":"hand-wound"}${r.cfg.complications.length?" date":""} at ${(+r.cfg.bph).toLocaleString("en-GB")} bph`;}
@@ -184,7 +188,7 @@ function sellPiece(pc,price,to,how){const c=car();sfx("sale");c.stock=c.stock.fi
 function closeWeek(){
   const c=car();if(!c||c.over)return null;const rep=[],R=weekRng("close");calFx={};
   /* 1. the work: staff on repairs and trade, then your hours on everything in order */
-  let staffH=c.staff.reduce((a,s)=>a+BIZ.staffHours*STAFF[s.kind].eff,0),mine=hoursLeft(),myRepair=false;
+  let staffH=staffHrs(),mine=hoursLeft(),myRepair=false;
   for(const j of c.jobs){if(j.staff&&staffH>0){const d=Math.min(staffH,j.h);j.h-=d;staffH-=d;}}
   for(const j of c.jobs){if(mine<=0)break;if(j.h>0){const d=Math.min(mine,j.h);j.h-=d;mine-=d;if(j.kind==="repair")myRepair=true;}}
   const done=c.jobs.filter(j=>j.h<=1e-6);c.jobs=c.jobs.filter(j=>j.h>1e-6);
@@ -203,7 +207,7 @@ function closeWeek(){
   /* 2. retail: this week's buyers each look at the stock and may buy the best value for its price */
   const buyers=poisson(R,demand());
   for(let b=0;b<buyers;b++){let best=null,bv=0;for(const pc of c.stock){if(!pieceFree(pc))continue;const v=pc.value/pc.price;if(v>bv){bv=v;best=pc;}}
-    if(best&&R()<SIM.buyChance(best.value,best.price)){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);addRep(saleGain(best),rep);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
+    if(best&&R()<SIM.buyChance(best.value,best.price,walkCap())){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);addRep(saleGain(best),rep);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
   /* 3. trials coming back */
   const p=c.bench;if(p&&p.trial&&c.wk+1>=p.trial.back){const T=p.trial,C=SIM.CERT[T.tier];
     if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;addRep(REP_GAIN.cert[T.tier],rep);certLog(p,T);}
@@ -228,14 +232,14 @@ function closeWeek(){
   const R2=weekRng("arrive"),nr=poisson(R2,BIZ.repairsWeek*(upOwned("shop")?BIZ.repairsShop:1)*SIM.eraMult(c.year,"repairs"));
   for(let i=0;i<nr;i++)addRepair(R2);if(nr){rep.push(`${nr} watch${nr>1?"es":""} in for repair.`);sfx("door");}
   if(R2()<1/BIZ.offerEvery){const n=c.offers.length;addOffer(R2);if(c.offers.length>n){rep.push("A commission enquiry: see the Shop tab.");sfx("door");}}
-  if(R2()<(1+.2*repTier("trade"))/BIZ.tradeEvery){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep){rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);sfx("door");}}
+  if(R2()<Math.min(.8,(1+.2*repTier("trade"))*(1+BIZ.tradeStaff*staffHrs()/BIZ.staffHours)/BIZ.tradeEvery)){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep){rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);sfx("door");}}
   if(c.wk%8===0)refreshCands(R2);
   if(newYear)rep.push(`Happy new year: ${c.year}.`);
   calWeekStart(rep);
   save();
   return{lines:rep,cash:c.cash,broke:c.cash<0};}
 /* below zero: the bank, once; then the end */
-function loanOffer(){const c=car(),need=-c.cash+4*weeklyCosts(),L=BIZ.loan;return Math.max(L.min,Math.ceil(need/L.round)*L.round);}
+function loanOffer(){const c=car(),L=BIZ.loan,need=-c.cash+L.cover*weeklyCosts();return Math.max(L.min,Math.ceil(need/L.round)*L.round);}
 function takeLoan(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=amt*(1+L.rate);
   c.loan={amt,left:total,pay:Math.ceil(total/L.weeks)};c.loanUsed=true;earn(amt,"bank loan");save();}
 function goBroke(){const c=car();c.over=true;save();}

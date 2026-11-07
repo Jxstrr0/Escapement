@@ -2,6 +2,17 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.0.2.2: career difficulty
+
+A difficulty audit ran 25 bot careers (an expert, a sloppy novice, repairs only, idle; both starts). Every expert that hired staff went broke, the 2008 start was harder than the 2000 one, one wrong repair cost five right ones in press reputation, and piece prices ran to six figures at walk-in so everything was done by year 5. Changes, measured with the same bots afterwards:
+
+- **Staff earn their keep.** Brands offer trade batches more often and bigger when you have staff (`BIZ.tradeStaff`: each 40 staff hours a week adds half again to the chance; batch size steps up per 80 staff hours). The Staff card says how much repairs and trade work is waiting for them against the hours they do, warns when they are idle on full pay, and says a new hand needs about 30 h of that work a week. Bots that hire (and take the batches) now do better than those that don't, and none went broke.
+- **Skip ahead 2008 is fair.** Th 28,000 to start (was 18,000), the shop's rent Th 520 a week (was 620), and the bank lends what you are short plus 12 weeks of costs (`BIZ.loan.cover`, was 4). Experts no longer sit at Th 1,000-20,000 for years; repairs alone in a shop still run down slowly (closed after about 7 years, was 1-2).
+- **A wrong repair** costs 0.2 press reputation (was 0.5; a right one gains 0.1).
+- **Piece prices:** prestige adds 5% of the price per point (`ECON.markupPrestige` .05, was .11), and walk-in buyers rarely pay above Th 15,000, plus 35% per press tier (`ECON.walkIn`, `walkInCap`; above it the chance falls with the square of the overshoot; fair visitors go to 1.5 times that). Dearer pieces sell at auction, by commission or to the dealer; the Stock card says so.
+- **The long game:** skills take longer at the top (`SKILL_XP` level 10 at 520 XP, was 320; levels 1-4 unchanged) and every R&D project takes 1.5 times the weeks. An expert now finishes R&D around year 6-7 (was 4-5) and maxes skills around year 10-13 (was 3-4).
+- Still open: cash keeps piling up once R&D is done, because nothing is left to buy and 2030 has no ending (`docs/OPEN-QUESTIONS.md` 8).
+
 ## 1.0.2.0: the numbers in the tour, fix buttons on trial results
 
 - The tour (`TUT` in `src/app/help.js`, now 16 steps) stops on each timegrapher readout (Rate, Amplitude, Beat error, Beat) after "Read the trace", and on the Build capsule (Rate band, Reserve, Parts and hours, Cert odds) before "Make it". Each card says what the number is, what is good, what a certificate needs and which control moves it. Steps that other code jumps to carry an `id` (`close`, `make`) and are found with `tutIdx`, so adding cards does not break old saves' `tutStep` checks.

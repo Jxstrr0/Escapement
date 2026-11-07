@@ -4,6 +4,9 @@ Found by the 1.0.2.1 audit (code review, design check, playthrough, 15-year mone
 
 ## Balance (from the money runs)
 
+Done in 1.0.2.2 (career difficulty, see `docs/DESIGN.md`): 1 (prestige markup halved, walk-in buyers capped), 3 (Th 28,000, rent 520, the loan covers 12 weeks), and in 7 the skills curve and staff cost (staff now get more trade work). Also done there, found by the difficulty audit: staff idle on full pay, and a wrong repair costing five right ones in press reputation. Still open below: 2, 4, 5, 6, and repairs-only staying flat.
+
+
 1. **Piece prices run away.** `pieceValue` (`src/sim/market.js`) multiplies `(1.45 + 0.11 × prestige) × CERT_MULT × case.mult`, so a top piece is Th 150,000 to 600,000 and walk-in buyers (`demand()` / `buyChance`, `src/app/business.js`) buy them weekly. Cash reaches millions by 2012; the design says a Chronometer piece is 5,000 to 15,000 and six figures is an auction lot. Soften the prestige markup, and let six-figure pieces sell only at auction or to top-tier collectors?
 2. **Trials ignore skill.** Chronometer passes 100% at skill 1 once the Th 900 alloy spring is bought. Observatory fails only on `maxVar`; `TRIAL.noise` 0.8 (`src/sim/trial.js`) makes it about a coin flip (38 to 53%) that no skill, machine or part improves. Make trial noise shrink with skill and better parts?
 3. **Skip ahead 2008 goes broke.** Shop costs about Th 880 a week, close to repair income; both test runs that hired staff closed in year 2. The loan (`loanOffer`, need + 4 weeks of costs) lasts about 4 to 5 weeks. Lower the shop rent or raise the 2008 starting cash, and lend about 16 weeks of costs?
