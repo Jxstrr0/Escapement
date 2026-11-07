@@ -118,7 +118,7 @@ function lotRun(lot,mine){const c=car(),R=SIM.rng(`${c.seed}|sale|${c.sale.wk}|$
   bidders.sort((a,b)=>b.max-a.max);const top=bidders[0];
   const floor=lot.kind==="mine"?lot.value*lot.reserve:0;
   const st0=bidStep(lot.est*.5);let price=Math.max(st0,Math.round(lot.est*.5/st0)*st0);const steps=[];let lead=null;
-  /* you may cut the step: your bid stops exactly at your limit (to the nearest Th 50) rather than lose to the increment */
+  /* you may cut the step: your bid stops exactly at your limit (to the nearest €50) rather than lose to the increment */
   const cut=b=>Math.floor(b.max/50)*50;
   while(steps.length<200){const next=lead?price+bidStep(price):price,can=bidders.filter(b=>b!==lead&&(b.max>=next||b.me&&lead&&cut(b)>price));if(!can.length)break;
     const b=can[Math.floor(R()*can.length)];price=b.me&&b.max<next?cut(b):next;lead=b;steps.push([price,b.name]);}
