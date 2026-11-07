@@ -4,16 +4,16 @@ Found by the 1.0.2.1 audit (code review, design check, playthrough, 15-year mone
 
 ## Balance (from the money runs)
 
-Done in 1.0.2.2 (career difficulty, see `docs/DESIGN.md`): 1 (prestige markup halved, walk-in buyers capped), 3 (Th 28,000, rent 520, the loan covers 12 weeks), and in 7 the skills curve and staff cost (staff now get more trade work). Also done there, found by the difficulty audit: staff idle on full pay, and a wrong repair costing five right ones in press reputation. Still open below: 2, 4, 5, 6, and repairs-only staying flat.
+Done in 1.0.2.2 (career difficulty, see `docs/DESIGN.md`): 1 (prestige markup halved, walk-in buyers capped), 3 (€28,000, rent 520, the loan covers 12 weeks), and in 7 the skills curve and staff cost (staff now get more trade work). Also done there, found by the difficulty audit: staff idle on full pay, and a wrong repair costing five right ones in press reputation. Still open below: 2, 4, 5, 6, and repairs-only staying flat.
 
 
-1. **Piece prices run away.** `pieceValue` (`src/sim/market.js`) multiplies `(1.45 + 0.11 × prestige) × CERT_MULT × case.mult`, so a top piece is Th 150,000 to 600,000 and walk-in buyers (`demand()` / `buyChance`, `src/app/business.js`) buy them weekly. Cash reaches millions by 2012; the design says a Chronometer piece is 5,000 to 15,000 and six figures is an auction lot. Soften the prestige markup, and let six-figure pieces sell only at auction or to top-tier collectors?
-2. **Trials ignore skill.** Chronometer passes 100% at skill 1 once the Th 900 alloy spring is bought. Observatory fails only on `maxVar`; `TRIAL.noise` 0.8 (`src/sim/trial.js`) makes it about a coin flip (38 to 53%) that no skill, machine or part improves. Make trial noise shrink with skill and better parts?
-3. **Skip ahead 2008 goes broke.** Shop costs about Th 880 a week, close to repair income; both test runs that hired staff closed in year 2. The loan (`loanOffer`, need + 4 weeks of costs) lasts about 4 to 5 weeks. Lower the shop rent or raise the 2008 starting cash, and lend about 16 weeks of costs?
-4. **Commission budgets are fixed** (`COMMISSION_TEMPLATES`, Th 2,300 to 31,000) while pieces reach Th 130,000; `deliver()` takes any piece that fits the spec. Warn before delivering a piece worth far more than the budget, or scale budgets?
+1. **Piece prices run away.** `pieceValue` (`src/sim/market.js`) multiplies `(1.45 + 0.11 × prestige) × CERT_MULT × case.mult`, so a top piece is €150,000 to 600,000 and walk-in buyers (`demand()` / `buyChance`, `src/app/business.js`) buy them weekly. Cash reaches millions by 2012; the design says a Chronometer piece is 5,000 to 15,000 and six figures is an auction lot. Soften the prestige markup, and let six-figure pieces sell only at auction or to top-tier collectors?
+2. **Trials ignore skill.** Chronometer passes 100% at skill 1 once the €900 alloy spring is bought. Observatory fails only on `maxVar`; `TRIAL.noise` 0.8 (`src/sim/trial.js`) makes it about a coin flip (38 to 53%) that no skill, machine or part improves. Make trial noise shrink with skill and better parts?
+3. **Skip ahead 2008 goes broke.** Shop costs about €880 a week, close to repair income; both test runs that hired staff closed in year 2. The loan (`loanOffer`, need + 4 weeks of costs) lasts about 4 to 5 weeks. Lower the shop rent or raise the 2008 starting cash, and lend about 16 weeks of costs?
+4. **Commission budgets are fixed** (`COMMISSION_TEMPLATES`, €2,300 to 31,000) while pieces reach €130,000; `deliver()` takes any piece that fits the spec. Warn before delivering a piece worth far more than the budget, or scale budgets?
 5. **Kessel Peak becomes unwinnable.** Rivals gain 1.3% a year (`calendar.js`); the player tops out at about 700 to 770 points, so second place from 2005 and third from 2016. Cap rival growth, or let the player's noise fall with skill?
 6. **Top reputation is out of reach.** 0.8% weekly decay (`REP_GAIN.decay`) means Legendary (120) and collectors tier 4 were never reached in 20 years. Halve the decay, or set Legendary at 100?
-7. Smaller: skills max out in 2 to 4 years, even repairs-only (`SKILL_XP`); 4 staff cost about Th 196,000 a year against Th 150,000 to 200,000 of trade profit; repairs-only is a flat +Th 3,000 a year for 15 years.
+7. Smaller: skills max out in 2 to 4 years, even repairs-only (`SKILL_XP`); 4 staff cost about €196,000 a year against €150,000 to 200,000 of trade profit; repairs-only is a flat +€3,000 a year for 15 years.
 
 ## Missing pieces of the game
 

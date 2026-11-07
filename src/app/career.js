@@ -52,7 +52,7 @@ function doCloseWeek(){const c=car();if(!c||c.over)return;
   if(res.broke){if(!c.loanUsed){loanSheet(amt=>{res.lines.unshift(`The Haldis Savings Bank lent you ${fmt$(amt)}.`);c.lastWeek.lines=res.lines.slice(0,40);c.lastWeek.d=c.cash-was.cash;c.lastWeek.cash=c.cash;save();weekSheet(was,res);});return;}goBroke();brokeSheet();return;}
   weekSheet(was,res);if(TAB_RENDER[curTab])TAB_RENDER[curTab]();}
 function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
-  openSheet(`Week ${was.week} closed`,`<p class="weekd ${d<0?"neg":""}">${d>=0?"+":"−"}${fmt$(Math.abs(d)).replace("Th ","Th ")} · now ${fmt$(c.cash)}</p>
+  openSheet(`Week ${was.week} closed`,`<p class="weekd ${d<0?"neg":""}">${d>=0?"+":"−"}${fmt$(Math.abs(d))} · now ${fmt$(c.cash)}</p>
 <ul class="wklines">${res.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}<li class="dim">Rent ${fmt$(rent())} · your keep ${fmt$(BIZ.keep)}${wages()?` · wages ${fmt$(wages())}`:""}${c.loan?` · loan ${fmt$(c.loan.pay)}`:""}</li></ul>
 <div class="row"><button class="btn pri" id="wkOk">Week ${c.week}, ${c.year}</button></div>`);
   $("wkOk").addEventListener("click",closeSheet);
