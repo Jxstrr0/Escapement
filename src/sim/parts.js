@@ -7,7 +7,7 @@
 
    This file: the parts tables (plan section 4a). PARTS is an object of slots; each slot is a list of options with
      id, name, blurb   what the player reads
-     cost              parts cost per piece, in thalers
+     cost              parts cost per piece, in euros
      hours             bench hours it adds to building one piece
      prestige          what collectors see in it (points, summed)
      parts             how many parts it adds to the count

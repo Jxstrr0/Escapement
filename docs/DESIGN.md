@@ -7,9 +7,9 @@ This file describes the game as it actually is on `main`. It grows as plan PRs l
 A difficulty audit ran 25 bot careers (an expert, a sloppy novice, repairs only, idle; both starts). Every expert that hired staff went broke, the 2008 start was harder than the 2000 one, one wrong repair cost five right ones in press reputation, and piece prices ran to six figures at walk-in so everything was done by year 5. Changes, measured with the same bots afterwards:
 
 - **Staff earn their keep.** Brands offer trade batches more often and bigger when you have staff (`BIZ.tradeStaff`: each 40 staff hours a week adds half again to the chance; batch size steps up per 80 staff hours). The Staff card says how much repairs and trade work is waiting for them against the hours they do, warns when they are idle on full pay, and says a new hand needs about 30 h of that work a week. Bots that hire (and take the batches) now do better than those that don't, and none went broke.
-- **Skip ahead 2008 is fair.** Th 28,000 to start (was 18,000), the shop's rent Th 520 a week (was 620), and the bank lends what you are short plus 12 weeks of costs (`BIZ.loan.cover`, was 4). Experts no longer sit at Th 1,000-20,000 for years; repairs alone in a shop still run down slowly (closed after about 7 years, was 1-2).
+- **Skip ahead 2008 is fair.** €28,000 to start (was 18,000), the shop's rent €520 a week (was 620), and the bank lends what you are short plus 12 weeks of costs (`BIZ.loan.cover`, was 4). Experts no longer sit at €1,000-20,000 for years; repairs alone in a shop still run down slowly (closed after about 7 years, was 1-2).
 - **A wrong repair** costs 0.2 press reputation (was 0.5; a right one gains 0.1).
-- **Piece prices:** prestige adds 5% of the price per point (`ECON.markupPrestige` .05, was .11), and walk-in buyers rarely pay above Th 15,000, plus 35% per press tier (`ECON.walkIn`, `walkInCap`; above it the chance falls with the square of the overshoot; fair visitors go to 1.5 times that). Dearer pieces sell at auction, by commission or to the dealer; the Stock card says so.
+- **Piece prices:** prestige adds 5% of the price per point (`ECON.markupPrestige` .05, was .11), and walk-in buyers rarely pay above €15,000, plus 35% per press tier (`ECON.walkIn`, `walkInCap`; above it the chance falls with the square of the overshoot; fair visitors go to 1.5 times that). Dearer pieces sell at auction, by commission or to the dealer; the Stock card says so.
 - **The long game:** skills take longer at the top (`SKILL_XP` level 10 at 520 XP, was 320; levels 1-4 unchanged) and every R&D project takes 1.5 times the weeks. An expert now finishes R&D around year 6-7 (was 4-5) and maxes skills around year 10-13 (was 3-4).
 - Still open: cash keeps piling up once R&D is done, because nothing is left to buy and 2030 has no ending (`docs/OPEN-QUESTIONS.md` 8).
 
@@ -52,8 +52,8 @@ A difficulty audit ran 25 bot careers (an expert, a sloppy novice, repairs only,
 
 ## 0.10.1.0: balance (R&D 40% cheaper)
 
-- A bot played 12-year careers both ways. A player who only does repairs and trade batches and never spends ends with about Th 300,000 by year 8; a player who buys upgrades, hires staff and runs R&D is never rich (Th 30,000-90,000 in hand) and finished R&D only around year 13 or later. Repairs and trade are where the money comes from; cutting trade pay hurt the investing player badly and barely touched the saver.
-- So every `RND` cost is 40% lower (all of it now about Th 350,000, was about Th 580,000); weeks and skill levels are unchanged. In the bot runs an investing player now finishes R&D around year 7-10. Income is unchanged; a player who never spends still piles up cash, and can now buy R&D with it.
+- A bot played 12-year careers both ways. A player who only does repairs and trade batches and never spends ends with about €300,000 by year 8; a player who buys upgrades, hires staff and runs R&D is never rich (€30,000-90,000 in hand) and finished R&D only around year 13 or later. Repairs and trade are where the money comes from; cutting trade pay hurt the investing player badly and barely touched the saver.
+- So every `RND` cost is 40% lower (all of it now about €350,000, was about €580,000); weeks and skill levels are unchanged. In the bot runs an investing player now finishes R&D around year 7-10. Income is unchanged; a player who never spends still piles up cash, and can now buy R&D with it.
 - Seen in the runs, left as is: a bot that keeps three staff through the smartwatch years (2015-2018) and keeps buying R&D can go broke; a real player sees the cash fall and can let staff go.
 
 ## 0.10.0.0: the dial side and the Blender props (PR 9)
@@ -96,13 +96,13 @@ Lite never downloads a model. It draws everything in code from the same numbers 
 ## 0.8.0.0: R&D, in-house parts and your own calibre (PR 7)
 
 - **R&D** (Career tab, the R&D card): 17 projects in `RND` (`src/app/state.js`). Pay the cost up front; the project is ready at the Close week its weeks run out, and it teaches you (skill XP). One runs at a time; the clean room or a master watchmaker on the staff gives a second R&D bench. Each project can need a skill level, a Shop upgrade or another project first, and the card says which. Stop a project and the money is gone.
-  - **Complications:** power reserve (Th 1,500, 4 weeks, a good first project), moonphase, chronograph (Th 9,500, 12 weeks, Complications 3), annual calendar, split-seconds (after the chronograph), perpetual calendar (after the annual), tourbillon, minute repeater (Th 66,000, 36 weeks).
+  - **Complications:** power reserve (€1,500, 4 weeks, a good first project), moonphase, chronograph (€9,500, 12 weeks, Complications 3), annual calendar, split-seconds (after the chronograph), perpetual calendar (after the annual), tourbillon, minute repeater (€66,000, 36 weeks).
   - **Movement parts:** free-sprung balance, silicon hairspring, co-axial and detent escapements.
   - The complications skill a project needs is below the complication's complexity on purpose: you can build one before you have mastered it, with extra beat error and returns until you train up (the "beyond your skill" stress line).
 - **In-house parts** (`PARTS.house`, a new list slot; Build tab, In-house parts row): hairsprings (needs the clean room), balances (lathe), escapements and plates & bridges (CNC). Each takes 50-60% off that part's cost and adds prestige (collectors pay for "in-house"), but costs 2-4 bench hours a piece. Finishing the project switches it on in your build.
-- **Your own calibre** (after in-house plates, with the CNC; Th 36,000 and 24 weeks, Th 15,000 and 14 weeks for each one after, up to four): name it, and the core of the build in the Build tab (barrel to winding) is frozen as your calibre. Pick it in the Calibre row at the top of the Build tab: its core goes in at once, and a piece built on it takes 20% fewer hours, its parts cost 20% less and collectors count 6 more prestige (`K.calibre`). Complications, finishes and in-house parts stay free; changing a core part takes the build off the calibre. Pieces are named after it ("No. 12 · Haldis 1 calibre, hand-wound, chronograph"). The goal "Your own calibre" is reached when the first one is ready. In the Sandbox, "Save this core as a calibre" is free and instant.
+- **Your own calibre** (after in-house plates, with the CNC; €36,000 and 24 weeks, €15,000 and 14 weeks for each one after, up to four): name it, and the core of the build in the Build tab (barrel to winding) is frozen as your calibre. Pick it in the Calibre row at the top of the Build tab: its core goes in at once, and a piece built on it takes 20% fewer hours, its parts cost 20% less and collectors count 6 more prestige (`K.calibre`). Complications, finishes and in-house parts stay free; changing a core part takes the build off the calibre. Pieces are named after it ("No. 12 · Haldis 1 calibre, hand-wound, chronograph"). The goal "Your own calibre" is reached when the first one is ready. In the Sandbox, "Save this core as a calibre" is free and instant.
 - **Make refuses parts you don't own yet** (a build left over from the Sandbox, say): the Make card names them and what unlocks them.
-- **Rhodium plating:** a new finish (Th 14, 1 h, +1 prestige) that turns the plates and bridges silver-white in 3D instead of gilt.
+- **Rhodium plating:** a new finish (€14, 1 h, +1 prestige) that turns the plates and bridges silver-white in 3D instead of gilt.
 - Saved inside `esc-save` (no new keys): `S.career.rnd` (`done`, `run`), `S.career.calibres`, `S.cals` (the Sandbox's), and `cal` / `house` in a build. The sim's numbers for every build without them are unchanged.
 
 ## 0.7.2.0: the workshop
@@ -128,14 +128,14 @@ Lite never downloads a model. It draws everything in code from the same numbers 
   segment's track at Local name and tier 3 at Respected. A wrong repair, a late delivery or a service return costs
   reputation. Every track fades a little each week (0.8%).
 - **Coming up** card: the next auction night, the trial and the fair, soonest first, with their buttons.
-- **The Haldis Valley Fair** (week 37). Book a stand (Th 450) up to five weeks before and choose up to three stock pieces.
+- **The Haldis Valley Fair** (week 37). Book a stand (€450) up to five weeks before and choose up to three stock pieces.
   At the fair, visitors buy at your asking price more readily than walk-ins (1.6 times the chance), collectors notice
   finished and complicated pieces, and there are commission enquiries and often a trade enquiry.
-- **The Kessel Peak Trial** (entries weeks 8-18, Th 250; results week 24). One cased stock piece against five rival shops
+- **The Kessel Peak Trial** (entries weeks 8-18, €250; results week 24). One cased stock piece against five rival shops
   (Varn & Söhne, Halvard, Atelier Amsel, Kessler, Ostrander Frères, who get a little better every year). Thirty days: four in
   each of five positions, cold / room / warm, four recovery days. Points from an index of the mean rate away from zero, the
   day-to-day changes, the position spread and (weighted most) the temperature error. The results play like a race, the
-  leaderboard re-sorting day by day; then the place, the prize (Th 6,000 / 3,000 / 1,500) and where it lost most. A steel
+  leaderboard re-sorting day by day; then the place, the prize (€6,000 / 3,000 / 1,500) and where it lost most. A steel
   hairspring falls away in the temperature days; a regulated BCH piece places around the podium; an Observatory build wins.
 - **Auction nights** at Brugg & Lell (the Spring sale, week 16; the Winter sale, week 46). From six weeks before, consign
   stock pieces (Shop tab, Auction…) with no reserve, 80% or full value; they're held from walk-ins and the dealer. Your
@@ -155,18 +155,18 @@ Lite never downloads a model. It draws everything in code from the same numbers 
 
 ## 0.6.0.0: the shop and the career (PR 5)
 
-- **New game** (Career tab): **Repair bench, 2000** (a shared bench, the basic timing machine, Th 2,500), **Skip ahead to
-  2008** (your own shop, the six-position machine, a cleaning machine, Th 18,000, skills at level 3) or the **Sandbox**
+- **New game** (Career tab): **Repair bench, 2000** (a shared bench, the basic timing machine, €2,500), **Skip ahead to
+  2008** (your own shop, the six-position machine, a cleaning machine, €18,000, skills at level 3) or the **Sandbox**
   (every part, no money, no calendar: what the game was before careers).
 - **Time.** Act, then **Close week**. You have 45 bench hours a week. Adjusting spends them at once; what is left at Close
   week goes into the work in hand (assembling your piece, repairs, trade batches, first in first out). Staff take repairs
-  and trade work. Rent (Th 140 on the shared bench, Th 620 in your own shop), your keep (Th 260) and wages go out every week.
+  and trade work. Rent (€140 on the shared bench, €620 in your own shop), your keep (€260) and wages go out every week.
 - **Repairs.** Customer watches come in (about 1.8 a week, more with your own shop) with a complaint shared by more than one
   fault. Put one on the timegrapher: magnetised races, a dry one loses amplitude, a broken mainspring shows no trace, a bent
   hairspring limps (big beat error), worn pivots scatter, water damage goes wild. Choose the fix (hours, parts); you're paid
   when it goes back working. A wrong fix wastes the work and the watch comes back. Uncollected after four weeks, it leaves.
 - **Your pieces.** Build tab: **Make this piece** pays the parts and queues the assembly. Once assembled it is on the
-  timegrapher; it needs at least a Bench check to be sold. The Bureau (Th 140, 3 weeks) and the Observatory (Th 650, 6 weeks)
+  timegrapher; it needs at least a Bench check to be sold. The Bureau (€140, 3 weeks) and the Observatory (€650, 6 weeks)
   keep it for their weeks and send the result back at Close week. Then **case** it (five cases; a movement too thick for a
   case won't go in) and it goes into stock at its value.
 - **Selling.** Each week a few buyers (more with your own shop and a display window) look at your stock and may buy the
@@ -179,7 +179,7 @@ Lite never downloads a model. It draws everything in code from the same numbers 
 - **The bank** lends once when the till goes below zero at Close week (8% over a year). Below zero again, the workshop closes.
 - **Save slots** (Career tab): three whole games on this phone. Loading one keeps this phone's settings.
 - Numbers to judge it by (a bot playing two years): repairs alone just pay the bills on a shared bench; repairs, pieces and
-  trade together end the first year near Th 34,000 before any upgrades.
+  trade together end the first year near €34,000 before any upgrades.
 
 ## 0.4.0.0: timegrapher, adjustment, certification, tick (PR 3)
 
@@ -253,7 +253,7 @@ balance, steel overcoil spring at 28,800 bph):
   the regulator's floor.
 - **Shock, magnetism, returns, service**: from the shock system, escapement fragility and hairspring; a sold piece's yearly
   chance of coming back.
-- **Thickness, parts, cost (thalers), bench hours, prestige**: sums. Default 3.4 mm, 171 parts, Th 300, 24 h.
+- **Thickness, parts, cost (euros), bench hours, prestige**: sums. Default 3.4 mm, 171 parts, €300, 24 h.
 - **Stress report**: 17 rules in plain English, from "Amplitude below 220° at full wind" to "Drop test risk" to
   "Hairspring cracked".
 
@@ -262,7 +262,7 @@ The Test tab prints these numbers for the movement on the bench until the timegr
 ## 0.1.0.0: scaffold (PR 0)
 
 - **Setting:** the Haldis, a high watchmaking valley in the north of Velmark, an invented alpine country. Career years 2000 to 2030 (not playable yet).
-- **Money:** the Velmark thaler, shown `Th 4,850` (100 pfennig to a thaler). Prices are sized like Swiss francs: repairs 80 to 400, Chronometer pieces 5,000 to 15,000, auction lots up to six figures.
+- **Money:** euros, shown `€4,850` (whole amounts). Prices are sized like Swiss francs: repairs 80 to 400, Chronometer pieces 5,000 to 15,000, auction lots up to six figures.
 - **Look:** dark felt and brass, steel greys for secondary text; a pale workshop light theme. Space Grotesk for UI, JetBrains Mono for readouts. The 3D bench view stays dark in both themes.
 - **Screens:** an intro on first visit; five tabs (Bench, Build, Test, Shop, Career), each with cards saying what is coming and in which PR; a Settings sheet from the gear (graphics tier, auto-adjust, theme, motion, saves, install app, version).
 - **3D:** the movement you built, on a felt mat under one warm lamp, rebuilt whenever a part changes. Barrel by the crown, the train curving round to the escape wheel, fork and balance near the far edge; bridges and cock with ruby jewels (gold chatons from 25 jewels) and blued screws; finishes show as perlage on the plate, stripes on the bridges, bevelled edges, a glossy steel. Automatic adds a rotor that rocks; date, GMT, moon and calendars sit on the dial side; the chronograph, split-seconds, power reserve and repeater gongs on top; a tourbillon carries the escapement and balance in a cage that turns once a minute. The balance swings at the timegrapher's amplitude and beat rate, the escape wheel steps half a tooth each beat and the train turns from it, the fork flicks from banking to banking. The tag under the view names the movement. Bench tab: Assembled / Exploded (the layers lift apart) and the loupe on the balance and escapement (or double-tap the view); views glide, or cut with reduced motion. Drag to orbit, pinch or wheel to zoom. Lite: no shadows, pixel ratio 1 (materials changed in 0.7.1.0, below). Full: PBR brass and steel, soft lamp shadow. Ultra: Full plus bloom (addons loaded on demand).

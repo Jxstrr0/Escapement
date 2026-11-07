@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.0.2.2";
+const VERSION="1.0.2.3";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -40,7 +40,7 @@ const UPGRADES={
   lathe:{name:"Watchmaker's lathe",cost:2400,blurb:"Polished pivots; re-pivoting takes half the time.",fix:{pivot:.5}},
   polishing:{name:"Polishing bench",cost:1500,blurb:"Black polish for steel parts."},
   mill:{name:"Milling machine",cost:4800,blurb:"Cut your own barrel bridges: twin barrels."},
-  shop:{name:"Own shop on the high street",cost:6500,rent:520,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent Th 520 a week."},
+  shop:{name:"Own shop on the high street",cost:6500,rent:520,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent €520 a week."},
   window:{name:"Display window",cost:1400,needs:["shop"],demand:1.3,blurb:"Pieces in the window: more buyers stop."},
   bench2:{name:"Second bench",cost:2200,needs:["shop"],staff:1,blurb:"Room for one more watchmaker."},
   climate:{name:"Climate control",cost:3200,needs:["shop"],blurb:"A steady workshop. Needed for the laboratory timing machine."},
@@ -56,7 +56,7 @@ const STAFF={
 const STAFF_NAMES=["Anneli Brask","Joris Halm","Mette Ostrander","Tobin Vael","Ilse Karrow","Pieter Lund","Saskia Dorn","Emil Fasch","Runa Velt","Kasimir Ott","Lotte Hesse","Bram Iversen"];
 /* repair faults. On the timegrapher each one shows a pattern: rate (s/d added), amp (amplitude multiplied), beat (ms added),
    jit (extra scatter), stop (no beats at all). The complaint is what the customer says (shared between faults on
-   purpose: the timegrapher tells them apart). fix: name, hours, parts (Th); pay is what the customer pays when it's right */
+   purpose: the timegrapher tells them apart). fix: name, hours, parts (€); pay is what the customer pays when it's right */
 const FAULTS={
   magnet:{name:"Magnetised",cls:"quick",rate:180,amp:1,beat:.3,jit:.05,complaint:"It gains minutes every day.",
     fix:"Demagnetise",hours:.5,parts:0,pay:90,blurb:"A phone or a handbag clasp: the hairspring coils stick together and it races."},
@@ -262,7 +262,7 @@ if(mqLight&&mqLight.addEventListener)mqLight.addEventListener("change",()=>{if(S
 if(mqReduce&&mqReduce.addEventListener)mqReduce.addEventListener("change",applyReduce);
 
 /* ---- formatting ---- */
-const fmt$=n=>(n<0?"−":"")+"Th "+Math.round(Math.abs(n)).toLocaleString("en-GB");   // Velmark thaler (100 pfennig); prices sized like Swiss francs
+const fmt$=n=>(n<0?"−":"")+"€"+Math.round(Math.abs(n)).toLocaleString("en-GB");   // euros, whole amounts: €4,850
 const fmtN=(n,d)=>Number(n).toFixed(d||0);
 
 /* ---- the header over the 3D view ---- */
