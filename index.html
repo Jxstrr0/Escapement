@@ -609,7 +609,7 @@ if(sv&&(sv.gfx==="ultra"||sv.gfx==="full"))document.write(ESC_LIBS.map(function(
 
    This file: the parts tables (plan section 4a). PARTS is an object of slots; each slot is a list of options with
      id, name, blurb   what the player reads
-     cost              parts cost per piece, in thalers
+     cost              parts cost per piece, in euros
      hours             bench hours it adds to building one piece
      prestige          what collectors see in it (points, summed)
      parts             how many parts it adds to the count
@@ -2658,7 +2658,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.0.2.2";
+const VERSION="1.0.2.3";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -2691,7 +2691,7 @@ const UPGRADES={
   lathe:{name:"Watchmaker's lathe",cost:2400,blurb:"Polished pivots; re-pivoting takes half the time.",fix:{pivot:.5}},
   polishing:{name:"Polishing bench",cost:1500,blurb:"Black polish for steel parts."},
   mill:{name:"Milling machine",cost:4800,blurb:"Cut your own barrel bridges: twin barrels."},
-  shop:{name:"Own shop on the high street",cost:6500,rent:520,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent Th 520 a week."},
+  shop:{name:"Own shop on the high street",cost:6500,rent:520,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent €520 a week."},
   window:{name:"Display window",cost:1400,needs:["shop"],demand:1.3,blurb:"Pieces in the window: more buyers stop."},
   bench2:{name:"Second bench",cost:2200,needs:["shop"],staff:1,blurb:"Room for one more watchmaker."},
   climate:{name:"Climate control",cost:3200,needs:["shop"],blurb:"A steady workshop. Needed for the laboratory timing machine."},
@@ -2707,7 +2707,7 @@ const STAFF={
 const STAFF_NAMES=["Anneli Brask","Joris Halm","Mette Ostrander","Tobin Vael","Ilse Karrow","Pieter Lund","Saskia Dorn","Emil Fasch","Runa Velt","Kasimir Ott","Lotte Hesse","Bram Iversen"];
 /* repair faults. On the timegrapher each one shows a pattern: rate (s/d added), amp (amplitude multiplied), beat (ms added),
    jit (extra scatter), stop (no beats at all). The complaint is what the customer says (shared between faults on
-   purpose: the timegrapher tells them apart). fix: name, hours, parts (Th); pay is what the customer pays when it's right */
+   purpose: the timegrapher tells them apart). fix: name, hours, parts (€); pay is what the customer pays when it's right */
 const FAULTS={
   magnet:{name:"Magnetised",cls:"quick",rate:180,amp:1,beat:.3,jit:.05,complaint:"It gains minutes every day.",
     fix:"Demagnetise",hours:.5,parts:0,pay:90,blurb:"A phone or a handbag clasp: the hairspring coils stick together and it races."},
@@ -2913,7 +2913,7 @@ if(mqLight&&mqLight.addEventListener)mqLight.addEventListener("change",()=>{if(S
 if(mqReduce&&mqReduce.addEventListener)mqReduce.addEventListener("change",applyReduce);
 
 /* ---- formatting ---- */
-const fmt$=n=>(n<0?"−":"")+"Th "+Math.round(Math.abs(n)).toLocaleString("en-GB");   // Velmark thaler (100 pfennig); prices sized like Swiss francs
+const fmt$=n=>(n<0?"−":"")+"€"+Math.round(Math.abs(n)).toLocaleString("en-GB");   // euros, whole amounts: €4,850
 const fmtN=(n,d)=>Number(n).toFixed(d||0);
 
 /* ---- the header over the 3D view ---- */
@@ -4311,7 +4311,7 @@ function lotRun(lot,mine){const c=car(),R=SIM.rng(`${c.seed}|sale|${c.sale.wk}|$
   bidders.sort((a,b)=>b.max-a.max);const top=bidders[0];
   const floor=lot.kind==="mine"?lot.value*lot.reserve:0;
   const st0=bidStep(lot.est*.5);let price=Math.max(st0,Math.round(lot.est*.5/st0)*st0);const steps=[];let lead=null;
-  /* you may cut the step: your bid stops exactly at your limit (to the nearest Th 50) rather than lose to the increment */
+  /* you may cut the step: your bid stops exactly at your limit (to the nearest €50) rather than lose to the increment */
   const cut=b=>Math.floor(b.max/50)*50;
   while(steps.length<200){const next=lead?price+bidStep(price):price,can=bidders.filter(b=>b!==lead&&(b.max>=next||b.me&&lead&&cut(b)>price));if(!can.length)break;
     const b=can[Math.floor(R()*can.length)];price=b.me&&b.max<next?cut(b):next;lead=b;steps.push([price,b.name]);}
@@ -4659,7 +4659,7 @@ function doCloseWeek(){const c=car();if(!c||c.over)return;
   if(res.broke){if(!c.loanUsed){loanSheet(amt=>{res.lines.unshift(`The Haldis Savings Bank lent you ${fmt$(amt)}.`);c.lastWeek.lines=res.lines.slice(0,40);c.lastWeek.d=c.cash-was.cash;c.lastWeek.cash=c.cash;save();weekSheet(was,res);});return;}goBroke();brokeSheet();return;}
   weekSheet(was,res);if(TAB_RENDER[curTab])TAB_RENDER[curTab]();}
 function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
-  openSheet(`Week ${was.week} closed`,`<p class="weekd ${d<0?"neg":""}">${d>=0?"+":"−"}${fmt$(Math.abs(d)).replace("Th ","Th ")} · now ${fmt$(c.cash)}</p>
+  openSheet(`Week ${was.week} closed`,`<p class="weekd ${d<0?"neg":""}">${d>=0?"+":"−"}${fmt$(Math.abs(d))} · now ${fmt$(c.cash)}</p>
 <ul class="wklines">${res.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}<li class="dim">Rent ${fmt$(rent())} · your keep ${fmt$(BIZ.keep)}${wages()?` · wages ${fmt$(wages())}`:""}${c.loan?` · loan ${fmt$(c.loan.pay)}`:""}</li></ul>
 <div class="row"><button class="btn pri" id="wkOk">Week ${c.week}, ${c.year}</button></div>`);
   $("wkOk").addEventListener("click",closeSheet);
