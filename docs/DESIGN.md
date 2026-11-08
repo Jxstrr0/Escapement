@@ -2,6 +2,15 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.0.2.4: trials, climate control, Kessel Peak, reputation
+
+Answers to open questions 2, 5, 6 and 9 (`docs/OPEN-QUESTIONS.md`), measured with sim-test and bot careers:
+
+- **Trial noise shrinks with skill and machines** (`trialSd` in `sim/trial.js`, numbers in `TRIAL`): regulating skill 1 adds 25% noise, each level takes 6% off, down to 60% at the top; a finer timing machine cuts it (`timingRes^-0.4`: six-position x0.87, laboratory x0.76); Climate control x0.85. The app passes `trialTools()` (`app/test.js`) to `runTrial`, `runContest` and the Build capsule's `certOdds`. A chronometer candidate's Observatory odds go from 35% at any skill to 0% at skill 1, 35% at 5, 85% at 10; with the lab machine and Climate control, about 100%.
+- **Climate control** now steadies trials and the Kessel Peak contest (above), besides opening the laboratory timing machine.
+- **Kessel Peak**: rivals still improve 1.3% a year, but only for 20 years (`CALENDAR.trial.rivalYears`), and the player's own noise falls with skill. A strong player wins most years from the late 2010s; an average one places.
+- **Reputation fades half as fast**: `REP_GAIN.decay` 0.4% a week (0.8% before). Legendary is reachable.
+
 ## 1.0.2.2: career difficulty
 
 A difficulty audit ran 25 bot careers (an expert, a sloppy novice, repairs only, idle; both starts). Every expert that hired staff went broke, the 2008 start was harder than the 2000 one, one wrong repair cost five right ones in press reputation, and piece prices ran to six figures at walk-in so everything was done by year 5. Changes, measured with the same bots afterwards:

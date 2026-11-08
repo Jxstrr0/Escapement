@@ -93,7 +93,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: **euros** (`€4,850`, whole amounts; Kelbo, 1.0.2.3), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (1.0.2.3)
+## Current status (1.0.2.4)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
@@ -120,7 +120,8 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - 1.0.2.1: fixes from an audit. `openSheet` gives each sheet a fresh `#sheetBody` (listeners no longer pile up and act on an earlier watch or piece); the phone's Back button closes a sheet (`sheetHist`: one history entry, pushed when a sheet opens and reused by the next one); the tour no longer rewinds to step 6 on reload; commissions only take free pieces; the loan sheet is followed by the week's report; `c.lastWeek` and a Last week button; a low-cash warning on the Career card and a `bank` glossary entry; New game asks first when it would replace a career, and Settings has New game; upgrades say how much cash is short. Also: Close week re-asks the bank while cash is below zero (the loan sheet could be closed unanswered); the backup bar hides under an open sheet (`html.sheeton`); the tour's first card points at Close week when no repairs are in (a step's `alt`); the landscape coach card puts its buttons on their own row.
 - 1.0.2.2: career difficulty (from a bot audit): staff get more and bigger trade batches (`BIZ.tradeStaff`) and the Staff card shows their work against their hours; 2008 start €28,000, shop rent 520, the loan covers 12 weeks (`BIZ.loan.cover`); a wrong repair −0.2 press; `ECON.markupPrestige` .05 and walk-in buyers capped (`ECON.walkIn`, `walkInCap`); `SKILL_XP` slower at the top, R&D weeks ×1.5.
 - 1.0.2.3: money is shown in euros (`€4,850`, Kelbo) instead of Velmark thalers. Only `fmt$` and the wording changed; every price and save keeps its number.
-- **Paused: `docs/OPEN-QUESTIONS.md`** holds the balance and design questions from the 1.0.2.1 audit. Ask Kelbo before starting any of them.
+- 1.0.2.4: trials (open questions 2, 5, 6, 9): trial noise shrinks with regulating skill, a finer timing machine and Climate control (`trialSd`, `trialTools()`); rivals stop improving after 20 years (`CALENDAR.trial.rivalYears`); reputation fades 0.4% a week.
+- **Paused: `docs/OPEN-QUESTIONS.md`** holds the balance and design questions from the 1.0.2.1 audit, with Kelbo's decisions (2026-11-08) at the top. Next: 1.1.0.0 (ending, commission warning), 1.1.1.0 (free bench), 1.2.0.0 (staff skills, pitch first).
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)

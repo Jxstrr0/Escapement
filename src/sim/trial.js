@@ -31,8 +31,17 @@ const TRIAL={
   windT:12,          // h since winding: the trial winds every morning and reads the day's average
   noise:.8,          // s/day of daily scatter for a plain 28,800 bph movement with an index regulator
   noiseDrift:.5,     // extra scatter per unit of regulator drift (an index wanders, a micro-adjust stays put)
-  thermalNoise:.4    // the climate-box days (8 and 38 C) are steadier: their scatter is this share of the rest
+  thermalNoise:.4,   // the climate-box days (8 and 38 C) are steadier: their scatter is this share of the rest
+  /* the scatter is the watchmaker's too (1.0.2.4): a surer hand (regulating level), a finer timing machine and a
+     climate-controlled workshop each make a piece run steadier from day to day */
+  skillNoise:1.25,skillNoiseStep:.06,skillNoiseMin:.6,   // × at regulating level 1, less per level, never below the min
+  toolNoise:.4,      // × timingRes^-toolNoise: six-position machine ×0.87, laboratory ×0.76
+  climateNoise:.85   // × with Climate control (tools.climate)
 };
+function trialSd(P,m,skills,tools){const T=TRIAL,t=tools||{},L=lvl(skills,"regulating");
+  return T.noise*(1+P.regulator.drift*T.noiseDrift)*m.wrist/P.bph.rateStability
+    *Math.max(T.skillNoiseMin,T.skillNoise-T.skillNoiseStep*(L-1))
+    *Math.pow(Math.max(1,+t.timingRes||1),-T.toolNoise)*(t.climate?T.climateNoise:1);}
 /* the adjustment loop: what one press of each button does, and what it costs */
 const ADJ={
   regNoise:.25,regNoiseSkill:.025,   // a regulator nudge lands within this share of the step (level 1), less per level
@@ -55,7 +64,7 @@ function adjustPiece(kind,adjust,cfg,skills,n,seed){
 function runTrial(cfg,skills,tools,opts){
   opts=opts||{};
   const {P,m}=prepModel(cfg,skills,tools,opts),R=rng(opts.trialSeed!=null?opts.trialSeed:"trial");
-  const sd=opts.noNoise?0:TRIAL.noise*(1+P.regulator.drift*TRIAL.noiseDrift)*m.wrist/P.bph.rateStability;
+  const sd=opts.noNoise?0:trialSd(P,m,skills,tools);
   const days=TRIAL.days.map(([pos,temp])=>({pos,temp,rate:rateAt(m,pos,TRIAL.windT,temp)+gauss(R)*sd*(temp===23?1:TRIAL.thermalNoise)}));
   const ten=days.slice(0,10),mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
   const pairs=[0,2,4,6,8].map(i=>[ten[i].rate,ten[i+1].rate]);
@@ -80,7 +89,7 @@ function runTrial(cfg,skills,tools,opts){
 /* what to say about a trial: the certificate, or the first failure with a fix */
 const CERT_ADVICE={
   mean:(s,T)=>{const mid=(T.mean[0]+T.mean[1])/2,d=s.mean-mid;return `It ran ${d>0?"fast":"slow"}: ${(s.mean>=0?"+":"−")+Math.abs(s.mean).toFixed(1)} s/day on average. Regulate it about ${Math.abs(d).toFixed(0)} s/day ${d>0?"slower":"faster"}.`;},
-  maxVar:s=>`It wandered by up to ${s.maxVar.toFixed(1)} s/day from one day to the next. A micro-adjust regulator holds its setting better; a faster beat steadies it too.`,
+  maxVar:s=>`It wandered by up to ${s.maxVar.toFixed(1)} s/day from one day to the next. A micro-adjust regulator holds its setting better and a faster beat steadies it; so do more regulating skill, a finer timing machine and Climate control.`,
   posSpread:s=>`The rate changed by ${s.posSpread.toFixed(1)} s/day between positions. Poise the balance (and test in more positions if your timing machine can).`,
   thermal:s=>`Temperature moved it ${s.thermal.toFixed(2)} s/day for every degree. A steel hairspring can't do better; a self-compensating alloy or silicon spring can.`,
   beat:s=>`Beat error was ${s.beat.toFixed(2)} ms: the tick and the tock are uneven. Adjust the beat; a better regulator and more regulating skill get it lower.`,
@@ -127,7 +136,7 @@ function contestIndex(days){
 function runContest(cfg,skills,tools,opts){
   opts=opts||{};
   const {P,m}=prepModel(cfg,skills,tools,opts),R=rng(opts.trialSeed!=null?opts.trialSeed:"contest");
-  const sd=TRIAL.noise*(1+P.regulator.drift*TRIAL.noiseDrift)*m.wrist/P.bph.rateStability;
+  const sd=trialSd(P,m,skills,tools);
   const days=CONTEST.days.map(([pos,temp])=>({pos,temp,rate:rateAt(m,pos,TRIAL.windT,temp)+gauss(R)*sd*(temp===23?1:TRIAL.thermalNoise)}));
   const running=days.map((d,i)=>contestIndex(days.slice(0,i+1)).points);
   return{days,final:contestIndex(days),running};}

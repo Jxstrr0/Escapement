@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.0.2.3";
+const VERSION="1.0.2.4";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -43,7 +43,7 @@ const UPGRADES={
   shop:{name:"Own shop on the high street",cost:6500,rent:520,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent €520 a week."},
   window:{name:"Display window",cost:1400,needs:["shop"],demand:1.3,blurb:"Pieces in the window: more buyers stop."},
   bench2:{name:"Second bench",cost:2200,needs:["shop"],staff:1,blurb:"Room for one more watchmaker."},
-  climate:{name:"Climate control",cost:3200,needs:["shop"],blurb:"A steady workshop. Needed for the laboratory timing machine."},
+  climate:{name:"Climate control",cost:3200,needs:["shop"],blurb:"A steady workshop: pieces run steadier at the trials and the Kessel Peak contest. Needed for the laboratory timing machine."},
   "timing-lab":{name:"Laboratory timing machine",cost:9500,needs:["climate","timing-six"],blurb:"Six positions and a climate box at 8, 23 and 38 °C."},
   cnc:{name:"CNC mill",cost:24000,needs:["mill","shop"],batch:.6,blurb:"Fine-pitch trains and high-efficiency levers; trade batches take 40% less time."},
   cleanroom:{name:"Clean room",cost:16000,needs:["shop"],staff:1,blurb:"Dust-free assembly: room for one more watchmaker."}};
@@ -127,7 +127,7 @@ const RIVALS=[
    your old pieces can come up for resale once `resaleAfter` weeks have passed, and again `resaleGap` weeks after that). Weeks are 1-52 of each year */
 const CALENDAR={
   fair:{name:"Haldis Valley Fair",week:37,fee:450,show:3,buy:1.6,ahead:5},
-  trial:{name:"Kessel Peak Trial",open:8,close:18,back:24,fee:250,prizes:[6000,3000,1500],rivalGain:.013,rivalVar:.15},
+  trial:{name:"Kessel Peak Trial",open:8,close:18,back:24,fee:250,prizes:[6000,3000,1500],rivalGain:.013,rivalYears:20,rivalVar:.15},   // rivals improve rivalGain a year for rivalYears years, then hold
   sales:[{week:16,name:"Spring sale"},{week:46,name:"Winter sale"}],
   house:"Brugg & Lell",fee:.12,ahead:6,resaleAfter:26,resaleGap:104,resaleChance:.3,resaleMax:2,
   warranty:104};

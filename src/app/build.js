@@ -124,9 +124,9 @@ function renderBuildForm(){
 /* the capsule's certification cell: the best grade a careful hand gets this build through at least some of the time
    (SIM.certOdds: eight pieces, regulated, beat set, poised four times, at your skills and with your timing machine) */
 const oddsCache=new Map();
-function certCell(){const tool=typeof ownedTool==="function"?ownedTool():TOOLS["timing-basic"],sk=skillLvls();
-  const key=JSON.stringify(S.cfg)+"|"+JSON.stringify(sk)+"|"+tool.timingRes;let o=oddsCache.get(key);
-  if(!o){if(oddsCache.size>200)oddsCache.clear();o=SIM.certOdds(S.cfg,sk,{timingRes:tool.timingRes});oddsCache.set(key,o);}
+function certCell(){const tt=typeof trialTools==="function"?trialTools():{timingRes:1},sk=skillLvls();
+  const key=JSON.stringify(S.cfg)+"|"+JSON.stringify(sk)+"|"+JSON.stringify(tt);let o=oddsCache.get(key);
+  if(!o){if(oddsCache.size>200)oddsCache.clear();o=SIM.certOdds(S.cfg,sk,tt);oddsCache.set(key,o);}
   const pc=x=>Math.round(x*100)+"%";
   if(o.observatory>0)return `Obs <small>${pc(o.observatory)}</small>`;
   if(o.chronometer>0)return `BCH <small>${pc(o.chronometer)}</small>`;
