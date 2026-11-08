@@ -2,6 +2,15 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.1.1.0: more workshop sounds
+
+Ten sounds made with ElevenLabs on Kelbo's plan (`sounds/CREDITS.md`), played by `WORKSHOP_SOUND` like the first six:
+a stamp and bell when a trial's sheet shows a pass, a thud and paper for a fail, the gavel when your lot is knocked down
+(then the till), tool clicks on each adjusting press, the crown winding on Full wind, a crate when you take a trade batch,
+a machine starting when you buy one (`BUY_SOUND.machine`). Three new quiet loops join the ambience: staff at their
+benches once you employ someone, the fair's crowd in fair week, and rain on the window with the new **Rain on the
+window** setting (`S.rain`, in `esc-save`, kept when loading a slot).
+
 ## 1.1.0.0: the career summary and the commission warning
 
 Answers to open questions 8 and 4.

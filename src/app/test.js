@@ -182,7 +182,7 @@ TAB_RENDER.test=function(){renderTest();tgStart();};
 TAB_LEAVE.test=tgStop;
 
 function levelToast(k,l){if(l)toast(`${SKILLS[k].name} up to level ${l}.`);}
-function adjDone(kind,n){const p=curPiece(),k=kind==="poise"?"poising":"regulating";hud();
+function adjDone(kind,n){const p=curPiece(),k=kind==="poise"?"poising":"regulating";hud();sfx("tool");
   p.hours+=SIM.hoursFor(kind);levelToast(k,gainXp(k,SIM.ADJ.xp[kind]));
   save();const was=TG.st;renderTest();tickSet();
   tgMark(kind==="reg"?sgn(TG.st.rate-was.rate,1):kind==="beat"?"beat":"poise");}
@@ -197,7 +197,7 @@ onTap("tgPos",e=>{const b=e.target.closest("[data-pos]");if(!b)return;
   if(b.classList.contains("lock")){toast(`Needs the ${toolFor(t=>t.positions.length>1).name.toLowerCase()} (Shop).`);return;}
   if(S.tg.pos===b.dataset.pos)return;S.tg.pos=b.dataset.pos;save();renderTest();tickSet();tgMark(S.tg.pos);});
 onTap("tgTemp",e=>{const b=e.target.closest("[data-temp]");if(!b)return;S.tg.temp=+b.dataset.temp;save();renderTest();tgMark(b.dataset.temp+"°");});
-onTap("tgWind",e=>{const b=e.target.closest("[data-wind]");if(!b)return;S.tg.wind=+b.dataset.wind;save();renderTest();tickSet();tgMark(S.tg.wind?"24 h":"wound");});
+onTap("tgWind",e=>{const b=e.target.closest("[data-wind]");if(!b)return;S.tg.wind=+b.dataset.wind;if(!S.tg.wind)sfx("wind");save();renderTest();tickSet();tgMark(S.tg.wind?"24 h":"wound");});
 onTap("tgLift",e=>{const b=e.target.closest("[data-lift]");if(!b)return;S.tg.lift=+b.dataset.lift;save();renderTest();});
 onTap("tgSnd",()=>{S.sound=!S.sound;save();renderTest();tickSet();});
 
@@ -226,7 +226,7 @@ function fixHtml(res){const bad=res.checks.filter(c=>!c.ok&&certFixes(c.k).lengt
   const later=inCareer()&&bad.some(c=>certFixes(c.k).some(f=>f.tab==="build"));
   return `<div class="fixes"><h4>Where to fix it</h4>${bad.map(c=>`<div class="fixrow"><span>${c.label}</span><div class="row">${certFixes(c.k).map((f,i)=>`<button type="button" class="btn sm" data-fix="${c.k}:${i}">${f.label} →</button>`).join("")}</div></div>`).join("")}
 ${later?`<p class="hint">Build rows change your next piece: this one's parts are fixed. Regulate, Adjust beat and Poise work on this one.</p>`:""}</div>`;}
-function trialSheet(t,id){const C=SIM.CERT[id],res=t.tiers[id];
+function trialSheet(t,id){const C=SIM.CERT[id],res=t.tiers[id];sfx(res.pass?"pass":"fail");
   const days=t.days.map((d,i)=>`<tr><td>${i+1}</td><td>${POS_NAME[d.pos]}</td><td>${d.temp} °C</td><td>${sgn(d.rate)}</td></tr>`).join("");
   openSheet(id==="bench"?"Bench check":`${C.name} trial`,`
 <p class="verdict ${res.pass?"pass":"fail"}">${res.pass?"✓ ":"✖ "}${SIM.verdict(t,id)}</p>

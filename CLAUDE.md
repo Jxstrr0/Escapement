@@ -9,7 +9,7 @@ Sister project: Prairie Engine Works (`Jxstrr0/350Chev`). The stack, build scrip
 - Plain HTML, CSS and classic (non-module) JavaScript in a few big `<script>` blocks. No package.json, no npm, no bundler, no CI. The node scripts below are the only checks.
 - three.js **r128** from cdnjs. The bloom addons for Ultra come from jsdelivr `three@0.128.0` (the `ESC_LIBS` list in `src/html/body.html`, loaded on demand through `window.__escPost`; a Lite phone never loads them). Google Fonts: Space Grotesk (UI) and JetBrains Mono (readouts). Nothing else external.
 - PWA: `manifest.webmanifest`, `icons/`, and the generated `sw.js`. Installed copies work offline.
-- Assets: CC0 and CC-BY assets are fine. Every one gets a line in a `CREDITS.md` next to its folder (`sounds/CREDITS.md`, `models/CREDITS.md`, `textures/CREDITS.md`); ask Kelbo when a licence is unclear.
+- Assets: CC0 and CC-BY assets are fine, and so are sounds Kelbo has made with ElevenLabs on his paid plan (quote the credits and wait for a yes before generating). Every one gets a line in a `CREDITS.md` next to its folder (`sounds/CREDITS.md`, `models/CREDITS.md`, `textures/CREDITS.md`); ask Kelbo when a licence is unclear.
 - Node 16 or newer for the scripts (22 is what was last used). Nothing to install. `tools/make-icons.js` needs Playwright (run by hand; output is committed).
 - The props made in Blender (PR 9) are Python scripts in `tools/blender/` (`python3 tools/blender/all.py`; needs `pip install bpy`, Pillow and numpy). Run by hand; the `.glb` files they write to `models/` are committed. Never edit a model by hand: change its script.
 
@@ -93,7 +93,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: **euros** (`€4,850`, whole amounts; Kelbo, 1.0.2.3), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (1.1.0.0)
+## Current status (1.1.1.0)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
@@ -122,7 +122,8 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - 1.0.2.3: money is shown in euros (`€4,850`, Kelbo) instead of Velmark thalers. Only `fmt$` and the wording changed; every price and save keeps its number.
 - 1.0.2.4: trials (open questions 2, 5, 6, 9): trial noise shrinks with regulating skill, a finer timing machine and Climate control (`trialSd`, `trialTools()`); rivals stop improving after 20 years (`CALENDAR.trial.rivalYears`); reputation fades 0.4% a week.
 - 1.1.0.0: the career summary at 2031 week 1 (`c.ended`, `endSheet` in `app/cards.js`, Keep going, a Career summary button after), the career record `S.career.life` (`normLife`, `lifeSale` in `app/calendar.js`), and the commission warning (`deliverAsk`, `BIZ.warnOver` 2).
-- **Paused: `docs/OPEN-QUESTIONS.md`** holds the balance and design questions from the 1.0.2.1 audit, with Kelbo's decisions (2026-11-08) at the top. Next: 1.0.3.0 (ElevenLabs sounds), 1.1.1.0 (free bench), 1.2.0.0 (staff skills, pitch first).
+- 1.1.1.0: ten ElevenLabs sounds (pass, fail, gavel, tool, wind, crate, newmachine; staff, fair and rain loops) in `WORKSHOP_SOUND`, and a Rain on the window setting (`S.rain`).
+- **Paused: `docs/OPEN-QUESTIONS.md`** holds the balance and design questions from the 1.0.2.1 audit, with Kelbo's decisions (2026-11-08) at the top. Next: 1.1.2.0 (free bench), 1.2.0.0 (staff skills, pitch first).
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)
