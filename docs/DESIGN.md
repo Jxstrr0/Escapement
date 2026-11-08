@@ -2,6 +2,18 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.1.2.0: the bench is free during a trial
+
+Sending a piece to the Bureau or the Observatory takes it off the bench (`c.away`, inside `esc-save`), so the next piece
+can be made while it is away. When it comes back it goes onto the bench if the bench is free; if not, it waits in the
+Shop's On your bench card, where a certified piece can be cased straight away (`caseSheet(id)`, `casePiece(caseId, id)`)
+and any piece can go **To the bench** once the bench is free (`shelfToBench`). The card lists pieces at a trial with the
+week they come back, and the Bench's This week list names them too. Older saves with a piece at a trial on the bench move
+it to `c.away` on load. The week report's **See the trial result** button now shows only in the week a result comes back
+(`p.backWk`); the result stays on the Test tab and the Shop card. Sounds: audio now unlocks on every gesture event
+(`GESTURES` in `app/test.js`: pointerup and touchend as well as pointerdown, click, keydown), since browsers count a
+finger's tap on its release.
+
 ## 1.1.1.0: more workshop sounds
 
 Ten sounds made with ElevenLabs on Kelbo's plan (`sounds/CREDITS.md`), played by `WORKSHOP_SOUND` like the first six:

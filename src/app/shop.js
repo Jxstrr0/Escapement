@@ -25,6 +25,10 @@ function benchCard(){const c=car(),p=c.bench;let t;
   if(!p)t=`<p>Your bench is free. Design a movement on the Build tab and press <b>Make this piece</b>.</p>`;
   else{const j=pieceJob();t=`<p><b>${pieceName(p.cfg,p.no)}</b><br>${!p.made?`Being assembled: ${fmtN(j?j.h:0,0)} h left.`:p.trial?`At the ${SIM.CERT[p.trial.tier].body}, back ${whenTxt(p.trial.back-1)}.`:p.cert?`${SIM.CERT[p.cert].name}. Ready to case.`:"Assembled: adjust it and give it a Bench check on the Test tab."}</p>
 ${p.made&&!p.trial?`<div class="row">${p.cert?`<button class="btn pri" data-sh="case">Case it…</button>`:""}<button class="btn" data-sh="test">Test tab</button></div>`:""}`;}
+  /* pieces off the bench (1.1.2.0): at a trial, or back and waiting for the bench */
+  if(c.away.length)t+=`<ul class="shlist">${c.away.map(x=>`<li><div><b>${pieceName(x.cfg,x.no)}</b><br><small>${x.trial?`At the ${SIM.CERT[x.trial.tier].body} for its ${SIM.CERT[x.trial.tier].name} trial, back ${whenTxt(x.trial.back-1)}.`
+    :`Back from the ${x.lastTrial?SIM.CERT[x.lastTrial.tier].body:"trial"}: ${x.lastTrial&&x.lastTrial.best?`certified ${SIM.CERT[x.lastTrial.best].name}`:"refused"}.${p?" Waiting for your bench.":""}`}</small></div>
+${x.trial?"":`<div class="acts">${x.lastTrial?`<button class="btn sm" data-sh="awres" data-id="${x.id}">Result</button>`:""}${x.cert?`<button class="btn sm${p?" pri":""}" data-sh="case" data-id="${x.id}">Case it…</button>`:""}<button class="btn sm${p?"":" pri"}" data-sh="tobench" data-id="${x.id}"${p?" disabled":""}>To the bench</button></div>`}</li>`).join("")}</ul>`;
   return `<div class="card"><h3>On your bench</h3>${t}</div>`;}
 function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand(),sn=saleNext(),cc=canConsign();
   return `<div class="card"><h3>In stock<span class="cnt">${c.stock.length}</span></h3><ul class="shlist stk">${c.stock.map(x=>{const pr=x.price/x.value-1;
@@ -79,8 +83,10 @@ $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]"
   if(k==="new")newGameSheet();
   if(k==="tg"){S.tgOn={kind:"repair",id:+id};save();showTab("test");}
   if(k==="fix")fixSheet(+id);
-  if(k==="case")caseSheet();
+  if(k==="case")caseSheet(id);
   if(k==="test")showTab("test");
+  if(k==="tobench"&&shelfToBench(id)){toast("On your bench.");shopChanged();}
+  if(k==="awres"){const x=car().away.find(p=>p.id===+id);if(x&&x.lastTrial){x.seen=true;save();trialSheet(x.lastTrial.t,x.lastTrial.tier);}}
   if(k==="dealer"){const x=stockBy(id);if(x)confirmSheet(`Sell ${x.name} to the dealer?`,`He pays ${fmt$(dealerPrice(x))} now. In stock it's worth ${fmt$(x.value)}.`,"Sell it",()=>{sellPiece(x,dealerPrice(x),"the dealer","dealer");save();shopChanged();});}
   if(k==="deliver")deliverAsk(id,b.dataset.pc);
   if(k==="lot")lotSheet(+id);
@@ -110,15 +116,15 @@ function fixSheet(id){const r=repairBy(id);if(!r)return;
 <p class="hint">The fix goes into the work in hand: Close week to do it. If it wasn't the fault, the watch comes back still wrong.</p>`);
   $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-fix]");if(!b)return;startFix(id,b.dataset.fix);
     if(S.tgOn&&S.tgOn.id===id)S.tgOn=null;save();closeSheet();toast(`${FAULTS[b.dataset.fix].fix}: in the work in hand.`);shopChanged();});}
-/* case a finished piece: the cases that take this movement, the value in each */
-function caseSheet(){const c=car(),p=c.bench;if(!p)return;const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});
+/* case a finished piece (the bench piece, or one back from a trial and waiting: id): the cases that take this movement, the value in each */
+function caseSheet(id){const c=car(),p=id!=null&&id!==""?shelfBy(id):c.bench;if(!p)return;if(id==="")id=null;const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});
   const ok=c.orders.map(o=>tplOf(o.tpl)),fin=SIM.eraMult(c.year,"finish");
   openSheet(`Case No. ${p.no}`,`<p>${pieceName(p.cfg,p.no)} · ${SIM.CERT[p.cert].name} · movement ${r.thickness.toFixed(1)} mm</p>
 <ul class="shlist fixes">${Object.keys(CASES).map(id=>{const cs=CASES[id],fits=r.thickness<=cs.maxMove,lock=cs.needs&&!upOwned(cs.needs),v=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
   const forO=ok.filter(t=>specOk(t.spec,{cfg:p.cfg,r,cert:p.cert,caseId:id,thick:+(r.thickness+cs.thick).toFixed(1)}));
   return `<li class="${fits&&!lock?"":"own"}"><div><b>${cs.name}</b><br><small>${fmt$(cs.cost)} · ${(r.thickness+cs.thick).toFixed(1)} mm cased · value ${fmt$(v)}${!fits?` · too thick: takes ${cs.maxMove} mm at most`:lock?" · needs your own shop":""}</small>${forO.length?`<br><small class="good">Fits: ${forO.map(t=>t.title.toLowerCase()).join(", ")}</small>`:""}</div>
 <div class="acts"><button class="btn sm" data-case="${id}"${!fits||lock||c.cash<cs.cost?" disabled":""}>Case</button></div></li>`;}).join("")}</ul>`);
-  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-case]");if(!b)return;if(casePiece(b.dataset.case)){closeSheet();shopChanged();}});}
+  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-case]");if(!b)return;if(casePiece(b.dataset.case,id!=null?id:null)){closeSheet();shopChanged();}});}
 /* consign a stock piece to the next auction night, with a reserve */
 function lotSheet(id){const x=stockBy(id),sn=saleNext();if(!x||!sn)return;
   const est=lotEst(x);
