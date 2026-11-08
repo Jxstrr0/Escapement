@@ -7,7 +7,8 @@
      once (c.used); what is left at Close week goes into the jobs (c.jobs, first in first out): assembling your piece,
      repairs, trade batches. Staff work repairs and trade only.
    - Pieces: Make (Build tab) pays for the parts and queues the assembly. Once made it goes on the timegrapher (c.bench),
-     you adjust it, check or certify it (a Bureau or Observatory trial takes weeks and a fee), then case it (CASES) and it
+     you adjust it, check or certify it (a Bureau or Observatory trial takes weeks and a fee;
+     the piece leaves the bench for c.away meanwhile, and comes back to the bench, or waits there if the bench is busy), then case it (CASES) and it
      goes into stock (c.stock) at a price, or to a commission that fits.
    - closeWeek(): jobs, sales, trials coming back, deadlines, the calendar's events and service returns (app/calendar.js),
      wages and rent, new repairs and offers, news; then the week report.
@@ -24,7 +25,7 @@ const pick=(R,a)=>a[Math.floor(R()*a.length)%a.length];
 function newCareer(kind){
   const st=BIZ.starts[kind]||BIZ.starts.bench,seed=Math.random().toString(36).slice(2,8);
   const c={kind,seed,start:st.year,year:st.year,week:1,wk:0,cash:st.cash,used:0,up:{},unlocks:{},xp:{},seq:0,
-    loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
+    loan:null,loanUsed:false,over:false,bench:null,away:[],made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
     staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",tutStep:kind==="shop"?null:0,tutRep:null,
     rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,
     rnd:{done:{},run:[]},calibres:[],certsLog:[],ended:null,life:{sold:0,best:null,place:null,wins:0}};
@@ -52,6 +53,8 @@ function normCareer(c){if(!buObjS(c))return null;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
   c.stock=c.stock.filter(x=>buObjS(x)&&buObjS(x.cfg)&&CASES[x.caseId]);c.jobs=c.jobs.filter(j=>buObjS(j)&&+j.h>0);
   if(c.bench&&!(buObjS(c.bench)&&buObjS(c.bench.cfg)))c.bench=null;
+  c.away=(Array.isArray(c.away)?c.away:[]).filter(p=>buObjS(p)&&buObjS(p.cfg));   // pieces at a Bureau or Observatory trial, or back and waiting
+  if(c.bench&&c.bench.trial){c.away.push(c.bench);c.bench=null;}   // before 1.1.2.0 a piece at a trial stayed on the bench
   c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min((typeof TUT!=="undefined"?TUT.length:16)-1,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
   c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
   c.certsLog=normCertsLog(c.certsLog);   // certificates (app/cards.js)
@@ -174,15 +177,19 @@ function sendTrial(tier){const c=car(),p=c.bench,C=SIM.CERT[tier];if(!p||!p.made
   if(!pay(C.fee,`${C.name} trial for No. ${p.no}`))return false;
   const tool=ownedTool(),t=SIM.runTrial(p.cfg,skillLvls(),trialTools(),{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
   p.trial={tier,back:c.wk+C.weeks,best:t.tiers[tier].pass?tier:null,t:{days:t.days,stats:t.stats,tiers:{[tier]:t.tiers[tier]}}};
+  c.away.push(p);c.bench=null;   // off the bench (1.1.2.0): the next piece can start while this one is away
   save();return true;}
-/* case it and put it in stock (needs at least a Bench pass) */
-function casePiece(caseId){const c=car(),p=c.bench,cs=CASES[caseId];if(!p||!p.cert||!cs)return false;
+/* a piece back from a trial that waited because the bench was busy: onto the bench once it is free */
+function shelfBy(id){return car().away.find(p=>p.id===+id&&!p.trial);}
+function shelfToBench(id){const c=car(),p=shelfBy(id);if(!p||c.bench)return false;c.away=c.away.filter(x=>x!==p);c.bench=p;save();return true;}
+/* case it and put it in stock (needs at least a Bench pass): the bench piece, or one back from a trial and waiting (id) */
+function casePiece(caseId,id){const c=car(),p=id!=null?shelfBy(id):c.bench,cs=CASES[caseId];if(!p||!p.cert||!cs)return false;
   const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});if(r.thickness>cs.maxMove){toast("The movement is too thick for that case.");return false;}
   if(!pay(cs.cost,`${cs.name.split(",")[0].toLowerCase()} for No. ${p.no}`))return false;
   const fin=SIM.eraMult(c.year,"finish"),value=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
   c.stock.push({id:p.id,no:p.no,name:pieceName(p.cfg,p.no),cfg:p.cfg,seed:p.seed,adjust:p.adjust,cert:p.cert,caseId,value,price:value,since:c.wk,
     thick:+(r.thickness+cs.thick).toFixed(1),r:{reserveH:r.reserveH,prestige:r.prestige,amp24:r.amp24,cost:r.cost}});
-  c.bench=null;S.tgOn=null;checkGoals();save();toast(`No. ${p.no} is cased and in stock at ${fmt$(value)}.`);return true;}
+  if(c.bench===p){c.bench=null;S.tgOn=null;}else c.away=c.away.filter(x=>x!==p);checkGoals();save();toast(`No. ${p.no} is cased and in stock at ${fmt$(value)}.`);return true;}
 function stockBy(id){return car().stock.find(x=>x.id===+id);}
 function sellPiece(pc,price,to,how){const c=car();sfx("sale");c.stock=c.stock.filter(x=>x!==pc);earn(price,`${pc.name} sold${to?" to "+to:""}`);
   c.sold.push(soldRow(pc,price,to,how));if(c.sold.length>60)c.sold.shift();}
@@ -212,10 +219,11 @@ function closeWeek(){
   for(let b=0;b<buyers;b++){let best=null,bv=0;for(const pc of c.stock){if(!pieceFree(pc))continue;const v=pc.value/pc.price;if(v>bv){bv=v;best=pc;}}
     if(best&&R()<SIM.buyChance(best.value,best.price,walkCap())){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);addRep(saleGain(best),rep);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
   /* 3. trials coming back */
-  const p=c.bench;if(p&&p.trial&&c.wk+1>=p.trial.back){const T=p.trial,C=SIM.CERT[T.tier];
+  for(const p of c.away.slice()){if(!p.trial||c.wk+1<p.trial.back)continue;const T=p.trial,C=SIM.CERT[T.tier];
     if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;addRep(REP_GAIN.cert[T.tier],rep);certLog(p,T);}
-    rep.push(T.best?`No. ${p.no} is back from the ${C.body}: certified ${C.name}.`:`No. ${p.no} is back from the ${C.body}: refused. See the Test tab.`);
-    p.lastTrial=T;p.trial=null;p.seen=false;}
+    p.lastTrial=T;p.trial=null;p.seen=false;p.backWk=c.wk+1;
+    const free=!c.bench;if(free){c.away=c.away.filter(x=>x!==p);c.bench=p;}   // back onto the bench, or it waits in the Shop until the bench is free
+    rep.push(`No. ${p.no} is back from the ${C.body}: ${T.best?`certified ${C.name}`:"refused"}.${free?(T.best?"":" See the Test tab."):` It waits in the Shop (On your bench) until your bench is free${T.best?", or case it from there":""}.`}`);}
   /* 3b. R&D projects finishing (app/rnd.js) */
   rndClose(rep);
   /* 4. deadlines */

@@ -10,7 +10,7 @@ Found by the 1.0.2.1 audit (code review, design check, playthrough, 15-year mone
 - 9: Climate control steadies trial results. **Done in 1.0.2.4.**
 - 8: a career summary at 2031 week 1 with Keep going. **Done in 1.1.0.0.**
 - 4: warn before delivering a commission piece worth more than twice what the customer pays. **Done in 1.1.0.0.**
-- 10: the bench is free while a piece is at a trial. Planned for 1.1.2.0.
+- 10: the bench is free while a piece is at a trial. **Done in 1.1.2.0.**
 - 12: staff get skill profiles. Planned for 1.2.0.0 (details to be pitched first).
 - 11: no "hand the batch back". Closed.
 
@@ -40,5 +40,5 @@ Done in 1.0.2.2 (career difficulty, see `docs/DESIGN.md`): 1 (prestige markup ha
 - A "What's new" note after an update; haptics on Close week and sales; a toast when offline.
 - Name a piece or the workshop (only calibres can be named).
 - Fonts are all in px, so the phone's text-size setting doesn't change them (pinch zoom works).
-- "See the trial result" repeats in every week report until tapped.
+- ~~"See the trial result" repeats in every week report until tapped.~~ Done in 1.1.2.0.
 - Docs drift: CLAUDE.md says 12 TEST_BUILDS (13 now) and 50 part options (55); `src/README.md` misses `setRoom`, `roomSpec`, `wsSync`, `sfx`.

@@ -92,7 +92,9 @@ function tgStart(){if(!TG.cv){TG.cv=$("tgCv");TG.cx=TG.cv.getContext("2d");TG.R=
 function tgStop(){if(TG.raf)cancelAnimationFrame(TG.raf);TG.raf=0;WATCH_SOUND.stop();}
 function tickSet(){const st=TG.st||tgState();WATCH_SOUND.set({bph:st.bph,beatMs:st.beat,on:!!S.sound&&!st.stopped&&curTab==="test"&&!document.hidden});}
 /* browsers only start audio from a tap: the first tap anywhere while the Test tab is open starts the tick */
-document.addEventListener("pointerdown",()=>{if(curTab==="test"&&S.sound&&!document.hidden){WATCH_SOUND.unlock();tickSet();}},{passive:true,capture:true});
+/* the gesture events that may start audio (a finger counts on pointerup / touchend, a mouse on pointerdown); app/bench.js uses them too */
+const GESTURES=["pointerdown","pointerup","touchend","click","keydown"];
+for(const ev of GESTURES)document.addEventListener(ev,()=>{if(curTab==="test"&&S.sound&&!document.hidden){WATCH_SOUND.unlock();tickSet();}},{passive:true,capture:true});
 document.addEventListener("visibilitychange",()=>{if(curTab!=="test")return;if(document.hidden)tgStop();else tgStart();});
 window.addEventListener("resize",()=>{if(curTab==="test")tgSize();});
 
@@ -242,7 +244,7 @@ onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
   const id=b.dataset.cert,C=SIM.CERT[id],p=curPiece(),tool=ownedTool();
   if(inCareer()&&id!=="bench"){
     openSheet(`Send No. ${p.no} for trial`,`<p>The ${C.body} keeps it for ${C.weeks} weeks: fifteen days of timing, then the paperwork. The fee is ${fmt$(C.fee)}, pass or fail.</p>
-<p class="hint">You have ${fmt$(car().cash)}. While it's away your bench waits for it: work on repairs, trade and R&D.</p>
+<p class="hint">You have ${fmt$(car().cash)}. Your bench is free while it's away: start the next piece, or work on repairs, trade and R&D.</p>
 <div class="row"><button class="btn pri" id="trialGo">Send it (${fmt$(C.fee)})</button><button class="btn" id="trialNo">Not yet</button></div>`);
     $("trialNo").addEventListener("click",closeSheet);
     $("trialGo").addEventListener("click",()=>{if(sendTrial(id)){closeSheet();hud();renderTest();toast(`No. ${p.no} is on its way to the ${C.body}.`);}});
