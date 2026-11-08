@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.1.0.0";
+const VERSION="1.1.1.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -221,7 +221,7 @@ const BIZ={benchRent:140,keep:260,hoursWeek:45,staffHours:40,repairsWeek:1.8,rep
 
 /* ---- state ---- */
 const START_YEAR=2000,END_YEAR=2030;   // the first week of END_YEAR+1 brings the career summary (app/cards.js); the game goes on after it
-function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,reduce:null,sound:true,wsound:true,tab:"bench",
+function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,reduce:null,sound:true,wsound:true,rain:false,tab:"bench",
   cfg:Object.assign({},SIM.DEFAULT_CFG),career:null,
   xp:{},piece:null,tgOn:null,tg:{pos:"DU",temp:23,wind:0,lift:52},cals:[],dialCase:"steel-dress"};}   // dialCase: the case tried on the Bench's Dial side view (app/bench.js)   // cals: the Sandbox's calibres (a career keeps its own in S.career.calibres)   // tgOn: a customer's watch on the timegrapher ({kind:"repair",id}) instead of your piece   // xp: skill XP outside a career; piece: the movement on the timegrapher (app/test.js); tg: its settings
 let S=freshState();

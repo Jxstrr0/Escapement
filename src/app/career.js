@@ -81,7 +81,7 @@ function brokeSheet(){const c=car();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTa
   $("brNew").addEventListener("click",newGameSheet);$("brNo").addEventListener("click",closeSheet);}
 
 /* ---- save slots: a whole game each. Loading keeps this device's settings (theme, graphics, motion, sound) ---- */
-const KEEP_SETTINGS=["seen","theme","gfx","gfxAuto","reduce","sound","wsound","lastBackup"];
+const KEEP_SETTINGS=["seen","theme","gfx","gfxAuto","reduce","sound","wsound","rain","lastBackup"];
 function slotRead(i){try{const j=localStorage.getItem(slotKey(i));if(!j)return null;const o=JSON.parse(j);return buObjS(o)&&buObjS(o.cfg)?o:null;}catch(e){return null;}}
 function slotMeta(i){const o=slotRead(i);if(!o)return null;const c=o.career;
   return{what:c?`${c.over?"a closed workshop":"a career"}, ${c.year||START_YEAR} week ${c.week||1}, ${fmt$(c.cash||0)}`:"the Sandbox",at:o.savedAt};}

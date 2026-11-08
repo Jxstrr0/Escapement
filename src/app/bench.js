@@ -18,8 +18,9 @@ function roomSpec(){const c=car();
 function roomSync(){wsSync();if(!window.WATCH_VIS||!WATCH_VIS.setRoom)return;try{WATCH_VIS.setRoom(roomSpec());}catch(e){}}
 /* the workshop sounds (sound/workshop.js): on with the setting; the ambience rests while the page is hidden and under the
    timegrapher's tick on the Test tab; the cleaning machine runs once you own one. sfx(name) plays a one-shot */
-function wsSync(){if(typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.set({on:S.wsound!==false,amb:!document.hidden&&!(curTab==="test"&&S.sound),room:{cleaning:!!roomSpec().has.cleaning}});}catch(e){}}
-function sfx(name){if(S.wsound===false||typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.play(name);}catch(e){}}
+function wsSync(){if(typeof WORKSHOP_SOUND==="undefined")return;try{const c=car();WORKSHOP_SOUND.set({on:S.wsound!==false,amb:!document.hidden&&!(curTab==="test"&&S.sound),rain:S.rain===true,
+    room:{cleaning:!!roomSpec().has.cleaning,staff:!!(c&&c.staff.length),fair:!!(c&&c.week===CALENDAR.fair.week)}});}catch(e){}}
+function sfx(name,delay){if(S.wsound===false||typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.play(name,delay);}catch(e){}}
 document.addEventListener("visibilitychange",wsSync);
 document.addEventListener("pointerdown",()=>{if(S.wsound!==false&&typeof WORKSHOP_SOUND!=="undefined"){WORKSHOP_SOUND.unlock();wsSync();}},{passive:true,capture:true});
 function visSync(){

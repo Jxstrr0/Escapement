@@ -32,6 +32,7 @@ function openSettings(){
 <div class="field"><span class="lbl">Motion</span>${segHtml("reduceSeg","reduce",[["auto","Auto","follow phone"],["1","Reduced"],["0","Full"]],S.reduce==null?"auto":S.reduce?"1":"0")}</div>
 <div class="field"><span class="lbl">Tick</span>${segHtml("sndSeg","snd",[["1","On","the watch on the Test tab"],["0","Off"]],S.sound===false?"0":"1")}</div>
 <div class="field"><span class="lbl">Workshop sounds</span>${segHtml("wsndSeg","wsnd",[["1","On","bell, till, clock, room"],["0","Off"]],S.wsound===false?"0":"1")}</div>
+<div class="field"><span class="lbl">Rain on the window</span>${segHtml("rainSeg","rain",[["1","On","with workshop sounds"],["0","Off"]],S.rain===true?"1":"0")}</div>
 <div class="field"><span class="lbl">Help</span><div class="row"><button class="btn" id="setHelp">Help and glossary</button>${inCareer()&&!car().over?`<button class="btn" id="setTour">Take the tour</button>`:""}</div></div>
 <div class="field"><span class="lbl">Game</span><div class="row"><button class="btn" id="setNew">New game…</button></div></div>
 <div class="field"><span class="lbl">Saves</span><div class="row"><button class="btn" id="setBackup">Back up</button><button class="btn" id="setRestore">Restore</button></div>
@@ -45,6 +46,7 @@ ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"
   pick("themeSeg","theme",v=>{S.theme=v;applyTheme();});
   pick("sndSeg","snd",v=>{S.sound=v==="1";if(curTab==="test"){WATCH_SOUND.unlock();TAB_RENDER.test();}wsSync();});
   pick("wsndSeg","wsnd",v=>{S.wsound=v==="1";wsSync();if(S.wsound){WORKSHOP_SOUND.unlock();sfx("door");}});   // a bell to show it works
+  pick("rainSeg","rain",v=>{S.rain=v==="1";wsSync();if(S.rain&&S.wsound!==false)WORKSHOP_SOUND.unlock();});
   pick("reduceSeg","reduce",v=>{S.reduce=v==="auto"?null:v==="1";applyReduce();});
   $("setHelp").addEventListener("click",()=>helpSheet());$("setNew").addEventListener("click",()=>newGameSheet());if($("setTour"))$("setTour").addEventListener("click",()=>{closeSheet();tutStart(true);});   // app/help.js
   $("setBackup").addEventListener("click",buBackupOpen);
