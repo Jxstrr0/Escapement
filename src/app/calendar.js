@@ -23,7 +23,7 @@ const REP_GAIN={
   fair:{press:2},fairPiece:{collectors:1},
   auction:{collectors:2},resaleUp:{collectors:.5},
   ret:{press:-2,collectors:-1},
-  max:150,decay:.008};                              // every week each track loses this share: a name has to be kept up
+  max:150,decay:.004};                              // every week each track loses this share: a name has to be kept up (.008 before 1.0.2.4)
 let calFx={};
 const repOf=k=>{const c=car();return c&&c.rep?(+c.rep[k]||0):0;};
 function repTier(k){const p=repOf(k);let t=0;REP_TIERS.forEach((T,i)=>{if(p>=T.at)t=i;});return t;}
@@ -69,11 +69,11 @@ function trialState(){const c=car(),T=CALENDAR.trial,e=c.contest&&c.contest.year
 function enterTrial(id){const c=car(),T=CALENDAR.trial,pc=stockBy(id);if(!pc||!pieceFree(pc)||!trialState().open)return false;
   if(!pay(T.fee,`entry to the ${T.name}`))return false;pc.away="trial";c.contest={year:c.year,id:pc.id,no:pc.no,name:pc.name,res:null,seen:false};
   addRep(REP_GAIN.trialEntry);save();toast(`No. ${pc.no} goes up to Kessel Peak. Results in week ${T.back}.`);return true;}
-function rivalPoints(rv,year,R){const T=CALENDAR.trial,g=Math.pow(1-T.rivalGain,Math.max(0,year-2000));
+function rivalPoints(rv,year,R){const T=CALENDAR.trial,g=Math.pow(1-T.rivalGain,Math.min(T.rivalYears,Math.max(0,year-2000)));
   const idx=Math.max(.8,rv.trial*g*(1+T.rivalVar*(R()+R()+R()-1.5)*1.4));return Math.round(1000*Math.exp(-idx/SIM.CONTEST.scale));}
 function trialClose(lines){const c=car(),T=CALENDAR.trial,e=c.contest;if(!e||e.year!==c.year||e.res||c.week!==T.back)return;
   const pc=stockBy(e.id);if(!pc){c.contest=null;return;}pc.away=null;
-  const t=SIM.runContest(pc.cfg,skillLvls(),{timingRes:ownedTool().timingRes},{seed:pc.seed,adjust:pc.adjust,trialSeed:pc.seed+"k"+c.year});
+  const t=SIM.runContest(pc.cfg,skillLvls(),trialTools(),{seed:pc.seed,adjust:pc.adjust,trialSeed:pc.seed+"k"+c.year});
   const R=weekRng("contest"),field=RIVALS.map(rv=>({id:rv.id,name:rv.name,points:rivalPoints(rv,c.year,R)}));
   field.push({id:"me",name:"You: No. "+pc.no,points:t.final.points});field.sort((a,b)=>b.points-a.points);
   const place=field.findIndex(f=>f.id==="me")+1,prize=T.prizes[place-1]||0;
