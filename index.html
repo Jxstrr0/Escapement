@@ -2667,7 +2667,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.0.2.4";
+const VERSION="1.1.0.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -2876,10 +2876,11 @@ const RND_SLOTS={base:1,extra:["cleanroom"],extraStaff:"master",calibresMax:4}; 
 const BIZ={benchRent:140,keep:260,hoursWeek:45,staffHours:40,repairsWeek:1.8,repairsShop:1.6,repairWait:4,repairQueue:6,
   offerEvery:3,offerKeep:3,tradeEvery:6,tradeStaff:.5,late:.1,lateCancel:6,tradeLate:.15,dealer:.55,scrap:.3,
   loan:{rate:.08,weeks:52,min:4000,round:500,cover:12},   // cover: the loan also pays this many weeks of costs
+  warnOver:2,   // delivering a commission piece worth more than this many times what the customer pays asks first (1.1.0.0)
   starts:{bench:{year:2000,cash:2500,up:[],xp:0},shop:{year:2008,cash:28000,up:["shop","timing-six","cleaning"],xp:25}}};
 
 /* ---- state ---- */
-const START_YEAR=2000,END_YEAR=2030;
+const START_YEAR=2000,END_YEAR=2030;   // the first week of END_YEAR+1 brings the career summary (app/cards.js); the game goes on after it
 function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,reduce:null,sound:true,wsound:true,tab:"bench",
   cfg:Object.assign({},SIM.DEFAULT_CFG),career:null,
   xp:{},piece:null,tgOn:null,tg:{pos:"DU",temp:23,wind:0,lift:52},cals:[],dialCase:"steel-dress"};}   // dialCase: the case tried on the Bench's Dial side view (app/bench.js)   // cals: the Sandbox's calibres (a career keeps its own in S.career.calibres)   // tgOn: a customer's watch on the timegrapher ({kind:"repair",id}) instead of your piece   // xp: skill XP outside a career; piece: the movement on the timegrapher (app/test.js); tg: its settings
@@ -3986,7 +3987,7 @@ function newCareer(kind){
     loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
     staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",tutStep:kind==="shop"?null:0,tutRep:null,
     rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,
-    rnd:{done:{},run:[]},calibres:[],certsLog:[]};
+    rnd:{done:{},run:[]},calibres:[],certsLog:[],ended:null,life:{sold:0,best:null,place:null,wins:0}};
   if(kind==="shop")c.rep={collectors:6,trade:10,press:12};
   for(const id of st.up){c.up[id]=true;c.unlocks["shop:"+id]=true;}
   if(st.xp)for(const k in SKILLS)c.xp[k]=st.xp;
@@ -3997,7 +3998,7 @@ function newCareer(kind){
 /* a loaded career: fill in anything missing (older saves, hand-edited codes) so the rest of the game can trust its shape */
 function normCareer(c){if(!buObjS(c))return null;
   const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false,tutStep:null,tutRep:null,
-    sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
+    sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,ended:null};
   for(const k in d)if(!(k in c))c[k]=d[k];
   for(const k of ["up","unlocks","xp","certs","goals"])if(!buObjS(c[k]))c[k]={};
   for(const k of ["jobs","repairs","stock","orders","offers","staff","cands","sold","books","news","contests"])if(!Array.isArray(c[k]))c[k]=[];
@@ -4014,6 +4015,7 @@ function normCareer(c){if(!buObjS(c))return null;
   c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min((typeof TUT!=="undefined"?TUT.length:16)-1,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
   c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
   c.certsLog=normCertsLog(c.certsLog);   // certificates (app/cards.js)
+  c.life=normLife(c.life,c);   // the career record for the summary (app/calendar.js)
   for(const id in c.rnd.done)c.unlocks["rnd:"+id]=true;
   return c;}
 
@@ -4194,9 +4196,10 @@ function closeWeek(){
   if(R2()<Math.min(.8,(1+.2*repTier("trade"))*(1+BIZ.tradeStaff*staffHrs()/BIZ.staffHours)/BIZ.tradeEvery)){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep){rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);sfx("door");}}
   if(c.wk%8===0)refreshCands(R2);
   if(newYear)rep.push(`Happy new year: ${c.year}.`);
+  let end=false;if(c.year>END_YEAR&&c.ended==null){c.ended=c.wk;end=true;rep.unshift(`${c.year}: ${END_YEAR-c.start+1} years in the Haldis. Your career summary is ready.`);}
   calWeekStart(rep);
   save();
-  return{lines:rep,cash:c.cash,broke:c.cash<0};}
+  return{lines:rep,cash:c.cash,broke:c.cash<0,end};}
 /* below zero: the bank, once; then the end */
 function loanOffer(){const c=car(),L=BIZ.loan,need=-c.cash+L.cover*weeklyCosts();return Math.max(L.min,Math.ceil(need/L.round)*L.round);}
 function takeLoan(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=amt*(1+L.rate);
@@ -4283,6 +4286,7 @@ function trialClose(lines){const c=car(),T=CALENDAR.trial,e=c.contest;if(!e||e.y
   const place=field.findIndex(f=>f.id==="me")+1,prize=T.prizes[place-1]||0;
   e.res={place,prize,points:t.final.points,parts:t.final.parts,running:t.running,days:t.days.map(d=>[d.pos,d.temp,+d.rate.toFixed(2)]),field,seed:pc.seed+c.year};
   c.contests.push({year:c.year,no:pc.no,place,points:t.final.points,of:field.length,field:field.map(f=>[f.id,f.points])});if(c.contests.length>12)c.contests.shift();
+  if(c.life){if(place===1)c.life.wins++;if(!c.life.place||place<c.life.place.p)c.life.place={p:place,of:field.length,y:c.year};}
   if(prize)earn(prize,`${T.name} prize`);if(place<=3){addRep(REP_GAIN.podium[place-1],lines);goal("podium",lines);}
   lines.push(`The ${T.name} results are in: No. ${pc.no} placed ${ordinal(place)} of ${field.length}${prize?`, ${fmt$(prize)} in prize money`:""}.`);
   calFx.trial=true;}
@@ -4348,8 +4352,21 @@ function lotSettle(lot,res,lines){const c=car(),sl=c.sale,F=CALENDAR.fee;let lin
 function saleAuto(lines){const c=car(),sl=c.sale;if(!sl||sl.done||sl.wk!==c.wk)return;const L=saleLots();
   if(L.length)lines.push(`The ${sl.name} at ${CALENDAR.house}:`);
   while(sl.i<L.length){const lot=L[sl.i++];lotSettle(lot,lotRun(lot,0),lines);}sl.done=true;}
+/* the career record (S.career.life, inside esc-save): what the summary needs that the capped lists forget.
+   sold: pieces sold; best: the best sale {amt,name,how,y}; place: the best Kessel Peak place {p,of,y}; wins.
+   Older careers start from what their lists still hold. */
+function normLife(L,c){const o={sold:0,best:null,place:null,wins:0};
+  if(buObjS(L)){o.sold=Math.max(0,+L.sold||0);o.wins=Math.max(0,+L.wins||0);
+    if(buObjS(L.best)&&+L.best.amt>0)o.best={amt:+L.best.amt,name:String(L.best.name||"").slice(0,60),how:String(L.best.how||"retail").slice(0,12),y:+L.best.y||0};
+    if(buObjS(L.place)&&+L.place.p>0)o.place={p:+L.place.p,of:+L.place.of||0,y:+L.place.y||0};return o;}
+  o.sold=(c.sold||[]).length;
+  for(const s of c.sold||[])if(+s.price>(o.best?o.best.amt:0))o.best={amt:+s.price,name:String(s.name||"").slice(0,60),how:s.how||"retail",y:dateOf(+s.wk||0).year};
+  for(const t of c.contests||[]){if(t.place===1)o.wins++;if(!o.place||t.place<o.place.p)o.place={p:t.place,of:t.of,y:t.year};}
+  return o;}
+function lifeSale(pc,price,how){const c=car();if(!c||!c.life)return;const L=c.life;L.sold++;
+  if(+price>(L.best?L.best.amt:0))L.best={amt:Math.round(+price),name:String(pc.name||"").slice(0,60),how:how||"retail",y:c.year};}
 /* a sold-pieces row (resale and returns read it); a bought-back piece goes into stock from one */
-function soldRow(pc,price,to,how){return{id:pc.id,no:pc.no,name:pc.name,cfg:pc.cfg,seed:pc.seed,adjust:pc.adjust,cert:pc.cert,caseId:pc.caseId,
+function soldRow(pc,price,to,how){lifeSale(pc,price,how);return{id:pc.id,no:pc.no,name:pc.name,cfg:pc.cfg,seed:pc.seed,adjust:pc.adjust,cert:pc.cert,caseId:pc.caseId,
   thick:pc.thick,r:pc.r,value:pc.value,price,wk:car().wk,to:to||"a buyer",how:how||"retail"};}
 function stockFromSold(s){const c=car(),cs=CASES[s.caseId]||CASES["steel-dress"],r=SIM.simulate(s.cfg,skillLvls(),null,{seed:s.seed,adjust:s.adjust});
   const value=SIM.pieceValue(r,s.cert,cs);
@@ -4574,7 +4591,7 @@ $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]"
   if(k==="case")caseSheet();
   if(k==="test")showTab("test");
   if(k==="dealer"){const x=stockBy(id);if(x)confirmSheet(`Sell ${x.name} to the dealer?`,`He pays ${fmt$(dealerPrice(x))} now. In stock it's worth ${fmt$(x.value)}.`,"Sell it",()=>{sellPiece(x,dealerPrice(x),"the dealer","dealer");save();shopChanged();});}
-  if(k==="deliver")deliver(id,b.dataset.pc);
+  if(k==="deliver")deliverAsk(id,b.dataset.pc);
   if(k==="lot")lotSheet(+id);
   if(k==="unlot"){consign(id,null);toast("Withdrawn from the sale.");}
   if(k==="cancel")confirmSheet("Cancel this commission?","The customer goes elsewhere. Nothing is paid either way.","Cancel it",()=>{cancelOrder(id);shopChanged();});
@@ -4586,8 +4603,13 @@ $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]"
   shopChanged();});
 
 /* ---- sheets ---- */
-function confirmSheet(title,text,yes,fn){openSheet(title,`<p>${text}</p><div class="row"><button class="btn pri" id="cfYes">${yes}</button><button class="btn" id="cfNo">Not now</button></div>`);
+function confirmSheet(title,text,yes,fn,no){openSheet(title,`<p>${text}</p><div class="row"><button class="btn pri" id="cfYes">${yes}</button><button class="btn" id="cfNo">${no||"Not now"}</button></div>`);
   $("cfNo").addEventListener("click",closeSheet);$("cfYes").addEventListener("click",()=>{closeSheet();fn();});}
+/* a commission piece worth far more than the customer pays (BIZ.warnOver) asks first: it could sell for more */
+function deliverAsk(orderId,stockId){const c=car(),o=c.orders.find(x=>x.id===+orderId),x=stockBy(stockId);if(!o||!x)return;
+  const pay=orderPay(o);if(!(x.value>BIZ.warnOver*pay)){deliver(orderId,stockId);return;}
+  confirmSheet(`Deliver ${x.name} for ${fmt$(pay)}?`,`It's worth about ${fmt$(x.value)} in stock, more than ${BIZ.warnOver === 2?"twice":BIZ.warnOver+" times"} what ${o.cust} pays. You could sell it instead and make a simpler piece for this commission.`,
+    "Deliver anyway",()=>{deliver(orderId,stockId);shopChanged();},"Keep it");}
 /* diagnose: every fault with its fix, hours and parts. A wrong one costs the work and the watch comes back */
 function fixSheet(id){const r=repairBy(id);if(!r)return;
   openSheet("What's wrong with it?",`<p><b>${capWord(r.watch)}</b> · ${r.cust}: “${FAULTS[r.fault].complaint}”</p>
@@ -4629,7 +4651,7 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
 <p>${c.kind==="shop"?"Your shop on the Haldis high street":upOwned("shop")?"Your shop on the high street":"A shared bench in a rented corner of a workshop"}, since ${c.start}. ${fmt$(c.cash)} in the till; ${fmt$(weeklyCosts())} a week goes out.</p>
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
 ${c.cash<2*weeklyCosts()?`<p class="hint lockt">${c.cash<weeklyCosts()?"Not enough in the till for next week's costs.":"Two weeks of costs or less in the till."} ${c.loanUsed?"The bank won't lend again: below zero, the workshop closes.":"Below zero, the Haldis Savings Bank lends once."} Repairs and trade bring cash in fastest.</p>`:""}
-<div class="row"><button class="btn pri" data-cr="close">Close week</button>${c.lastWeek?`<button class="btn" data-cr="last">Last week</button>`:""}</div>
+<div class="row"><button class="btn pri" data-cr="close">Close week</button>${c.lastWeek?`<button class="btn" data-cr="last">Last week</button>`:""}${c.ended!=null?`<button class="btn" data-cr="end">Career summary</button>`:""}</div>
 <p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;
     h+=rndCard()+calendarCard()+repCard()+newsCard()+goalsCard()+certsCard()+rivalsCard();}
   h+=slotsCard();
@@ -4641,6 +4663,7 @@ $("careerBody").addEventListener("click",e=>{const v=e.target.closest("[data-ev]
   const b=e.target.closest("[data-cr]");if(!b)return;const k=b.dataset.cr,i=+b.dataset.i;
   if(k==="close")doCloseWeek();
   if(k==="last")lastWeekSheet();
+  if(k==="end")endSheet();
   if(k==="new")newGameSheet();
   if(k==="ssave"){const m=slotMeta(i);if(m)confirmSheet(`Save over slot ${i}?`,`It holds ${m.what}.`,"Save here",()=>slotSave(i));else slotSave(i);}
   if(k==="sload")confirmSheet(`Load slot ${i}?`,"The game you're playing now is replaced (save it to another slot first if you want it).","Load it",()=>slotLoad(i));
@@ -4674,6 +4697,8 @@ function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
 <ul class="wklines">${res.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}<li class="dim">Rent ${fmt$(rent())} · your keep ${fmt$(BIZ.keep)}${wages()?` · wages ${fmt$(wages())}`:""}${c.loan?` · loan ${fmt$(c.loan.pay)}`:""}</li></ul>
 <div class="row"><button class="btn pri" id="wkOk">Week ${c.week}, ${c.year}</button></div>`);
   $("wkOk").addEventListener("click",closeSheet);
+  if(res.end){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn pri" id="wkEnd">Your career summary</button>`;
+    $("wkOk").before(row.firstChild);$("wkOk").className="btn";$("wkEnd").addEventListener("click",endSheet);}
   const fx=calFx;if(fx.crack)crackFx();
   if(fx.trial){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkRace">Watch the ${CALENDAR.trial.name}</button>`;
     $("sheetBody").appendChild(row);$("wkRace").addEventListener("click",raceSheet);}
@@ -4839,6 +4864,7 @@ function crackFx(){let el=$("crack");if(!el){el=document.createElement("div");el
      positions, temperature), every check with its limit and tick, the date as year and week, and a round inked stamp.
    - The trophy: dark felt and brass, a medal cut like an escape wheel on a ribbon, the goal's name and blurb, the week it
      was reached and the piece or number behind it where there is one (goalBits).
+   - The career summary (1.1.0.0, endSheet): the same felt, the whole career on one card; see its block below.
    - Where they open: the Career tab's Goals card (a Trophy button on each goal reached), the Certificates card below it
      (certsCard), and a Certificate button in the Test tab's trial sheet after a pass (certSheetBtn; in the Sandbox the
      card is drawn on the spot and not logged). The picture is the same in both themes: paper is paper. ---- */
@@ -5012,9 +5038,9 @@ let cdTok=0;
 function cdFonts(){const f=document.fonts;if(!f)return Promise.resolve();
   const want=[`700 50px ${CD_F}`,`600 30px ${CD_F}`,`500 24px ${CD_F}`,`400 24px ${CD_F}`,`500 22px ${CD_M}`,`600 30px ${CD_M}`,`400 21px ${CD_M}`];
   return Promise.race([Promise.all(want.map(w=>f.load(w).catch(()=>null))).then(()=>f.ready),new Promise(r=>setTimeout(r,2500))]).catch(()=>{});}
-async function cardSheet(title,draw,file,alt){const tok=++cdTok,share=canShareFiles();
-  openSheet(title,`<div class="cdpic" id="cdPic"><p class="hint">Drawing the card…</p></div>
-<div class="row"><button class="btn pri" id="cdSave" disabled>Save picture</button>${share?`<button class="btn" id="cdShare" disabled>Share…</button>`:""}<button class="btn ghost" id="cdOk">Close</button></div>`);
+async function cardSheet(title,draw,file,alt,o){const tok=++cdTok,share=canShareFiles();o=o||{};
+  openSheet(title,`${o.pre||""}<div class="cdpic" id="cdPic"><p class="hint">Drawing the card…</p></div>
+<div class="row"><button class="btn pri" id="cdSave" disabled>Save picture</button>${share?`<button class="btn" id="cdShare" disabled>Share…</button>`:""}<button class="btn ${o.close?"":"ghost"}" id="cdOk">${o.close||"Close"}</button></div>`);
   $("cdOk").addEventListener("click",closeSheet);
   await cdFonts();if(tok!==cdTok||!sheetOn()||!$("cdPic"))return;
   let cv;try{cv=draw();}catch(e){$("cdPic").innerHTML=`<p class="hint">Couldn't draw the card here.</p>`;return;}
@@ -5028,6 +5054,41 @@ function certCard(r){const C=SIM.CERT[r.tier],k=r.ck.filter(c=>c[3]).length;
 function trophyCard(id){const c=car(),G=GOALS[id];if(!c||!G||c.goals[id]==null)return;const ids=Object.keys(GOALS),d=dateOf(c.goals[id]);
   const t={id,name:G.name,blurb:G.blurb,y:d.year,w:d.week,n:ids.indexOf(id)+1,of:ids.length,bits:goalBits(id)};
   cardSheet(`Goal: ${G.name}`,()=>drawTrophy(t),`escapement-goal-${shareSlug(G.name)}-${shareStamp()}.png`,`Trophy card: ${G.name}, reached ${d.year}, week ${d.week}.${t.bits[0]?" "+t.bits[0]+".":""}`);}
+
+/* ---- the career summary (1.1.0.0): offered at the first week of END_YEAR+1 (closeWeek sets c.ended), and from the
+   Career card after that. The years, pieces made and sold, certificates, the Kessel Peak record, the best sale, R&D and
+   calibres, goals, reputation and the till, on dark felt like the trophy. Keep going closes it: the game goes on. ---- */
+function endStats(){const c=car(),L=c.life||normLife(null,c),y1=c.start,y2=Math.min(c.year,END_YEAR),n=y2-y1+1,ce=c.certs||{};
+  const kp=!L.place?"Never entered":L.wins?`Won ${L.wins===1?"once":L.wins+" times"}`:`Best: ${ordinal(L.place.p)} of ${L.place.of} (${L.place.y})`;
+  const tiers=Object.keys(REP_TRACKS).map(k=>`${REP_TRACKS[k].name} ${REP_TIERS[repTier(k)].name.toLowerCase()}`);
+  const rd=Object.keys((c.rnd&&c.rnd.done)||{}).length,cals=(c.calibres||[]).length;
+  return{y1,y2,n,kind:c.kind,rows:[
+    ["Pieces made",String(c.made)],["Pieces sold",String(L.sold)],
+    ["Certificates",`${ce.chronometer||0} Chronometer · ${ce.observatory||0} Observatory`],
+    [CALENDAR.trial.name,kp],
+    ["Best sale",L.best?`${fmt$(L.best.amt)} · ${L.best.name}`:"None yet"],
+    ["R&D",`${rd} of ${Object.keys(RND).length} projects${cals?` · ${cals} calibre${cals>1?"s":""}`:""}`],
+    ["Goals",`${Object.keys(c.goals||{}).length} of ${Object.keys(GOALS).length}`],
+    ["Reputation",tiers.join(" · ")],
+    ["In the till",fmt$(c.cash)]]};}
+function drawSummary(s){const W=CD.W,H=CD.H,cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d"),cx=W/2,P=110;
+  const chalk="#f2efe6",muted="#b3bab4",brass="#c9a45c",brassT="#e0c07e";
+  const g=x.createRadialGradient(cx,H*.3,40,cx,H*.5,H*.85);g.addColorStop(0,"#22342a");g.addColorStop(1,"#0b100e");x.fillStyle=g;x.fillRect(0,0,W,H);
+  cdGrain(x,"felt|end|"+s.y1,7000,["rgba(255,255,255,.035)","rgba(0,0,0,.18)","rgba(120,150,130,.05)"]);
+  cdFrame(x,brass,40);x.textAlign="center";
+  x.fillStyle=brassT;cdFont(x,500,22,CD_M);cdSpaced(x,`THE HALDIS · ${s.y1}–${s.y2}`,cx,140,6);
+  x.fillStyle=chalk;cdFit(x,"A career in the Haldis",W-2*P,700,72,44);x.fillText("A career in the Haldis",cx,236);
+  x.fillStyle=muted;cdFont(x,400,30);x.fillText(`${s.n} year${s.n===1?"":"s"}, from ${s.kind==="shop"?"a shop on the high street":"a shared repair bench"}`,cx,290);
+  cdRule(x,340,420,"rgba(201,164,92,.7)");
+  let y=410;const step=Math.min(96,(H-150-y)/s.rows.length);
+  for(const [k,v] of s.rows){x.fillStyle=brassT;cdFont(x,500,22,CD_M);cdSpaced(x,k.toUpperCase(),cx,y,4);
+    x.fillStyle=chalk;cdFit(x,v,W-2*P,600,36,20);x.fillText(v,cx,y+44);y+=step;}
+  x.fillStyle="rgba(179,186,180,.6)";cdFont(x,500,16,CD_M);cdSpaced(x,"ESCAPEMENT",cx,H-70,5);
+  return cv;}
+function endSheet(){const c=car();if(!c)return;const s=endStats();
+  cardSheet(`${s.y1}–${s.y2}: your career`,()=>drawSummary(s),`escapement-career-${s.y1}-${s.y2}-${shareStamp()}.png`,
+    `Career summary, ${s.y1} to ${s.y2}: `+s.rows.map(r=>`${r[0]} ${r[1]}`).join("; ")+".",
+    {close:"Keep going",pre:`<p class="hint" style="margin-top:0">${s.n} years since ${c.kind==="shop"?"you opened the shop":"you took the bench"}. This is how they went. The Haldis goes on: keep going as long as you like, and open this again from the Career tab.</p>`});}
 
 /* ---- the Career tab's Certificates card ---- */
 function certsCard(){const c=car(),L=c.certsLog||[],had=["chronometer","observatory"].some(k=>c.certs[k]);
