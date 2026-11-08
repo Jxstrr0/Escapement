@@ -22,6 +22,8 @@ const TEMP_NAME={8:"Cold",23:"Room",38:"Warm"};
 const LIFTS=[38,44,50,52];
 
 function ownedTool(){let best=TOOLS["timing-basic"];for(const id in TOOLS)if(hasUnlock(TOOLS[id].unlock))best=TOOLS[id];return best;}
+/* what the sim's trials see (sim/trial.js trialSd): the timing machine's resolution and whether the workshop has Climate control */
+function trialTools(){return{timingRes:ownedTool().timingRes,climate:hasUnlock("shop:climate")};}
 /* in a career the piece is the one on your bench (or none); in the Sandbox it follows the build */
 function curPiece(){if(inCareer())return car().bench;const key=JSON.stringify(S.cfg);
   if(!S.piece||S.piece.key!==key){S.pieceN=(+S.pieceN||0)+1;
@@ -245,7 +247,7 @@ onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
     $("trialNo").addEventListener("click",closeSheet);
     $("trialGo").addEventListener("click",()=>{if(sendTrial(id)){closeSheet();hud();renderTest();toast(`No. ${p.no} is on its way to the ${C.body}.`);}});
     return;}
-  const t=SIM.runTrial(pieceCfg(),skillLvls(),{timingRes:tool.timingRes},{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
+  const t=SIM.runTrial(pieceCfg(),skillLvls(),trialTools(),{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
   const res=t.tiers[id];
   if(res.pass&&(!p.cert||SIM.CERT_ORDER.indexOf(id)>SIM.CERT_ORDER.indexOf(p.cert)))p.cert=id;
   if(!p.xpDone){p.xpDone=true;const r=pieceSim();

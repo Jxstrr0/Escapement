@@ -994,8 +994,17 @@ const TRIAL={
   windT:12,          // h since winding: the trial winds every morning and reads the day's average
   noise:.8,          // s/day of daily scatter for a plain 28,800 bph movement with an index regulator
   noiseDrift:.5,     // extra scatter per unit of regulator drift (an index wanders, a micro-adjust stays put)
-  thermalNoise:.4    // the climate-box days (8 and 38 C) are steadier: their scatter is this share of the rest
+  thermalNoise:.4,   // the climate-box days (8 and 38 C) are steadier: their scatter is this share of the rest
+  /* the scatter is the watchmaker's too (1.0.2.4): a surer hand (regulating level), a finer timing machine and a
+     climate-controlled workshop each make a piece run steadier from day to day */
+  skillNoise:1.25,skillNoiseStep:.06,skillNoiseMin:.6,   // × at regulating level 1, less per level, never below the min
+  toolNoise:.4,      // × timingRes^-toolNoise: six-position machine ×0.87, laboratory ×0.76
+  climateNoise:.85   // × with Climate control (tools.climate)
 };
+function trialSd(P,m,skills,tools){const T=TRIAL,t=tools||{},L=lvl(skills,"regulating");
+  return T.noise*(1+P.regulator.drift*T.noiseDrift)*m.wrist/P.bph.rateStability
+    *Math.max(T.skillNoiseMin,T.skillNoise-T.skillNoiseStep*(L-1))
+    *Math.pow(Math.max(1,+t.timingRes||1),-T.toolNoise)*(t.climate?T.climateNoise:1);}
 /* the adjustment loop: what one press of each button does, and what it costs */
 const ADJ={
   regNoise:.25,regNoiseSkill:.025,   // a regulator nudge lands within this share of the step (level 1), less per level
@@ -1018,7 +1027,7 @@ function adjustPiece(kind,adjust,cfg,skills,n,seed){
 function runTrial(cfg,skills,tools,opts){
   opts=opts||{};
   const {P,m}=prepModel(cfg,skills,tools,opts),R=rng(opts.trialSeed!=null?opts.trialSeed:"trial");
-  const sd=opts.noNoise?0:TRIAL.noise*(1+P.regulator.drift*TRIAL.noiseDrift)*m.wrist/P.bph.rateStability;
+  const sd=opts.noNoise?0:trialSd(P,m,skills,tools);
   const days=TRIAL.days.map(([pos,temp])=>({pos,temp,rate:rateAt(m,pos,TRIAL.windT,temp)+gauss(R)*sd*(temp===23?1:TRIAL.thermalNoise)}));
   const ten=days.slice(0,10),mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
   const pairs=[0,2,4,6,8].map(i=>[ten[i].rate,ten[i+1].rate]);
@@ -1043,7 +1052,7 @@ function runTrial(cfg,skills,tools,opts){
 /* what to say about a trial: the certificate, or the first failure with a fix */
 const CERT_ADVICE={
   mean:(s,T)=>{const mid=(T.mean[0]+T.mean[1])/2,d=s.mean-mid;return `It ran ${d>0?"fast":"slow"}: ${(s.mean>=0?"+":"−")+Math.abs(s.mean).toFixed(1)} s/day on average. Regulate it about ${Math.abs(d).toFixed(0)} s/day ${d>0?"slower":"faster"}.`;},
-  maxVar:s=>`It wandered by up to ${s.maxVar.toFixed(1)} s/day from one day to the next. A micro-adjust regulator holds its setting better; a faster beat steadies it too.`,
+  maxVar:s=>`It wandered by up to ${s.maxVar.toFixed(1)} s/day from one day to the next. A micro-adjust regulator holds its setting better and a faster beat steadies it; so do more regulating skill, a finer timing machine and Climate control.`,
   posSpread:s=>`The rate changed by ${s.posSpread.toFixed(1)} s/day between positions. Poise the balance (and test in more positions if your timing machine can).`,
   thermal:s=>`Temperature moved it ${s.thermal.toFixed(2)} s/day for every degree. A steel hairspring can't do better; a self-compensating alloy or silicon spring can.`,
   beat:s=>`Beat error was ${s.beat.toFixed(2)} ms: the tick and the tock are uneven. Adjust the beat; a better regulator and more regulating skill get it lower.`,
@@ -1090,7 +1099,7 @@ function contestIndex(days){
 function runContest(cfg,skills,tools,opts){
   opts=opts||{};
   const {P,m}=prepModel(cfg,skills,tools,opts),R=rng(opts.trialSeed!=null?opts.trialSeed:"contest");
-  const sd=TRIAL.noise*(1+P.regulator.drift*TRIAL.noiseDrift)*m.wrist/P.bph.rateStability;
+  const sd=trialSd(P,m,skills,tools);
   const days=CONTEST.days.map(([pos,temp])=>({pos,temp,rate:rateAt(m,pos,TRIAL.windT,temp)+gauss(R)*sd*(temp===23?1:TRIAL.thermalNoise)}));
   const running=days.map((d,i)=>contestIndex(days.slice(0,i+1)).points);
   return{days,final:contestIndex(days),running};}
@@ -2658,7 +2667,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.0.2.3";
+const VERSION="1.0.2.4";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -2694,7 +2703,7 @@ const UPGRADES={
   shop:{name:"Own shop on the high street",cost:6500,rent:520,staff:2,demand:3,blurb:"Your own door in the valley town: walk-in buyers, room for two staff. Rent €520 a week."},
   window:{name:"Display window",cost:1400,needs:["shop"],demand:1.3,blurb:"Pieces in the window: more buyers stop."},
   bench2:{name:"Second bench",cost:2200,needs:["shop"],staff:1,blurb:"Room for one more watchmaker."},
-  climate:{name:"Climate control",cost:3200,needs:["shop"],blurb:"A steady workshop. Needed for the laboratory timing machine."},
+  climate:{name:"Climate control",cost:3200,needs:["shop"],blurb:"A steady workshop: pieces run steadier at the trials and the Kessel Peak contest. Needed for the laboratory timing machine."},
   "timing-lab":{name:"Laboratory timing machine",cost:9500,needs:["climate","timing-six"],blurb:"Six positions and a climate box at 8, 23 and 38 °C."},
   cnc:{name:"CNC mill",cost:24000,needs:["mill","shop"],batch:.6,blurb:"Fine-pitch trains and high-efficiency levers; trade batches take 40% less time."},
   cleanroom:{name:"Clean room",cost:16000,needs:["shop"],staff:1,blurb:"Dust-free assembly: room for one more watchmaker."}};
@@ -2778,7 +2787,7 @@ const RIVALS=[
    your old pieces can come up for resale once `resaleAfter` weeks have passed, and again `resaleGap` weeks after that). Weeks are 1-52 of each year */
 const CALENDAR={
   fair:{name:"Haldis Valley Fair",week:37,fee:450,show:3,buy:1.6,ahead:5},
-  trial:{name:"Kessel Peak Trial",open:8,close:18,back:24,fee:250,prizes:[6000,3000,1500],rivalGain:.013,rivalVar:.15},
+  trial:{name:"Kessel Peak Trial",open:8,close:18,back:24,fee:250,prizes:[6000,3000,1500],rivalGain:.013,rivalYears:20,rivalVar:.15},   // rivals improve rivalGain a year for rivalYears years, then hold
   sales:[{week:16,name:"Spring sale"},{week:46,name:"Winter sale"}],
   house:"Brugg & Lell",fee:.12,ahead:6,resaleAfter:26,resaleGap:104,resaleChance:.3,resaleMax:2,
   warranty:104};
@@ -3454,9 +3463,9 @@ function renderBuildForm(){
 /* the capsule's certification cell: the best grade a careful hand gets this build through at least some of the time
    (SIM.certOdds: eight pieces, regulated, beat set, poised four times, at your skills and with your timing machine) */
 const oddsCache=new Map();
-function certCell(){const tool=typeof ownedTool==="function"?ownedTool():TOOLS["timing-basic"],sk=skillLvls();
-  const key=JSON.stringify(S.cfg)+"|"+JSON.stringify(sk)+"|"+tool.timingRes;let o=oddsCache.get(key);
-  if(!o){if(oddsCache.size>200)oddsCache.clear();o=SIM.certOdds(S.cfg,sk,{timingRes:tool.timingRes});oddsCache.set(key,o);}
+function certCell(){const tt=typeof trialTools==="function"?trialTools():{timingRes:1},sk=skillLvls();
+  const key=JSON.stringify(S.cfg)+"|"+JSON.stringify(sk)+"|"+JSON.stringify(tt);let o=oddsCache.get(key);
+  if(!o){if(oddsCache.size>200)oddsCache.clear();o=SIM.certOdds(S.cfg,sk,tt);oddsCache.set(key,o);}
   const pc=x=>Math.round(x*100)+"%";
   if(o.observatory>0)return `Obs <small>${pc(o.observatory)}</small>`;
   if(o.chronometer>0)return `BCH <small>${pc(o.chronometer)}</small>`;
@@ -3534,6 +3543,8 @@ const TEMP_NAME={8:"Cold",23:"Room",38:"Warm"};
 const LIFTS=[38,44,50,52];
 
 function ownedTool(){let best=TOOLS["timing-basic"];for(const id in TOOLS)if(hasUnlock(TOOLS[id].unlock))best=TOOLS[id];return best;}
+/* what the sim's trials see (sim/trial.js trialSd): the timing machine's resolution and whether the workshop has Climate control */
+function trialTools(){return{timingRes:ownedTool().timingRes,climate:hasUnlock("shop:climate")};}
 /* in a career the piece is the one on your bench (or none); in the Sandbox it follows the build */
 function curPiece(){if(inCareer())return car().bench;const key=JSON.stringify(S.cfg);
   if(!S.piece||S.piece.key!==key){S.pieceN=(+S.pieceN||0)+1;
@@ -3757,7 +3768,7 @@ onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
     $("trialNo").addEventListener("click",closeSheet);
     $("trialGo").addEventListener("click",()=>{if(sendTrial(id)){closeSheet();hud();renderTest();toast(`No. ${p.no} is on its way to the ${C.body}.`);}});
     return;}
-  const t=SIM.runTrial(pieceCfg(),skillLvls(),{timingRes:tool.timingRes},{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
+  const t=SIM.runTrial(pieceCfg(),skillLvls(),trialTools(),{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
   const res=t.tiers[id];
   if(res.pass&&(!p.cert||SIM.CERT_ORDER.indexOf(id)>SIM.CERT_ORDER.indexOf(p.cert)))p.cert=id;
   if(!p.xpDone){p.xpDone=true;const r=pieceSim();
@@ -4117,7 +4128,7 @@ function pieceName(cfg,no){const P=(s,id)=>SIM.part(s,id);const bits=[cfg.windin
 /* a Bureau or Observatory trial: pay the fee, the piece is away for the weeks, the result comes back at Close week */
 function sendTrial(tier){const c=car(),p=c.bench,C=SIM.CERT[tier];if(!p||!p.made||p.trial)return false;
   if(!pay(C.fee,`${C.name} trial for No. ${p.no}`))return false;
-  const tool=ownedTool(),t=SIM.runTrial(p.cfg,skillLvls(),{timingRes:tool.timingRes},{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
+  const tool=ownedTool(),t=SIM.runTrial(p.cfg,skillLvls(),trialTools(),{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
   p.trial={tier,back:c.wk+C.weeks,best:t.tiers[tier].pass?tier:null,t:{days:t.days,stats:t.stats,tiers:{[tier]:t.tiers[tier]}}};
   save();return true;}
 /* case it and put it in stock (needs at least a Bench pass) */
@@ -4216,7 +4227,7 @@ const REP_GAIN={
   fair:{press:2},fairPiece:{collectors:1},
   auction:{collectors:2},resaleUp:{collectors:.5},
   ret:{press:-2,collectors:-1},
-  max:150,decay:.008};                              // every week each track loses this share: a name has to be kept up
+  max:150,decay:.004};                              // every week each track loses this share: a name has to be kept up (.008 before 1.0.2.4)
 let calFx={};
 const repOf=k=>{const c=car();return c&&c.rep?(+c.rep[k]||0):0;};
 function repTier(k){const p=repOf(k);let t=0;REP_TIERS.forEach((T,i)=>{if(p>=T.at)t=i;});return t;}
@@ -4262,11 +4273,11 @@ function trialState(){const c=car(),T=CALENDAR.trial,e=c.contest&&c.contest.year
 function enterTrial(id){const c=car(),T=CALENDAR.trial,pc=stockBy(id);if(!pc||!pieceFree(pc)||!trialState().open)return false;
   if(!pay(T.fee,`entry to the ${T.name}`))return false;pc.away="trial";c.contest={year:c.year,id:pc.id,no:pc.no,name:pc.name,res:null,seen:false};
   addRep(REP_GAIN.trialEntry);save();toast(`No. ${pc.no} goes up to Kessel Peak. Results in week ${T.back}.`);return true;}
-function rivalPoints(rv,year,R){const T=CALENDAR.trial,g=Math.pow(1-T.rivalGain,Math.max(0,year-2000));
+function rivalPoints(rv,year,R){const T=CALENDAR.trial,g=Math.pow(1-T.rivalGain,Math.min(T.rivalYears,Math.max(0,year-2000)));
   const idx=Math.max(.8,rv.trial*g*(1+T.rivalVar*(R()+R()+R()-1.5)*1.4));return Math.round(1000*Math.exp(-idx/SIM.CONTEST.scale));}
 function trialClose(lines){const c=car(),T=CALENDAR.trial,e=c.contest;if(!e||e.year!==c.year||e.res||c.week!==T.back)return;
   const pc=stockBy(e.id);if(!pc){c.contest=null;return;}pc.away=null;
-  const t=SIM.runContest(pc.cfg,skillLvls(),{timingRes:ownedTool().timingRes},{seed:pc.seed,adjust:pc.adjust,trialSeed:pc.seed+"k"+c.year});
+  const t=SIM.runContest(pc.cfg,skillLvls(),trialTools(),{seed:pc.seed,adjust:pc.adjust,trialSeed:pc.seed+"k"+c.year});
   const R=weekRng("contest"),field=RIVALS.map(rv=>({id:rv.id,name:rv.name,points:rivalPoints(rv,c.year,R)}));
   field.push({id:"me",name:"You: No. "+pc.no,points:t.final.points});field.sort((a,b)=>b.points-a.points);
   const place=field.findIndex(f=>f.id==="me")+1,prize=T.prizes[place-1]||0;
@@ -5068,7 +5079,7 @@ const GLOSS={
   prestige:{t:"Prestige",g:"Movement",d:"How much a collector cares about what's inside: fine finishing, complications, in-house parts, your own calibre. It raises the price a buyer will pay."},
   cost:{t:"Parts cost",g:"Business",d:"What the parts for one movement cost you, paid when you press Make. Your own in-house parts and calibre bring it down."},
   hours:{t:"Bench hours",g:"Business",d:"The work to assemble one movement. You have so many hours a week; staff add theirs. Close week puts the hours into the work in hand, in order."},
-  certodds:{t:"Cert odds",g:"Business",d:"The chance a carefully adjusted piece of this build passes each grade (regulated to the middle of the window, beat set, poised). Your skills raise it; the parts set its ceiling."},
+  certodds:{t:"Cert odds",g:"Business",d:"The chance a carefully adjusted piece of this build passes each grade (regulated to the middle of the window, beat set, poised). Your skills, a better timing machine and Climate control raise it; the parts set its ceiling."},
   cert:{t:"Certificates",g:"Business",d:"The Haldis Chronometry Bureau (stamp BCH) tests a movement for fifteen days in five positions and three temperatures and grants Chronometer. The Kessel Peak Observatory grants the stricter Observatory grade. Both multiply a piece's value."},
   week:{t:"Close week",g:"Business",d:"Nothing moves until you close the week: you act first (repairs, adjusting, buying), then Close week does the work, brings customers and pays the rent."},
   bank:{t:"The bank",g:"Business",d:"Each week the rent, your keep and any wages come out of the till. If it drops below zero, the Haldis Savings Bank lends once: enough to cover it, paid back with 8% over a year. Below zero a second time and the workshop closes. The Career card warns you when two weeks of costs or less are left."},
