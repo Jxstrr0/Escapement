@@ -11,7 +11,7 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
 <p>${c.kind==="shop"?"Your shop on the Haldis high street":upOwned("shop")?"Your shop on the high street":"A shared bench in a rented corner of a workshop"}, since ${c.start}. ${fmt$(c.cash)} in the till; ${fmt$(weeklyCosts())} a week goes out.</p>
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
 ${c.cash<2*weeklyCosts()?`<p class="hint lockt">${c.cash<weeklyCosts()?"Not enough in the till for next week's costs.":"Two weeks of costs or less in the till."} ${c.loanUsed?"The bank won't lend again: below zero, the workshop closes.":"Below zero, the Haldis Savings Bank lends once."} Repairs and trade bring cash in fastest.</p>`:""}
-<div class="row"><button class="btn pri" data-cr="close">Close week</button>${c.lastWeek?`<button class="btn" data-cr="last">Last week</button>`:""}</div>
+<div class="row"><button class="btn pri" data-cr="close">Close week</button>${c.lastWeek?`<button class="btn" data-cr="last">Last week</button>`:""}${c.ended!=null?`<button class="btn" data-cr="end">Career summary</button>`:""}</div>
 <p class="hint">Act first (repairs, adjusting, buying), then close the week: the work gets done, buyers come by, the rent is paid.</p></div>`;
     h+=rndCard()+calendarCard()+repCard()+newsCard()+goalsCard()+certsCard()+rivalsCard();}
   h+=slotsCard();
@@ -23,6 +23,7 @@ $("careerBody").addEventListener("click",e=>{const v=e.target.closest("[data-ev]
   const b=e.target.closest("[data-cr]");if(!b)return;const k=b.dataset.cr,i=+b.dataset.i;
   if(k==="close")doCloseWeek();
   if(k==="last")lastWeekSheet();
+  if(k==="end")endSheet();
   if(k==="new")newGameSheet();
   if(k==="ssave"){const m=slotMeta(i);if(m)confirmSheet(`Save over slot ${i}?`,`It holds ${m.what}.`,"Save here",()=>slotSave(i));else slotSave(i);}
   if(k==="sload")confirmSheet(`Load slot ${i}?`,"The game you're playing now is replaced (save it to another slot first if you want it).","Load it",()=>slotLoad(i));
@@ -56,6 +57,8 @@ function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
 <ul class="wklines">${res.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}<li class="dim">Rent ${fmt$(rent())} · your keep ${fmt$(BIZ.keep)}${wages()?` · wages ${fmt$(wages())}`:""}${c.loan?` · loan ${fmt$(c.loan.pay)}`:""}</li></ul>
 <div class="row"><button class="btn pri" id="wkOk">Week ${c.week}, ${c.year}</button></div>`);
   $("wkOk").addEventListener("click",closeSheet);
+  if(res.end){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn pri" id="wkEnd">Your career summary</button>`;
+    $("wkOk").before(row.firstChild);$("wkOk").className="btn";$("wkEnd").addEventListener("click",endSheet);}
   const fx=calFx;if(fx.crack)crackFx();
   if(fx.trial){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkRace">Watch the ${CALENDAR.trial.name}</button>`;
     $("sheetBody").appendChild(row);$("wkRace").addEventListener("click",raceSheet);}

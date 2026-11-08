@@ -27,7 +27,7 @@ function newCareer(kind){
     loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
     staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",tutStep:kind==="shop"?null:0,tutRep:null,
     rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,
-    rnd:{done:{},run:[]},calibres:[],certsLog:[]};
+    rnd:{done:{},run:[]},calibres:[],certsLog:[],ended:null,life:{sold:0,best:null,place:null,wins:0}};
   if(kind==="shop")c.rep={collectors:6,trade:10,press:12};
   for(const id of st.up){c.up[id]=true;c.unlocks["shop:"+id]=true;}
   if(st.xp)for(const k in SKILLS)c.xp[k]=st.xp;
@@ -38,7 +38,7 @@ function newCareer(kind){
 /* a loaded career: fill in anything missing (older saves, hand-edited codes) so the rest of the game can trust its shape */
 function normCareer(c){if(!buObjS(c))return null;
   const d={kind:"bench",seed:"x",start:START_YEAR,year:START_YEAR,week:1,wk:0,cash:0,used:0,seq:0,loan:null,loanUsed:false,over:false,bench:null,made:0,trade:null,tradeOffer:null,tut:false,tutStep:null,tutRep:null,
-    sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false};
+    sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,ended:null};
   for(const k in d)if(!(k in c))c[k]=d[k];
   for(const k of ["up","unlocks","xp","certs","goals"])if(!buObjS(c[k]))c[k]={};
   for(const k of ["jobs","repairs","stock","orders","offers","staff","cands","sold","books","news","contests"])if(!Array.isArray(c[k]))c[k]=[];
@@ -55,6 +55,7 @@ function normCareer(c){if(!buObjS(c))return null;
   c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min((typeof TUT!=="undefined"?TUT.length:16)-1,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
   c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
   c.certsLog=normCertsLog(c.certsLog);   // certificates (app/cards.js)
+  c.life=normLife(c.life,c);   // the career record for the summary (app/calendar.js)
   for(const id in c.rnd.done)c.unlocks["rnd:"+id]=true;
   return c;}
 
@@ -235,9 +236,10 @@ function closeWeek(){
   if(R2()<Math.min(.8,(1+.2*repTier("trade"))*(1+BIZ.tradeStaff*staffHrs()/BIZ.staffHours)/BIZ.tradeEvery)){addTradeOffer(R2);if(c.tradeOffer&&c.tradeOffer.until===c.wk+BIZ.offerKeep){rep.push(`${c.tradeOffer.brand} asks about a trade batch.`);sfx("door");}}
   if(c.wk%8===0)refreshCands(R2);
   if(newYear)rep.push(`Happy new year: ${c.year}.`);
+  let end=false;if(c.year>END_YEAR&&c.ended==null){c.ended=c.wk;end=true;rep.unshift(`${c.year}: ${END_YEAR-c.start+1} years in the Haldis. Your career summary is ready.`);}
   calWeekStart(rep);
   save();
-  return{lines:rep,cash:c.cash,broke:c.cash<0};}
+  return{lines:rep,cash:c.cash,broke:c.cash<0,end};}
 /* below zero: the bank, once; then the end */
 function loanOffer(){const c=car(),L=BIZ.loan,need=-c.cash+L.cover*weeklyCosts();return Math.max(L.min,Math.ceil(need/L.round)*L.round);}
 function takeLoan(){const c=car(),amt=loanOffer(),L=BIZ.loan,total=amt*(1+L.rate);

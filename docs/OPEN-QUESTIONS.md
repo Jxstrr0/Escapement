@@ -8,8 +8,8 @@ Found by the 1.0.2.1 audit (code review, design check, playthrough, 15-year mone
 - 5: both: cap rival growth (20 years) and lower the player's noise with skill. **Done in 1.0.2.4.**
 - 6: halve the reputation fade (0.4% a week). **Done in 1.0.2.4.**
 - 9: Climate control steadies trial results. **Done in 1.0.2.4.**
-- 8: a career summary at 2031 week 1 with Keep going. Planned for 1.1.0.0.
-- 4: warn before delivering a commission piece worth far more than its budget. Planned for 1.1.0.0.
+- 8: a career summary at 2031 week 1 with Keep going. **Done in 1.1.0.0.**
+- 4: warn before delivering a commission piece worth more than twice what the customer pays. **Done in 1.1.0.0.**
 - 10: the bench is free while a piece is at a trial. Planned for 1.1.1.0.
 - 12: staff get skill profiles. Planned for 1.2.0.0 (details to be pitched first).
 - 11: no "hand the batch back". Closed.
