@@ -86,8 +86,10 @@ const whenTxt=wk=>{const d=wk-car().wk;return d<=0?"this week":d===1?"next week"
 
 /* ---- upgrades and staff ---- */
 function upNeeds(id){const U=UPGRADES[id];return(U.needs||[]).filter(n=>!upOwned(n));}
+/* the sound a purchase makes: the machines whir into life (1.1.1.0) */
+const BUY_SOUND={machine:["timing-six","timing-lab","cleaning","lathe","polishing","mill","climate","cnc","cleanroom"]};
 function buyUpgrade(id){const U=UPGRADES[id],c=car();if(!U||upOwned(id)||upNeeds(id).length)return false;
-  if(!pay(U.cost,U.name))return false;c.up[id]=true;c.unlocks["shop:"+id]=true;toast(`${U.name}: yours.`);checkGoals();save();return true;}
+  if(!pay(U.cost,U.name))return false;c.up[id]=true;c.unlocks["shop:"+id]=true;toast(`${U.name}: yours.`);if(BUY_SOUND.machine.includes(id))sfx("newmachine");checkGoals();save();return true;}
 function refreshCands(R){const c=car(),kinds=Object.keys(STAFF).filter(k=>!STAFF[k].needs||upOwned(STAFF[k].needs));
   const taken=new Set(c.staff.map(s=>s.name));c.cands=[];
   for(let i=0;i<3;i++){let n=pick(R,STAFF_NAMES);for(let j=0;j<6&&taken.has(n);j++)n=pick(R,STAFF_NAMES);taken.add(n);c.cands.push({name:n,kind:kinds[i%kinds.length]});}}
@@ -149,7 +151,7 @@ function addTradeOffer(R){const c=car();if(c.trade||c.tradeOffer)return;
   c.tradeOffer={id:nextId(),brand:pick(R,TRADE_BRANDS),cfg,qty,price,parts:T.parts,hoursEach:T.hours,weeks:Math.ceil(qty*T.hours/BIZ.hoursWeek)+3,until:c.wk+BIZ.offerKeep};}
 function tradeLine(t){const r=SIM.simulate(t.cfg,{},null,{seed:"trade"});return `${t.qty} × ${r.cfg.winding==="automatic"?"automatic":"hand-wound"}${r.cfg.complications.length?" date":""} at ${(+r.cfg.bph).toLocaleString("en-GB")} bph`;}
 function acceptTrade(){const c=car(),t=c.tradeOffer;if(!t)return;if(!pay(t.qty*t.parts,`parts for ${t.qty} movements (${t.brand})`))return;
-  c.trade=Object.assign(t,{due:c.wk+t.weeks});c.tradeOffer=null;
+  c.trade=Object.assign(t,{due:c.wk+t.weeks});c.tradeOffer=null;sfx("crate");
   c.jobs.push({id:nextId(),kind:"trade",ref:t.id,h:t.qty*t.hoursEach*batchMult(),label:`${t.qty} movements for ${t.brand}`,staff:true});save();}
 
 /* ---- your pieces ---- */

@@ -1193,24 +1193,28 @@ return api;
    needed (the service worker keeps them for offline). Shares WATCH_SOUND's AudioContext.
    One-shots (SHOTS):  door   the shop bell, when work comes in     sale   the till drawer and coins, when a piece sells
                        chime  a mantel clock's three strokes, at Close week
+                       (1.1.1.0, made with ElevenLabs on Kelbo's plan) pass / fail  a trial's verdict; gavel  a lot
+                       knocked down; tool  an adjusting press; wind  winding the crown; crate  a trade batch's parts;
+                       newmachine  a machine bought
    Ambience (LOOPS), quiet, under everything: the wall clock, the valley through the window, and the cleaning machine
-   running a cycle now and then once you own one. Each loop file carries 0.1 s of padding at both ends (the end of the
+   running a cycle now and then once you own one; staff at their benches once you employ someone, the valley fair's
+   crowd in fair week, and rain on the window when the Rain setting is on. Each loop file carries 0.1 s of padding at both ends (the end of the
    loop before, the start after) and plays from 0.1 to 0.1 + len, so MP3's encoder gap never clicks at the seam.
      WORKSHOP_SOUND.play(name, delay)   a one-shot, delay in seconds (calls made while held are queued: hold / release)
      WORKSHOP_SOUND.hold() / release(at, gap)   queue the one-shots made between the two, then play them from at s, gap s apart
-     WORKSHOP_SOUND.set({on, amb, room})    on: the setting; amb: the ambience may play now (page visible, not under the
-                                            timegrapher's tick); room: {cleaning} from the app's roomSpec()
+     WORKSHOP_SOUND.set({on, amb, rain, room})  on: the setting; amb: the ambience may play now (page visible, not under
+                                            the timegrapher's tick); rain: the Rain setting; room: {cleaning, staff, fair}
      WORKSHOP_SOUND.unlock()            call from a tap (browsers only allow audio after one) */
 const WORKSHOP_SOUND=(function(){
 "use strict";
 const DIR="sounds/";
-const SHOTS={door:{vol:.55},sale:{vol:.6},chime:{vol:.45}};
-const LOOPS={clock:{len:3.994,vol:.16},valley:{len:30,vol:.12},machine:{len:5.436,vol:.10}};
+const SHOTS={door:{vol:.55},sale:{vol:.6},chime:{vol:.45},pass:{vol:.5},fail:{vol:.5},gavel:{vol:.55},tool:{vol:.3},wind:{vol:.35},crate:{vol:.45},newmachine:{vol:.4}};
+const LOOPS={clock:{len:3.994,vol:.16},valley:{len:30,vol:.12},machine:{len:5.436,vol:.10},staff:{len:11.3,vol:.07},fair:{len:11.3,vol:.08},rain:{len:14.3,vol:.09}};
 /* the cleaning machine: runs CYCLE.run s, rests CYCLE.rest s, fading in and out over CYCLE.fade s */
 const CYCLE={run:22,rest:70,fade:3};
 const AMB_FADE=1.2;
 let ctx=null,out=null,amb=null,started=false,held=null,cycT=0;
-const cfg={on:false,amb:false,room:{}},bufs={},loading={},loops={};
+const cfg={on:false,amb:false,rain:false,room:{}},bufs={},loading={},loops={};
 function audio(){if(ctx)return ctx;if(typeof WATCH_SOUND==="undefined"||!WATCH_SOUND.context)return null;ctx=WATCH_SOUND.context();if(!ctx)return null;
   out=ctx.createGain();out.gain.value=1;out.connect(ctx.destination);amb=ctx.createGain();amb.gain.value=0;amb.connect(out);return ctx;}
 function load(name){if(bufs[name])return Promise.resolve(bufs[name]);if(loading[name])return loading[name];
@@ -1238,7 +1242,9 @@ function tick(){if(!ctx)return;const want=cfg.on&&cfg.amb,now=ctx.currentTime;
   loopOn("clock");loopOn("valley");
   if(cfg.room&&cfg.room.cleaning){loopOn("machine");const m=loops.machine;
     if(m&&m.g){cycT+=2;const t=cycT%(CYCLE.run+CYCLE.rest),on=t<CYCLE.run;m.g.gain.setTargetAtTime(on?LOOPS.machine.vol:0,now,CYCLE.fade/3);}}
-  else loopOff("machine");}
+  else loopOff("machine");
+  const extra={staff:!!(cfg.room&&cfg.room.staff),fair:!!(cfg.room&&cfg.room.fair),rain:!!cfg.rain};
+  for(const k in extra){if(extra[k])loopOn(k);else loopOff(k);}}
 const api={
   unlock(){if(!audio())return;if(ctx.state==="suspended")ctx.resume().catch(()=>{});if(!started){started=true;setInterval(tick,2000);}tick();},
   play(name,delay){if(held){held.push(name);return;}shot(name,delay);},
@@ -2667,7 +2673,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.1.0.0";
+const VERSION="1.1.1.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -2881,7 +2887,7 @@ const BIZ={benchRent:140,keep:260,hoursWeek:45,staffHours:40,repairsWeek:1.8,rep
 
 /* ---- state ---- */
 const START_YEAR=2000,END_YEAR=2030;   // the first week of END_YEAR+1 brings the career summary (app/cards.js); the game goes on after it
-function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,reduce:null,sound:true,wsound:true,tab:"bench",
+function freshState(){return{sv:1,seen:false,theme:"dark",gfx:null,gfxAuto:true,reduce:null,sound:true,wsound:true,rain:false,tab:"bench",
   cfg:Object.assign({},SIM.DEFAULT_CFG),career:null,
   xp:{},piece:null,tgOn:null,tg:{pos:"DU",temp:23,wind:0,lift:52},cals:[],dialCase:"steel-dress"};}   // dialCase: the case tried on the Bench's Dial side view (app/bench.js)   // cals: the Sandbox's calibres (a career keeps its own in S.career.calibres)   // tgOn: a customer's watch on the timegrapher ({kind:"repair",id}) instead of your piece   // xp: skill XP outside a career; piece: the movement on the timegrapher (app/test.js); tg: its settings
 let S=freshState();
@@ -3300,6 +3306,7 @@ function openSettings(){
 <div class="field"><span class="lbl">Motion</span>${segHtml("reduceSeg","reduce",[["auto","Auto","follow phone"],["1","Reduced"],["0","Full"]],S.reduce==null?"auto":S.reduce?"1":"0")}</div>
 <div class="field"><span class="lbl">Tick</span>${segHtml("sndSeg","snd",[["1","On","the watch on the Test tab"],["0","Off"]],S.sound===false?"0":"1")}</div>
 <div class="field"><span class="lbl">Workshop sounds</span>${segHtml("wsndSeg","wsnd",[["1","On","bell, till, clock, room"],["0","Off"]],S.wsound===false?"0":"1")}</div>
+<div class="field"><span class="lbl">Rain on the window</span>${segHtml("rainSeg","rain",[["1","On","with workshop sounds"],["0","Off"]],S.rain===true?"1":"0")}</div>
 <div class="field"><span class="lbl">Help</span><div class="row"><button class="btn" id="setHelp">Help and glossary</button>${inCareer()&&!car().over?`<button class="btn" id="setTour">Take the tour</button>`:""}</div></div>
 <div class="field"><span class="lbl">Game</span><div class="row"><button class="btn" id="setNew">New game…</button></div></div>
 <div class="field"><span class="lbl">Saves</span><div class="row"><button class="btn" id="setBackup">Back up</button><button class="btn" id="setRestore">Restore</button></div>
@@ -3313,6 +3320,7 @@ ${ap||tip?`<div class="field"><span class="lbl">App</span>${ap?`<div class="row"
   pick("themeSeg","theme",v=>{S.theme=v;applyTheme();});
   pick("sndSeg","snd",v=>{S.sound=v==="1";if(curTab==="test"){WATCH_SOUND.unlock();TAB_RENDER.test();}wsSync();});
   pick("wsndSeg","wsnd",v=>{S.wsound=v==="1";wsSync();if(S.wsound){WORKSHOP_SOUND.unlock();sfx("door");}});   // a bell to show it works
+  pick("rainSeg","rain",v=>{S.rain=v==="1";wsSync();if(S.rain&&S.wsound!==false)WORKSHOP_SOUND.unlock();});
   pick("reduceSeg","reduce",v=>{S.reduce=v==="auto"?null:v==="1";applyReduce();});
   $("setHelp").addEventListener("click",()=>helpSheet());$("setNew").addEventListener("click",()=>newGameSheet());if($("setTour"))$("setTour").addEventListener("click",()=>{closeSheet();tutStart(true);});   // app/help.js
   $("setBackup").addEventListener("click",buBackupOpen);
@@ -3704,7 +3712,7 @@ TAB_RENDER.test=function(){renderTest();tgStart();};
 TAB_LEAVE.test=tgStop;
 
 function levelToast(k,l){if(l)toast(`${SKILLS[k].name} up to level ${l}.`);}
-function adjDone(kind,n){const p=curPiece(),k=kind==="poise"?"poising":"regulating";hud();
+function adjDone(kind,n){const p=curPiece(),k=kind==="poise"?"poising":"regulating";hud();sfx("tool");
   p.hours+=SIM.hoursFor(kind);levelToast(k,gainXp(k,SIM.ADJ.xp[kind]));
   save();const was=TG.st;renderTest();tickSet();
   tgMark(kind==="reg"?sgn(TG.st.rate-was.rate,1):kind==="beat"?"beat":"poise");}
@@ -3719,7 +3727,7 @@ onTap("tgPos",e=>{const b=e.target.closest("[data-pos]");if(!b)return;
   if(b.classList.contains("lock")){toast(`Needs the ${toolFor(t=>t.positions.length>1).name.toLowerCase()} (Shop).`);return;}
   if(S.tg.pos===b.dataset.pos)return;S.tg.pos=b.dataset.pos;save();renderTest();tickSet();tgMark(S.tg.pos);});
 onTap("tgTemp",e=>{const b=e.target.closest("[data-temp]");if(!b)return;S.tg.temp=+b.dataset.temp;save();renderTest();tgMark(b.dataset.temp+"°");});
-onTap("tgWind",e=>{const b=e.target.closest("[data-wind]");if(!b)return;S.tg.wind=+b.dataset.wind;save();renderTest();tickSet();tgMark(S.tg.wind?"24 h":"wound");});
+onTap("tgWind",e=>{const b=e.target.closest("[data-wind]");if(!b)return;S.tg.wind=+b.dataset.wind;if(!S.tg.wind)sfx("wind");save();renderTest();tickSet();tgMark(S.tg.wind?"24 h":"wound");});
 onTap("tgLift",e=>{const b=e.target.closest("[data-lift]");if(!b)return;S.tg.lift=+b.dataset.lift;save();renderTest();});
 onTap("tgSnd",()=>{S.sound=!S.sound;save();renderTest();tickSet();});
 
@@ -3748,7 +3756,7 @@ function fixHtml(res){const bad=res.checks.filter(c=>!c.ok&&certFixes(c.k).lengt
   const later=inCareer()&&bad.some(c=>certFixes(c.k).some(f=>f.tab==="build"));
   return `<div class="fixes"><h4>Where to fix it</h4>${bad.map(c=>`<div class="fixrow"><span>${c.label}</span><div class="row">${certFixes(c.k).map((f,i)=>`<button type="button" class="btn sm" data-fix="${c.k}:${i}">${f.label} →</button>`).join("")}</div></div>`).join("")}
 ${later?`<p class="hint">Build rows change your next piece: this one's parts are fixed. Regulate, Adjust beat and Poise work on this one.</p>`:""}</div>`;}
-function trialSheet(t,id){const C=SIM.CERT[id],res=t.tiers[id];
+function trialSheet(t,id){const C=SIM.CERT[id],res=t.tiers[id];sfx(res.pass?"pass":"fail");
   const days=t.days.map((d,i)=>`<tr><td>${i+1}</td><td>${POS_NAME[d.pos]}</td><td>${d.temp} °C</td><td>${sgn(d.rate)}</td></tr>`).join("");
   openSheet(id==="bench"?"Bench check":`${C.name} trial`,`
 <p class="verdict ${res.pass?"pass":"fail"}">${res.pass?"✓ ":"✖ "}${SIM.verdict(t,id)}</p>
@@ -3805,8 +3813,9 @@ function roomSpec(){const c=car();
 function roomSync(){wsSync();if(!window.WATCH_VIS||!WATCH_VIS.setRoom)return;try{WATCH_VIS.setRoom(roomSpec());}catch(e){}}
 /* the workshop sounds (sound/workshop.js): on with the setting; the ambience rests while the page is hidden and under the
    timegrapher's tick on the Test tab; the cleaning machine runs once you own one. sfx(name) plays a one-shot */
-function wsSync(){if(typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.set({on:S.wsound!==false,amb:!document.hidden&&!(curTab==="test"&&S.sound),room:{cleaning:!!roomSpec().has.cleaning}});}catch(e){}}
-function sfx(name){if(S.wsound===false||typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.play(name);}catch(e){}}
+function wsSync(){if(typeof WORKSHOP_SOUND==="undefined")return;try{const c=car();WORKSHOP_SOUND.set({on:S.wsound!==false,amb:!document.hidden&&!(curTab==="test"&&S.sound),rain:S.rain===true,
+    room:{cleaning:!!roomSpec().has.cleaning,staff:!!(c&&c.staff.length),fair:!!(c&&c.week===CALENDAR.fair.week)}});}catch(e){}}
+function sfx(name,delay){if(S.wsound===false||typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.play(name,delay);}catch(e){}}
 document.addEventListener("visibilitychange",wsSync);
 document.addEventListener("pointerdown",()=>{if(S.wsound!==false&&typeof WORKSHOP_SOUND!=="undefined"){WORKSHOP_SOUND.unlock();wsSync();}},{passive:true,capture:true});
 function visSync(){
@@ -4046,8 +4055,10 @@ const whenTxt=wk=>{const d=wk-car().wk;return d<=0?"this week":d===1?"next week"
 
 /* ---- upgrades and staff ---- */
 function upNeeds(id){const U=UPGRADES[id];return(U.needs||[]).filter(n=>!upOwned(n));}
+/* the sound a purchase makes: the machines whir into life (1.1.1.0) */
+const BUY_SOUND={machine:["timing-six","timing-lab","cleaning","lathe","polishing","mill","climate","cnc","cleanroom"]};
 function buyUpgrade(id){const U=UPGRADES[id],c=car();if(!U||upOwned(id)||upNeeds(id).length)return false;
-  if(!pay(U.cost,U.name))return false;c.up[id]=true;c.unlocks["shop:"+id]=true;toast(`${U.name}: yours.`);checkGoals();save();return true;}
+  if(!pay(U.cost,U.name))return false;c.up[id]=true;c.unlocks["shop:"+id]=true;toast(`${U.name}: yours.`);if(BUY_SOUND.machine.includes(id))sfx("newmachine");checkGoals();save();return true;}
 function refreshCands(R){const c=car(),kinds=Object.keys(STAFF).filter(k=>!STAFF[k].needs||upOwned(STAFF[k].needs));
   const taken=new Set(c.staff.map(s=>s.name));c.cands=[];
   for(let i=0;i<3;i++){let n=pick(R,STAFF_NAMES);for(let j=0;j<6&&taken.has(n);j++)n=pick(R,STAFF_NAMES);taken.add(n);c.cands.push({name:n,kind:kinds[i%kinds.length]});}}
@@ -4109,7 +4120,7 @@ function addTradeOffer(R){const c=car();if(c.trade||c.tradeOffer)return;
   c.tradeOffer={id:nextId(),brand:pick(R,TRADE_BRANDS),cfg,qty,price,parts:T.parts,hoursEach:T.hours,weeks:Math.ceil(qty*T.hours/BIZ.hoursWeek)+3,until:c.wk+BIZ.offerKeep};}
 function tradeLine(t){const r=SIM.simulate(t.cfg,{},null,{seed:"trade"});return `${t.qty} × ${r.cfg.winding==="automatic"?"automatic":"hand-wound"}${r.cfg.complications.length?" date":""} at ${(+r.cfg.bph).toLocaleString("en-GB")} bph`;}
 function acceptTrade(){const c=car(),t=c.tradeOffer;if(!t)return;if(!pay(t.qty*t.parts,`parts for ${t.qty} movements (${t.brand})`))return;
-  c.trade=Object.assign(t,{due:c.wk+t.weeks});c.tradeOffer=null;
+  c.trade=Object.assign(t,{due:c.wk+t.weeks});c.tradeOffer=null;sfx("crate");
   c.jobs.push({id:nextId(),kind:"trade",ref:t.id,h:t.qty*t.hoursEach*batchMult(),label:`${t.qty} movements for ${t.brand}`,staff:true});save();}
 
 /* ---- your pieces ---- */
@@ -4337,7 +4348,7 @@ function lotRun(lot,mine){const c=car(),R=SIM.rng(`${c.seed}|sale|${c.sale.wk}|$
 /* settle a lot once its bidding is over */
 function lotSettle(lot,res,lines){const c=car(),sl=c.sale,F=CALENDAR.fee;let line;
   if(lot.kind==="mine"){const pc=stockBy(lot.id);if(!pc)return;pc.lot=null;
-    if(res.sold){const net=Math.round(res.hammer*(1-F));c.stock=c.stock.filter(x=>x!==pc);sfx("sale");earn(net,`${pc.name} at ${CALENDAR.house} (hammer ${fmt$(res.hammer)}, less ${Math.round(F*100)}%)`);
+    sfx("gavel");if(res.sold){const net=Math.round(res.hammer*(1-F));c.stock=c.stock.filter(x=>x!==pc);sfx("sale",1.1);earn(net,`${pc.name} at ${CALENDAR.house} (hammer ${fmt$(res.hammer)}, less ${Math.round(F*100)}%)`);
       c.sold.push(soldRow(pc,res.hammer,res.buyer,"auction"));addRep(REP_GAIN.auction,lines);goal("auction",lines);
       line=`${pc.name}: sold to ${res.buyer} for ${fmt$(res.hammer)} (${fmt$(net)} to you).`;}
     else line=`${pc.name}: bought in at ${fmt$(res.hammer)}, below your reserve. It's back in stock.`;}
@@ -4721,7 +4732,7 @@ function brokeSheet(){const c=car();hud();if(TAB_RENDER[curTab])TAB_RENDER[curTa
   $("brNew").addEventListener("click",newGameSheet);$("brNo").addEventListener("click",closeSheet);}
 
 /* ---- save slots: a whole game each. Loading keeps this device's settings (theme, graphics, motion, sound) ---- */
-const KEEP_SETTINGS=["seen","theme","gfx","gfxAuto","reduce","sound","wsound","lastBackup"];
+const KEEP_SETTINGS=["seen","theme","gfx","gfxAuto","reduce","sound","wsound","rain","lastBackup"];
 function slotRead(i){try{const j=localStorage.getItem(slotKey(i));if(!j)return null;const o=JSON.parse(j);return buObjS(o)&&buObjS(o.cfg)?o:null;}catch(e){return null;}}
 function slotMeta(i){const o=slotRead(i);if(!o)return null;const c=o.career;
   return{what:c?`${c.over?"a closed workshop":"a career"}, ${c.year||START_YEAR} week ${c.week||1}, ${fmt$(c.cash||0)}`:"the Sandbox",at:o.savedAt};}
