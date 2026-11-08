@@ -169,7 +169,7 @@ function pieceName(cfg,no){const P=(s,id)=>SIM.part(s,id);const bits=[cfg.windin
 /* a Bureau or Observatory trial: pay the fee, the piece is away for the weeks, the result comes back at Close week */
 function sendTrial(tier){const c=car(),p=c.bench,C=SIM.CERT[tier];if(!p||!p.made||p.trial)return false;
   if(!pay(C.fee,`${C.name} trial for No. ${p.no}`))return false;
-  const tool=ownedTool(),t=SIM.runTrial(p.cfg,skillLvls(),{timingRes:tool.timingRes},{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
+  const tool=ownedTool(),t=SIM.runTrial(p.cfg,skillLvls(),trialTools(),{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
   p.trial={tier,back:c.wk+C.weeks,best:t.tiers[tier].pass?tier:null,t:{days:t.days,stats:t.stats,tiers:{[tier]:t.tiers[tier]}}};
   save();return true;}
 /* case it and put it in stock (needs at least a Bench pass) */

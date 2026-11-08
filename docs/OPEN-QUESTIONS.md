@@ -2,6 +2,18 @@
 
 Found by the 1.0.2.1 audit (code review, design check, playthrough, 15-year money runs). Paused by Kelbo: ask these before starting any of them. Each is its own PR once decided.
 
+## Decisions (Kelbo, 2026-11-08)
+
+- 2: trial noise shrinks with skill and machines. **Done in 1.0.2.4.**
+- 5: both: cap rival growth (20 years) and lower the player's noise with skill. **Done in 1.0.2.4.**
+- 6: halve the reputation fade (0.4% a week). **Done in 1.0.2.4.**
+- 9: Climate control steadies trial results. **Done in 1.0.2.4.**
+- 8: a career summary at 2031 week 1 with Keep going. Planned for 1.1.0.0.
+- 4: warn before delivering a commission piece worth far more than its budget. Planned for 1.1.0.0.
+- 10: the bench is free while a piece is at a trial. Planned for 1.1.1.0.
+- 12: staff get skill profiles. Planned for 1.2.0.0 (details to be pitched first).
+- 11: no "hand the batch back". Closed.
+
 ## Balance (from the money runs)
 
 Done in 1.0.2.2 (career difficulty, see `docs/DESIGN.md`): 1 (prestige markup halved, walk-in buyers capped), 3 (€28,000, rent 520, the loan covers 12 weeks), and in 7 the skills curve and staff cost (staff now get more trade work). Also done there, found by the difficulty audit: staff idle on full pay, and a wrong repair costing five right ones in press reputation. Still open below: 2, 4, 5, 6, and repairs-only staying flat.
