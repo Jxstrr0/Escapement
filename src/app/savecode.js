@@ -160,8 +160,9 @@ function buRestore(text,err){
   closeSheet();applyLoaded(r.data.save,"Backup restored");buPersist();}
 
 /* ===================== save safety =====================
-   Every Kelbo game shares the jxstrr0.github.io origin, so one storage quota: if the phone runs low, the browser may
-   clear the whole origin, and every game's saves with it. Three things make that less likely to hurt:
+   The game lives at its own address (escapement.longlight.games), so it has its own storage quota; saves from before the
+   move stay on the old shared jxstrr0.github.io origin, and the esc- prefix keeps them apart from the other games there.
+   If the phone runs low, the browser may clear the whole origin, and the saves with it. Three things make that less likely to hurt:
    1. buPersist() asks the browser to keep our storage (navigator.storage.persist). Once per page load, and only once the
       player has something worth keeping (a save write with progress, a backup or a restore), because Firefox shows a
       prompt for it. Chrome and Safari decide quietly. buStoreLine() fills the "Storage: ..." line in both Saves spots.

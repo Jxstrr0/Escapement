@@ -2,8 +2,8 @@
 /* Escapement: build index.html from src/.
  *
  *   Copied from Prairie Engine Works (Jxstrr0/350Chev). The only changes are the names: the service worker's caches are
- *   "esc-..." instead of "pew-..." (both games live on jxstrr0.github.io and share one cache store, so PEW's names would
- *   make each game delete the other's offline copy), and the on-demand three.js addon list is ESC_LIBS instead of ESC_LIBS.
+ *   "esc-..." instead of "pew-..." (each game now has its own address, but both used to live on jxstrr0.github.io and
+ *   share one cache store, so the prefixes keep old copies there apart and neither game deletes the other's offline copy), and the on-demand three.js addon list is ESC_LIBS instead of ESC_LIBS.
  *
  *   Edit src/, run `node build.js`, commit both src/ and index.html. Never hand-edit index.html.
  *
