@@ -1,6 +1,6 @@
 # Notes for Claude
 
-Escapement is a browser watchmaking career game by Longlight Interactive: build mechanical movements part by part, put them on the timegrapher, chase chronometer certification and sell to customers, collectors and auction houses, until a shared repair bench in the Haldis becomes a manufacture making its own calibres. Phone-first, free, one self-contained page (`index.html`, built from `src/`), live at https://jxstrr0.github.io/Escapement/. **The build plan is `docs/ESCAPEMENT-PLAN.md`**: read it before starting any PR, do one PR at a time, tick it off in its checklist. The game as built is `docs/DESIGN.md`.
+Escapement is a browser watchmaking career game by Longlight Interactive: build mechanical movements part by part, put them on the timegrapher, chase chronometer certification and sell to customers, collectors and auction houses, until a shared repair bench in the Haldis becomes a manufacture making its own calibres. Phone-first, free, one self-contained page (`index.html`, built from `src/`), live at https://escapement.longlight.games/. **The build plan is `docs/ESCAPEMENT-PLAN.md`**: read it before starting any PR, do one PR at a time, tick it off in its checklist. The game as built is `docs/DESIGN.md`.
 
 Sister project: Prairie Engine Works (`Jxstrr0/350Chev`). The stack, build script and save-code shape are lifted from it; when in doubt, look at how PEW does it.
 
@@ -36,7 +36,7 @@ Run all three before every commit. To play a local copy: `python3 -m http.server
 
 GitHub Pages serves the repo root from `main` (`.nojekyll` keeps Jekyll out). No workflow file: merging into `main` is the deploy. Allow a minute or two, then reload the live site. Installed copies show the "New version ready" bar because the service worker's cache name carries the version and a content hash.
 
-**Shared host.** Every Kelbo game on GitHub Pages lives on `jxstrr0.github.io`, so they share one origin: one localStorage, one Cache Storage, one storage quota. Escapement's localStorage keys all start `esc-` and its caches all start `esc-`; the service worker only ever deletes `esc-` caches. Never use another game's prefix, and never delete or clear anything outside `esc-`.
+**Own address.** Since November 2026 every Longlight game has its own subdomain, so Escapement (`escapement.longlight.games`) has its own origin: its own localStorage, Cache Storage and storage quota. Saves from before the move stay on the old shared origin, `jxstrr0.github.io` (Kelbo accepted that). The prefix rules still apply, so old copies there stay apart from the other games: Escapement's localStorage keys all start `esc-` and its caches all start `esc-`; the service worker only ever deletes `esc-` caches. Never use another game's prefix, and never delete or clear anything outside `esc-`.
 
 ## Versions
 
@@ -129,12 +129,12 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 
 ## Longlight brand (studio pieces only)
 
-The game keeps its own look (felt and brass). The Longlight brand applies only to studio pieces: the studio logo or splash, the "Longlight Interactive" credit line, the studio block on a credits or about screen, and any link back to the studio site (https://jxstrr0.github.io/Kelbo.Website/). Use the official logo files from `Jxstrr0/Kelbo.Website` (`assets/press/longlight-logo-dark` / `-light`); copy them in, never hotlink, redraw or recolour them. Studio colours inside studio pieces only: Clay `#D97757`, Purple `#7B3FC4`, Slate `#141413`, Ivory `#FAF9F5`, Lilac `#B48CE8`.
+The game keeps its own look (felt and brass). The Longlight brand applies only to studio pieces: the studio logo or splash, the "Longlight Interactive" credit line, the studio block on a credits or about screen, and any link back to the studio site (https://longlight.games/; press kit https://longlight.games/press.html). Use the official logo files from `Jxstrr0/Kelbo.Website` (`assets/press/longlight-logo-dark` / `-light`); copy them in, never hotlink, redraw or recolour them. Studio colours inside studio pieces only: Clay `#D97757`, Purple `#7B3FC4`, Slate `#141413`, Ivory `#FAF9F5`, Lilac `#B48CE8`.
 
 ## Studio catalogue
 
 `LONGLIGHT-STUDIO.md` (repo root) covers every Longlight game: looks, names
-already taken, storage and cache prefixes on the shared origin, a reuse map and
+already taken, storage and cache prefixes (kept apart from the old shared origin), a reuse map and
 improvement ideas. Read it before pitching new ideas, names or looks, and
 before building a system another Longlight game may already have. This file
 wins where the two disagree. Don't edit the copy here: the master is
