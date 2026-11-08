@@ -2673,7 +2673,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.1.1.0";
+const VERSION="1.1.2.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -3622,7 +3622,9 @@ function tgStart(){if(!TG.cv){TG.cv=$("tgCv");TG.cx=TG.cv.getContext("2d");TG.R=
 function tgStop(){if(TG.raf)cancelAnimationFrame(TG.raf);TG.raf=0;WATCH_SOUND.stop();}
 function tickSet(){const st=TG.st||tgState();WATCH_SOUND.set({bph:st.bph,beatMs:st.beat,on:!!S.sound&&!st.stopped&&curTab==="test"&&!document.hidden});}
 /* browsers only start audio from a tap: the first tap anywhere while the Test tab is open starts the tick */
-document.addEventListener("pointerdown",()=>{if(curTab==="test"&&S.sound&&!document.hidden){WATCH_SOUND.unlock();tickSet();}},{passive:true,capture:true});
+/* the gesture events that may start audio (a finger counts on pointerup / touchend, a mouse on pointerdown); app/bench.js uses them too */
+const GESTURES=["pointerdown","pointerup","touchend","click","keydown"];
+for(const ev of GESTURES)document.addEventListener(ev,()=>{if(curTab==="test"&&S.sound&&!document.hidden){WATCH_SOUND.unlock();tickSet();}},{passive:true,capture:true});
 document.addEventListener("visibilitychange",()=>{if(curTab!=="test")return;if(document.hidden)tgStop();else tgStart();});
 window.addEventListener("resize",()=>{if(curTab==="test")tgSize();});
 
@@ -3772,7 +3774,7 @@ onTap("certBtns",e=>{const b=e.target.closest("[data-cert]");if(!b)return;
   const id=b.dataset.cert,C=SIM.CERT[id],p=curPiece(),tool=ownedTool();
   if(inCareer()&&id!=="bench"){
     openSheet(`Send No. ${p.no} for trial`,`<p>The ${C.body} keeps it for ${C.weeks} weeks: fifteen days of timing, then the paperwork. The fee is ${fmt$(C.fee)}, pass or fail.</p>
-<p class="hint">You have ${fmt$(car().cash)}. While it's away your bench waits for it: work on repairs, trade and R&D.</p>
+<p class="hint">You have ${fmt$(car().cash)}. Your bench is free while it's away: start the next piece, or work on repairs, trade and R&D.</p>
 <div class="row"><button class="btn pri" id="trialGo">Send it (${fmt$(C.fee)})</button><button class="btn" id="trialNo">Not yet</button></div>`);
     $("trialNo").addEventListener("click",closeSheet);
     $("trialGo").addEventListener("click",()=>{if(sendTrial(id)){closeSheet();hud();renderTest();toast(`No. ${p.no} is on its way to the ${C.body}.`);}});
@@ -3817,7 +3819,9 @@ function wsSync(){if(typeof WORKSHOP_SOUND==="undefined")return;try{const c=car(
     room:{cleaning:!!roomSpec().has.cleaning,staff:!!(c&&c.staff.length),fair:!!(c&&c.week===CALENDAR.fair.week)}});}catch(e){}}
 function sfx(name,delay){if(S.wsound===false||typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.play(name,delay);}catch(e){}}
 document.addEventListener("visibilitychange",wsSync);
-document.addEventListener("pointerdown",()=>{if(S.wsound!==false&&typeof WORKSHOP_SOUND!=="undefined"){WORKSHOP_SOUND.unlock();wsSync();}},{passive:true,capture:true});
+/* browsers only let audio start inside a tap: for a finger that is pointerup / touchend, not pointerdown (1.1.2.0: on phones the
+   sounds could stay silent when only pointerdown was listened to), so every gesture event unlocks (GESTURES, app/test.js) */
+for(const ev of GESTURES)document.addEventListener(ev,()=>{if(S.wsound!==false&&typeof WORKSHOP_SOUND!=="undefined"){WORKSHOP_SOUND.unlock();wsSync();}},{passive:true,capture:true});
 function visSync(){
   if(!window.WATCH_VIS)return;
   roomSync();
@@ -3857,6 +3861,7 @@ function renderBenchTodo(){const el=$("bTodo"),c=car();
   const rin=c.repairs.filter(r=>r.state==="in").length,p=c.bench,lines=[];
   lines.push(rin?`${rin} repair${rin>1?"s":""} waiting for a diagnosis`:"No repairs waiting");
   lines.push(!p?"Your bench is free for a piece of your own":!p.made?`No. ${p.no} is being assembled`:p.trial?`No. ${p.no} is away at a trial`:p.cert?`No. ${p.no} is ready to case`:`No. ${p.no} needs adjusting and a Bench check`);
+  for(const x of c.away)lines.push(x.trial?`No. ${x.no} is away at a trial, back ${whenTxt(x.trial.back-1)}`:`No. ${x.no} is back from its trial and waiting (Shop)`);
   if(c.stock.length)lines.push(`${c.stock.length} in stock`);
   el.innerHTML=`<h3>This week<span class="cnt">${c.year} · week ${c.week}</span></h3><ul class="todo">${lines.map(l=>`<li>${l}</li>`).join("")}</ul>
 <div class="row">${rin?`<button class="btn" data-bt="shop">Repairs</button>`:""}<button class="btn" data-bt="${p?"test":"build"}">${p?"Test tab":"Build tab"}</button><button class="btn pri" data-bt="close">Close week</button></div>`;}
@@ -3976,7 +3981,8 @@ phoBuild();
      once (c.used); what is left at Close week goes into the jobs (c.jobs, first in first out): assembling your piece,
      repairs, trade batches. Staff work repairs and trade only.
    - Pieces: Make (Build tab) pays for the parts and queues the assembly. Once made it goes on the timegrapher (c.bench),
-     you adjust it, check or certify it (a Bureau or Observatory trial takes weeks and a fee), then case it (CASES) and it
+     you adjust it, check or certify it (a Bureau or Observatory trial takes weeks and a fee;
+     the piece leaves the bench for c.away meanwhile, and comes back to the bench, or waits there if the bench is busy), then case it (CASES) and it
      goes into stock (c.stock) at a price, or to a commission that fits.
    - closeWeek(): jobs, sales, trials coming back, deadlines, the calendar's events and service returns (app/calendar.js),
      wages and rent, new repairs and offers, news; then the week report.
@@ -3993,7 +3999,7 @@ const pick=(R,a)=>a[Math.floor(R()*a.length)%a.length];
 function newCareer(kind){
   const st=BIZ.starts[kind]||BIZ.starts.bench,seed=Math.random().toString(36).slice(2,8);
   const c={kind,seed,start:st.year,year:st.year,week:1,wk:0,cash:st.cash,used:0,up:{},unlocks:{},xp:{},seq:0,
-    loan:null,loanUsed:false,over:false,bench:null,made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
+    loan:null,loanUsed:false,over:false,bench:null,away:[],made:0,jobs:[],repairs:[],stock:[],orders:[],offers:[],trade:null,tradeOffer:null,
     staff:[],cands:[],sold:[],books:[],certs:{},tut:kind==="shop",tutStep:kind==="shop"?null:0,tutRep:null,
     rep:{collectors:0,trade:0,press:0},goals:{},news:[],newsN:0,contests:[],sale:null,fair:null,contest:null,fairs:0,slumpLetGo:false,
     rnd:{done:{},run:[]},calibres:[],certsLog:[],ended:null,life:{sold:0,best:null,place:null,wins:0}};
@@ -4021,6 +4027,8 @@ function normCareer(c){if(!buObjS(c))return null;
   c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
   c.stock=c.stock.filter(x=>buObjS(x)&&buObjS(x.cfg)&&CASES[x.caseId]);c.jobs=c.jobs.filter(j=>buObjS(j)&&+j.h>0);
   if(c.bench&&!(buObjS(c.bench)&&buObjS(c.bench.cfg)))c.bench=null;
+  c.away=(Array.isArray(c.away)?c.away:[]).filter(p=>buObjS(p)&&buObjS(p.cfg));   // pieces at a Bureau or Observatory trial, or back and waiting
+  if(c.bench&&c.bench.trial){c.away.push(c.bench);c.bench=null;}   // before 1.1.2.0 a piece at a trial stayed on the bench
   c.tutStep=c.tutStep==null||c.tut?null:Math.max(0,Math.min((typeof TUT!=="undefined"?TUT.length:16)-1,Math.floor(+c.tutStep)||0));c.tutRep=c.tutRep==null?null:+c.tutRep||null;   // the tour (app/help.js)
   c.rnd=normRnd(c.rnd);c.calibres=normCals(c.calibres);   // R&D (app/rnd.js)
   c.certsLog=normCertsLog(c.certsLog);   // certificates (app/cards.js)
@@ -4143,15 +4151,19 @@ function sendTrial(tier){const c=car(),p=c.bench,C=SIM.CERT[tier];if(!p||!p.made
   if(!pay(C.fee,`${C.name} trial for No. ${p.no}`))return false;
   const tool=ownedTool(),t=SIM.runTrial(p.cfg,skillLvls(),trialTools(),{seed:p.seed,adjust:p.adjust,trialSeed:p.seed+"t"+(p.subs++)});
   p.trial={tier,back:c.wk+C.weeks,best:t.tiers[tier].pass?tier:null,t:{days:t.days,stats:t.stats,tiers:{[tier]:t.tiers[tier]}}};
+  c.away.push(p);c.bench=null;   // off the bench (1.1.2.0): the next piece can start while this one is away
   save();return true;}
-/* case it and put it in stock (needs at least a Bench pass) */
-function casePiece(caseId){const c=car(),p=c.bench,cs=CASES[caseId];if(!p||!p.cert||!cs)return false;
+/* a piece back from a trial that waited because the bench was busy: onto the bench once it is free */
+function shelfBy(id){return car().away.find(p=>p.id===+id&&!p.trial);}
+function shelfToBench(id){const c=car(),p=shelfBy(id);if(!p||c.bench)return false;c.away=c.away.filter(x=>x!==p);c.bench=p;save();return true;}
+/* case it and put it in stock (needs at least a Bench pass): the bench piece, or one back from a trial and waiting (id) */
+function casePiece(caseId,id){const c=car(),p=id!=null?shelfBy(id):c.bench,cs=CASES[caseId];if(!p||!p.cert||!cs)return false;
   const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});if(r.thickness>cs.maxMove){toast("The movement is too thick for that case.");return false;}
   if(!pay(cs.cost,`${cs.name.split(",")[0].toLowerCase()} for No. ${p.no}`))return false;
   const fin=SIM.eraMult(c.year,"finish"),value=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
   c.stock.push({id:p.id,no:p.no,name:pieceName(p.cfg,p.no),cfg:p.cfg,seed:p.seed,adjust:p.adjust,cert:p.cert,caseId,value,price:value,since:c.wk,
     thick:+(r.thickness+cs.thick).toFixed(1),r:{reserveH:r.reserveH,prestige:r.prestige,amp24:r.amp24,cost:r.cost}});
-  c.bench=null;S.tgOn=null;checkGoals();save();toast(`No. ${p.no} is cased and in stock at ${fmt$(value)}.`);return true;}
+  if(c.bench===p){c.bench=null;S.tgOn=null;}else c.away=c.away.filter(x=>x!==p);checkGoals();save();toast(`No. ${p.no} is cased and in stock at ${fmt$(value)}.`);return true;}
 function stockBy(id){return car().stock.find(x=>x.id===+id);}
 function sellPiece(pc,price,to,how){const c=car();sfx("sale");c.stock=c.stock.filter(x=>x!==pc);earn(price,`${pc.name} sold${to?" to "+to:""}`);
   c.sold.push(soldRow(pc,price,to,how));if(c.sold.length>60)c.sold.shift();}
@@ -4181,10 +4193,11 @@ function closeWeek(){
   for(let b=0;b<buyers;b++){let best=null,bv=0;for(const pc of c.stock){if(!pieceFree(pc))continue;const v=pc.value/pc.price;if(v>bv){bv=v;best=pc;}}
     if(best&&R()<SIM.buyChance(best.value,best.price,walkCap())){const who=pick(R,CUSTOMERS);sellPiece(best,best.price,who);addRep(saleGain(best),rep);rep.push(`Sold ${best.name} to ${who}: ${fmt$(best.price)}.`);}}
   /* 3. trials coming back */
-  const p=c.bench;if(p&&p.trial&&c.wk+1>=p.trial.back){const T=p.trial,C=SIM.CERT[T.tier];
+  for(const p of c.away.slice()){if(!p.trial||c.wk+1<p.trial.back)continue;const T=p.trial,C=SIM.CERT[T.tier];
     if(T.best){const ord=SIM.CERT_ORDER;if(!p.cert||ord.indexOf(T.tier)>ord.indexOf(p.cert))p.cert=T.tier;c.certs[T.tier]=(c.certs[T.tier]||0)+1;addRep(REP_GAIN.cert[T.tier],rep);certLog(p,T);}
-    rep.push(T.best?`No. ${p.no} is back from the ${C.body}: certified ${C.name}.`:`No. ${p.no} is back from the ${C.body}: refused. See the Test tab.`);
-    p.lastTrial=T;p.trial=null;p.seen=false;}
+    p.lastTrial=T;p.trial=null;p.seen=false;p.backWk=c.wk+1;
+    const free=!c.bench;if(free){c.away=c.away.filter(x=>x!==p);c.bench=p;}   // back onto the bench, or it waits in the Shop until the bench is free
+    rep.push(`No. ${p.no} is back from the ${C.body}: ${T.best?`certified ${C.name}`:"refused"}.${free?(T.best?"":" See the Test tab."):` It waits in the Shop (On your bench) until your bench is free${T.best?", or case it from there":""}.`}`);}
   /* 3b. R&D projects finishing (app/rnd.js) */
   rndClose(rep);
   /* 4. deadlines */
@@ -4545,6 +4558,10 @@ function benchCard(){const c=car(),p=c.bench;let t;
   if(!p)t=`<p>Your bench is free. Design a movement on the Build tab and press <b>Make this piece</b>.</p>`;
   else{const j=pieceJob();t=`<p><b>${pieceName(p.cfg,p.no)}</b><br>${!p.made?`Being assembled: ${fmtN(j?j.h:0,0)} h left.`:p.trial?`At the ${SIM.CERT[p.trial.tier].body}, back ${whenTxt(p.trial.back-1)}.`:p.cert?`${SIM.CERT[p.cert].name}. Ready to case.`:"Assembled: adjust it and give it a Bench check on the Test tab."}</p>
 ${p.made&&!p.trial?`<div class="row">${p.cert?`<button class="btn pri" data-sh="case">Case it…</button>`:""}<button class="btn" data-sh="test">Test tab</button></div>`:""}`;}
+  /* pieces off the bench (1.1.2.0): at a trial, or back and waiting for the bench */
+  if(c.away.length)t+=`<ul class="shlist">${c.away.map(x=>`<li><div><b>${pieceName(x.cfg,x.no)}</b><br><small>${x.trial?`At the ${SIM.CERT[x.trial.tier].body} for its ${SIM.CERT[x.trial.tier].name} trial, back ${whenTxt(x.trial.back-1)}.`
+    :`Back from the ${x.lastTrial?SIM.CERT[x.lastTrial.tier].body:"trial"}: ${x.lastTrial&&x.lastTrial.best?`certified ${SIM.CERT[x.lastTrial.best].name}`:"refused"}.${p?" Waiting for your bench.":""}`}</small></div>
+${x.trial?"":`<div class="acts">${x.lastTrial?`<button class="btn sm" data-sh="awres" data-id="${x.id}">Result</button>`:""}${x.cert?`<button class="btn sm${p?" pri":""}" data-sh="case" data-id="${x.id}">Case it…</button>`:""}<button class="btn sm${p?"":" pri"}" data-sh="tobench" data-id="${x.id}"${p?" disabled":""}>To the bench</button></div>`}</li>`).join("")}</ul>`;
   return `<div class="card"><h3>On your bench</h3>${t}</div>`;}
 function stockCard(){const c=car();if(!c.stock.length)return "";const d=demand(),sn=saleNext(),cc=canConsign();
   return `<div class="card"><h3>In stock<span class="cnt">${c.stock.length}</span></h3><ul class="shlist stk">${c.stock.map(x=>{const pr=x.price/x.value-1;
@@ -4599,8 +4616,10 @@ $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]"
   if(k==="new")newGameSheet();
   if(k==="tg"){S.tgOn={kind:"repair",id:+id};save();showTab("test");}
   if(k==="fix")fixSheet(+id);
-  if(k==="case")caseSheet();
+  if(k==="case")caseSheet(id);
   if(k==="test")showTab("test");
+  if(k==="tobench"&&shelfToBench(id)){toast("On your bench.");shopChanged();}
+  if(k==="awres"){const x=car().away.find(p=>p.id===+id);if(x&&x.lastTrial){x.seen=true;save();trialSheet(x.lastTrial.t,x.lastTrial.tier);}}
   if(k==="dealer"){const x=stockBy(id);if(x)confirmSheet(`Sell ${x.name} to the dealer?`,`He pays ${fmt$(dealerPrice(x))} now. In stock it's worth ${fmt$(x.value)}.`,"Sell it",()=>{sellPiece(x,dealerPrice(x),"the dealer","dealer");save();shopChanged();});}
   if(k==="deliver")deliverAsk(id,b.dataset.pc);
   if(k==="lot")lotSheet(+id);
@@ -4630,15 +4649,15 @@ function fixSheet(id){const r=repairBy(id);if(!r)return;
 <p class="hint">The fix goes into the work in hand: Close week to do it. If it wasn't the fault, the watch comes back still wrong.</p>`);
   $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-fix]");if(!b)return;startFix(id,b.dataset.fix);
     if(S.tgOn&&S.tgOn.id===id)S.tgOn=null;save();closeSheet();toast(`${FAULTS[b.dataset.fix].fix}: in the work in hand.`);shopChanged();});}
-/* case a finished piece: the cases that take this movement, the value in each */
-function caseSheet(){const c=car(),p=c.bench;if(!p)return;const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});
+/* case a finished piece (the bench piece, or one back from a trial and waiting: id): the cases that take this movement, the value in each */
+function caseSheet(id){const c=car(),p=id!=null&&id!==""?shelfBy(id):c.bench;if(!p)return;if(id==="")id=null;const r=SIM.simulate(p.cfg,skillLvls(),null,{seed:p.seed,adjust:p.adjust});
   const ok=c.orders.map(o=>tplOf(o.tpl)),fin=SIM.eraMult(c.year,"finish");
   openSheet(`Case No. ${p.no}`,`<p>${pieceName(p.cfg,p.no)} · ${SIM.CERT[p.cert].name} · movement ${r.thickness.toFixed(1)} mm</p>
 <ul class="shlist fixes">${Object.keys(CASES).map(id=>{const cs=CASES[id],fits=r.thickness<=cs.maxMove,lock=cs.needs&&!upOwned(cs.needs),v=Math.round(SIM.pieceValue(r,p.cert,cs)*(1+(fin-1)*Math.min(1,p.cfg.finish.length/2))/10)*10;
   const forO=ok.filter(t=>specOk(t.spec,{cfg:p.cfg,r,cert:p.cert,caseId:id,thick:+(r.thickness+cs.thick).toFixed(1)}));
   return `<li class="${fits&&!lock?"":"own"}"><div><b>${cs.name}</b><br><small>${fmt$(cs.cost)} · ${(r.thickness+cs.thick).toFixed(1)} mm cased · value ${fmt$(v)}${!fits?` · too thick: takes ${cs.maxMove} mm at most`:lock?" · needs your own shop":""}</small>${forO.length?`<br><small class="good">Fits: ${forO.map(t=>t.title.toLowerCase()).join(", ")}</small>`:""}</div>
 <div class="acts"><button class="btn sm" data-case="${id}"${!fits||lock||c.cash<cs.cost?" disabled":""}>Case</button></div></li>`;}).join("")}</ul>`);
-  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-case]");if(!b)return;if(casePiece(b.dataset.case)){closeSheet();shopChanged();}});}
+  $("sheetBody").addEventListener("click",e=>{const b=e.target.closest("[data-case]");if(!b)return;if(casePiece(b.dataset.case,id!=null?id:null)){closeSheet();shopChanged();}});}
 /* consign a stock piece to the next auction night, with a reserve */
 function lotSheet(id){const x=stockBy(id),sn=saleNext();if(!x||!sn)return;
   const est=lotEst(x);
@@ -4715,8 +4734,9 @@ function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
     $("sheetBody").appendChild(row);$("wkRace").addEventListener("click",raceSheet);}
   if(c.sale&&c.sale.wk===c.wk&&!c.sale.done){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkSale">Go to the ${c.sale.name}</button>`;
     $("sheetBody").appendChild(row);$("wkSale").addEventListener("click",saleroomSheet);}
-  const p=c.bench;if(p&&p.lastTrial&&!p.seen){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkTrial">See the trial result</button>`;
-    $("sheetBody").appendChild(row);$("wkTrial").addEventListener("click",()=>{p.seen=true;save();trialSheet(p.lastTrial.t,p.lastTrial.tier);});}}
+  /* a trial result: only in the week it came back (it used to repeat every week until tapped); it stays on the Test tab and in the Shop */
+  for(const p of [c.bench,...c.away])if(p&&p.lastTrial&&p.backWk===c.wk){const row=document.createElement("div");row.className="row";const b=document.createElement("button");b.className="btn";
+    b.textContent=`See No. ${p.no}'s trial result`;row.appendChild(b);$("sheetBody").appendChild(row);b.addEventListener("click",()=>{p.seen=true;save();trialSheet(p.lastTrial.t,p.lastTrial.tier);});}}
 function lastWeekSheet(){const c=car(),L=c&&c.lastWeek;if(!L)return;
   openSheet(`Week ${L.week}, ${L.year}`,`<p class="weekd ${L.d<0?"neg":""}">${L.d>=0?"+":"−"}${fmt$(Math.abs(L.d))} · then ${fmt$(L.cash)}</p>
 <ul class="wklines">${L.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}</ul>`);}

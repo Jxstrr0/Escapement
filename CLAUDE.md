@@ -93,7 +93,7 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: **euros** (`€4,850`, whole amounts; Kelbo, 1.0.2.3), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (1.1.1.0)
+## Current status (1.1.2.0)
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
 - 0.1.0.2: save safety (backup files, storage protection, backup reminder; see Save codes).
@@ -123,7 +123,8 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - 1.0.2.4: trials (open questions 2, 5, 6, 9): trial noise shrinks with regulating skill, a finer timing machine and Climate control (`trialSd`, `trialTools()`); rivals stop improving after 20 years (`CALENDAR.trial.rivalYears`); reputation fades 0.4% a week.
 - 1.1.0.0: the career summary at 2031 week 1 (`c.ended`, `endSheet` in `app/cards.js`, Keep going, a Career summary button after), the career record `S.career.life` (`normLife`, `lifeSale` in `app/calendar.js`), and the commission warning (`deliverAsk`, `BIZ.warnOver` 2).
 - 1.1.1.0: ten ElevenLabs sounds (pass, fail, gavel, tool, wind, crate, newmachine; staff, fair and rain loops) in `WORKSHOP_SOUND`, and a Rain on the window setting (`S.rain`).
-- **Paused: `docs/OPEN-QUESTIONS.md`** holds the balance and design questions from the 1.0.2.1 audit, with Kelbo's decisions (2026-11-08) at the top. Next: 1.1.2.0 (free bench), 1.2.0.0 (staff skills, pitch first).
+- 1.1.2.0: the bench is free while a piece is at a trial (`c.away`: at a trial, or back and waiting; `shelfToBench`, `caseSheet(id)`); the trial-result button shows only in the week it came back (`p.backWk`); audio unlocks on every gesture event (`GESTURES`).
+- **Paused: `docs/OPEN-QUESTIONS.md`** holds the balance and design questions from the 1.0.2.1 audit, with Kelbo's decisions (2026-11-08) at the top. Next: 1.2.0.0 (staff skills, pitch first).
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 
 ## Longlight brand (studio pieces only)
