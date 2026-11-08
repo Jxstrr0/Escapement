@@ -2,6 +2,14 @@
 
 This file describes the game as it actually is on `main`. It grows as plan PRs land; the plan itself, with everything still to come, is [`ESCAPEMENT-PLAN.md`](ESCAPEMENT-PLAN.md).
 
+## 1.1.0.0: the career summary and the commission warning
+
+Answers to open questions 8 and 4.
+
+- **The end of 2030.** The first Close week into 2031 sets `c.ended` and the week's report gets a **Your career summary** button. The summary (`endSheet`, `endStats`, `drawSummary` in `app/cards.js`) is a felt-and-brass card like the trophies, to save or share: the years and how the career began, pieces made and sold, Chronometer and Observatory certificates, the Kessel Peak record (wins, or the best place), the best sale, R&D projects and calibres, goals, the three reputation tiers and the till. **Keep going** closes it; the game goes on, and the Career card keeps a **Career summary** button.
+- **The career record**, `S.career.life` (inside `esc-save`): pieces sold, the best sale, the best Kessel Peak place and wins, which the capped `sold` and `contests` lists forget. `lifeSale` (from `soldRow`) and the contest result keep it; `normLife` rebuilds it for older careers from what those lists still hold.
+- **Commission warning.** Delivering a piece worth more than `BIZ.warnOver` (2) times what the customer pays asks first (`deliverAsk` in `app/shop.js`): both numbers, **Deliver anyway** or **Keep it**.
+
 ## 1.0.2.4: trials, climate control, Kessel Peak, reputation
 
 Answers to open questions 2, 5, 6 and 9 (`docs/OPEN-QUESTIONS.md`), measured with sim-test and bot careers:

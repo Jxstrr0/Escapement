@@ -11,6 +11,7 @@
      positions, temperature), every check with its limit and tick, the date as year and week, and a round inked stamp.
    - The trophy: dark felt and brass, a medal cut like an escape wheel on a ribbon, the goal's name and blurb, the week it
      was reached and the piece or number behind it where there is one (goalBits).
+   - The career summary (1.1.0.0, endSheet): the same felt, the whole career on one card; see its block below.
    - Where they open: the Career tab's Goals card (a Trophy button on each goal reached), the Certificates card below it
      (certsCard), and a Certificate button in the Test tab's trial sheet after a pass (certSheetBtn; in the Sandbox the
      card is drawn on the spot and not logged). The picture is the same in both themes: paper is paper. ---- */
@@ -184,9 +185,9 @@ let cdTok=0;
 function cdFonts(){const f=document.fonts;if(!f)return Promise.resolve();
   const want=[`700 50px ${CD_F}`,`600 30px ${CD_F}`,`500 24px ${CD_F}`,`400 24px ${CD_F}`,`500 22px ${CD_M}`,`600 30px ${CD_M}`,`400 21px ${CD_M}`];
   return Promise.race([Promise.all(want.map(w=>f.load(w).catch(()=>null))).then(()=>f.ready),new Promise(r=>setTimeout(r,2500))]).catch(()=>{});}
-async function cardSheet(title,draw,file,alt){const tok=++cdTok,share=canShareFiles();
-  openSheet(title,`<div class="cdpic" id="cdPic"><p class="hint">Drawing the card…</p></div>
-<div class="row"><button class="btn pri" id="cdSave" disabled>Save picture</button>${share?`<button class="btn" id="cdShare" disabled>Share…</button>`:""}<button class="btn ghost" id="cdOk">Close</button></div>`);
+async function cardSheet(title,draw,file,alt,o){const tok=++cdTok,share=canShareFiles();o=o||{};
+  openSheet(title,`${o.pre||""}<div class="cdpic" id="cdPic"><p class="hint">Drawing the card…</p></div>
+<div class="row"><button class="btn pri" id="cdSave" disabled>Save picture</button>${share?`<button class="btn" id="cdShare" disabled>Share…</button>`:""}<button class="btn ${o.close?"":"ghost"}" id="cdOk">${o.close||"Close"}</button></div>`);
   $("cdOk").addEventListener("click",closeSheet);
   await cdFonts();if(tok!==cdTok||!sheetOn()||!$("cdPic"))return;
   let cv;try{cv=draw();}catch(e){$("cdPic").innerHTML=`<p class="hint">Couldn't draw the card here.</p>`;return;}
@@ -200,6 +201,41 @@ function certCard(r){const C=SIM.CERT[r.tier],k=r.ck.filter(c=>c[3]).length;
 function trophyCard(id){const c=car(),G=GOALS[id];if(!c||!G||c.goals[id]==null)return;const ids=Object.keys(GOALS),d=dateOf(c.goals[id]);
   const t={id,name:G.name,blurb:G.blurb,y:d.year,w:d.week,n:ids.indexOf(id)+1,of:ids.length,bits:goalBits(id)};
   cardSheet(`Goal: ${G.name}`,()=>drawTrophy(t),`escapement-goal-${shareSlug(G.name)}-${shareStamp()}.png`,`Trophy card: ${G.name}, reached ${d.year}, week ${d.week}.${t.bits[0]?" "+t.bits[0]+".":""}`);}
+
+/* ---- the career summary (1.1.0.0): offered at the first week of END_YEAR+1 (closeWeek sets c.ended), and from the
+   Career card after that. The years, pieces made and sold, certificates, the Kessel Peak record, the best sale, R&D and
+   calibres, goals, reputation and the till, on dark felt like the trophy. Keep going closes it: the game goes on. ---- */
+function endStats(){const c=car(),L=c.life||normLife(null,c),y1=c.start,y2=Math.min(c.year,END_YEAR),n=y2-y1+1,ce=c.certs||{};
+  const kp=!L.place?"Never entered":L.wins?`Won ${L.wins===1?"once":L.wins+" times"}`:`Best: ${ordinal(L.place.p)} of ${L.place.of} (${L.place.y})`;
+  const tiers=Object.keys(REP_TRACKS).map(k=>`${REP_TRACKS[k].name} ${REP_TIERS[repTier(k)].name.toLowerCase()}`);
+  const rd=Object.keys((c.rnd&&c.rnd.done)||{}).length,cals=(c.calibres||[]).length;
+  return{y1,y2,n,kind:c.kind,rows:[
+    ["Pieces made",String(c.made)],["Pieces sold",String(L.sold)],
+    ["Certificates",`${ce.chronometer||0} Chronometer · ${ce.observatory||0} Observatory`],
+    [CALENDAR.trial.name,kp],
+    ["Best sale",L.best?`${fmt$(L.best.amt)} · ${L.best.name}`:"None yet"],
+    ["R&D",`${rd} of ${Object.keys(RND).length} projects${cals?` · ${cals} calibre${cals>1?"s":""}`:""}`],
+    ["Goals",`${Object.keys(c.goals||{}).length} of ${Object.keys(GOALS).length}`],
+    ["Reputation",tiers.join(" · ")],
+    ["In the till",fmt$(c.cash)]]};}
+function drawSummary(s){const W=CD.W,H=CD.H,cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d"),cx=W/2,P=110;
+  const chalk="#f2efe6",muted="#b3bab4",brass="#c9a45c",brassT="#e0c07e";
+  const g=x.createRadialGradient(cx,H*.3,40,cx,H*.5,H*.85);g.addColorStop(0,"#22342a");g.addColorStop(1,"#0b100e");x.fillStyle=g;x.fillRect(0,0,W,H);
+  cdGrain(x,"felt|end|"+s.y1,7000,["rgba(255,255,255,.035)","rgba(0,0,0,.18)","rgba(120,150,130,.05)"]);
+  cdFrame(x,brass,40);x.textAlign="center";
+  x.fillStyle=brassT;cdFont(x,500,22,CD_M);cdSpaced(x,`THE HALDIS · ${s.y1}–${s.y2}`,cx,140,6);
+  x.fillStyle=chalk;cdFit(x,"A career in the Haldis",W-2*P,700,72,44);x.fillText("A career in the Haldis",cx,236);
+  x.fillStyle=muted;cdFont(x,400,30);x.fillText(`${s.n} year${s.n===1?"":"s"}, from ${s.kind==="shop"?"a shop on the high street":"a shared repair bench"}`,cx,290);
+  cdRule(x,340,420,"rgba(201,164,92,.7)");
+  let y=410;const step=Math.min(96,(H-150-y)/s.rows.length);
+  for(const [k,v] of s.rows){x.fillStyle=brassT;cdFont(x,500,22,CD_M);cdSpaced(x,k.toUpperCase(),cx,y,4);
+    x.fillStyle=chalk;cdFit(x,v,W-2*P,600,36,20);x.fillText(v,cx,y+44);y+=step;}
+  x.fillStyle="rgba(179,186,180,.6)";cdFont(x,500,16,CD_M);cdSpaced(x,"ESCAPEMENT",cx,H-70,5);
+  return cv;}
+function endSheet(){const c=car();if(!c)return;const s=endStats();
+  cardSheet(`${s.y1}–${s.y2}: your career`,()=>drawSummary(s),`escapement-career-${s.y1}-${s.y2}-${shareStamp()}.png`,
+    `Career summary, ${s.y1} to ${s.y2}: `+s.rows.map(r=>`${r[0]} ${r[1]}`).join("; ")+".",
+    {close:"Keep going",pre:`<p class="hint" style="margin-top:0">${s.n} years since ${c.kind==="shop"?"you opened the shop":"you took the bench"}. This is how they went. The Haldis goes on: keep going as long as you like, and open this again from the Career tab.</p>`});}
 
 /* ---- the Career tab's Certificates card ---- */
 function certsCard(){const c=car(),L=c.certsLog||[],had=["chronometer","observatory"].some(k=>c.certs[k]);
