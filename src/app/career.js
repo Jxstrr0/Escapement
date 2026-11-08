@@ -64,8 +64,9 @@ function weekSheet(was,res){const c=car(),d=c.cash-was.cash;
     $("sheetBody").appendChild(row);$("wkRace").addEventListener("click",raceSheet);}
   if(c.sale&&c.sale.wk===c.wk&&!c.sale.done){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkSale">Go to the ${c.sale.name}</button>`;
     $("sheetBody").appendChild(row);$("wkSale").addEventListener("click",saleroomSheet);}
-  const p=c.bench;if(p&&p.lastTrial&&!p.seen){const row=document.createElement("div");row.className="row";row.innerHTML=`<button class="btn" id="wkTrial">See the trial result</button>`;
-    $("sheetBody").appendChild(row);$("wkTrial").addEventListener("click",()=>{p.seen=true;save();trialSheet(p.lastTrial.t,p.lastTrial.tier);});}}
+  /* a trial result: only in the week it came back (it used to repeat every week until tapped); it stays on the Test tab and in the Shop */
+  for(const p of [c.bench,...c.away])if(p&&p.lastTrial&&p.backWk===c.wk){const row=document.createElement("div");row.className="row";const b=document.createElement("button");b.className="btn";
+    b.textContent=`See No. ${p.no}'s trial result`;row.appendChild(b);$("sheetBody").appendChild(row);b.addEventListener("click",()=>{p.seen=true;save();trialSheet(p.lastTrial.t,p.lastTrial.tier);});}}
 function lastWeekSheet(){const c=car(),L=c&&c.lastWeek;if(!L)return;
   openSheet(`Week ${L.week}, ${L.year}`,`<p class="weekd ${L.d<0?"neg":""}">${L.d>=0?"+":"−"}${fmt$(Math.abs(L.d))} · then ${fmt$(L.cash)}</p>
 <ul class="wklines">${L.lines.map(l=>`<li>${l}</li>`).join("")||"<li>A quiet week.</li>"}</ul>`);}

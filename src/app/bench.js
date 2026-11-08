@@ -22,7 +22,9 @@ function wsSync(){if(typeof WORKSHOP_SOUND==="undefined")return;try{const c=car(
     room:{cleaning:!!roomSpec().has.cleaning,staff:!!(c&&c.staff.length),fair:!!(c&&c.week===CALENDAR.fair.week)}});}catch(e){}}
 function sfx(name,delay){if(S.wsound===false||typeof WORKSHOP_SOUND==="undefined")return;try{WORKSHOP_SOUND.play(name,delay);}catch(e){}}
 document.addEventListener("visibilitychange",wsSync);
-document.addEventListener("pointerdown",()=>{if(S.wsound!==false&&typeof WORKSHOP_SOUND!=="undefined"){WORKSHOP_SOUND.unlock();wsSync();}},{passive:true,capture:true});
+/* browsers only let audio start inside a tap: for a finger that is pointerup / touchend, not pointerdown (1.1.2.0: on phones the
+   sounds could stay silent when only pointerdown was listened to), so every gesture event unlocks (GESTURES, app/test.js) */
+for(const ev of GESTURES)document.addEventListener(ev,()=>{if(S.wsound!==false&&typeof WORKSHOP_SOUND!=="undefined"){WORKSHOP_SOUND.unlock();wsSync();}},{passive:true,capture:true});
 function visSync(){
   if(!window.WATCH_VIS)return;
   roomSync();
@@ -62,6 +64,7 @@ function renderBenchTodo(){const el=$("bTodo"),c=car();
   const rin=c.repairs.filter(r=>r.state==="in").length,p=c.bench,lines=[];
   lines.push(rin?`${rin} repair${rin>1?"s":""} waiting for a diagnosis`:"No repairs waiting");
   lines.push(!p?"Your bench is free for a piece of your own":!p.made?`No. ${p.no} is being assembled`:p.trial?`No. ${p.no} is away at a trial`:p.cert?`No. ${p.no} is ready to case`:`No. ${p.no} needs adjusting and a Bench check`);
+  for(const x of c.away)lines.push(x.trial?`No. ${x.no} is away at a trial, back ${whenTxt(x.trial.back-1)}`:`No. ${x.no} is back from its trial and waiting (Shop)`);
   if(c.stock.length)lines.push(`${c.stock.length} in stock`);
   el.innerHTML=`<h3>This week<span class="cnt">${c.year} · week ${c.week}</span></h3><ul class="todo">${lines.map(l=>`<li>${l}</li>`).join("")}</ul>
 <div class="row">${rin?`<button class="btn" data-bt="shop">Repairs</button>`:""}<button class="btn" data-bt="${p?"test":"build"}">${p?"Test tab":"Build tab"}</button><button class="btn pri" data-bt="close">Close week</button></div>`;}
