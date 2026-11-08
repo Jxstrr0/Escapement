@@ -79,6 +79,7 @@ function trialClose(lines){const c=car(),T=CALENDAR.trial,e=c.contest;if(!e||e.y
   const place=field.findIndex(f=>f.id==="me")+1,prize=T.prizes[place-1]||0;
   e.res={place,prize,points:t.final.points,parts:t.final.parts,running:t.running,days:t.days.map(d=>[d.pos,d.temp,+d.rate.toFixed(2)]),field,seed:pc.seed+c.year};
   c.contests.push({year:c.year,no:pc.no,place,points:t.final.points,of:field.length,field:field.map(f=>[f.id,f.points])});if(c.contests.length>12)c.contests.shift();
+  if(c.life){if(place===1)c.life.wins++;if(!c.life.place||place<c.life.place.p)c.life.place={p:place,of:field.length,y:c.year};}
   if(prize)earn(prize,`${T.name} prize`);if(place<=3){addRep(REP_GAIN.podium[place-1],lines);goal("podium",lines);}
   lines.push(`The ${T.name} results are in: No. ${pc.no} placed ${ordinal(place)} of ${field.length}${prize?`, ${fmt$(prize)} in prize money`:""}.`);
   calFx.trial=true;}
@@ -144,8 +145,21 @@ function lotSettle(lot,res,lines){const c=car(),sl=c.sale,F=CALENDAR.fee;let lin
 function saleAuto(lines){const c=car(),sl=c.sale;if(!sl||sl.done||sl.wk!==c.wk)return;const L=saleLots();
   if(L.length)lines.push(`The ${sl.name} at ${CALENDAR.house}:`);
   while(sl.i<L.length){const lot=L[sl.i++];lotSettle(lot,lotRun(lot,0),lines);}sl.done=true;}
+/* the career record (S.career.life, inside esc-save): what the summary needs that the capped lists forget.
+   sold: pieces sold; best: the best sale {amt,name,how,y}; place: the best Kessel Peak place {p,of,y}; wins.
+   Older careers start from what their lists still hold. */
+function normLife(L,c){const o={sold:0,best:null,place:null,wins:0};
+  if(buObjS(L)){o.sold=Math.max(0,+L.sold||0);o.wins=Math.max(0,+L.wins||0);
+    if(buObjS(L.best)&&+L.best.amt>0)o.best={amt:+L.best.amt,name:String(L.best.name||"").slice(0,60),how:String(L.best.how||"retail").slice(0,12),y:+L.best.y||0};
+    if(buObjS(L.place)&&+L.place.p>0)o.place={p:+L.place.p,of:+L.place.of||0,y:+L.place.y||0};return o;}
+  o.sold=(c.sold||[]).length;
+  for(const s of c.sold||[])if(+s.price>(o.best?o.best.amt:0))o.best={amt:+s.price,name:String(s.name||"").slice(0,60),how:s.how||"retail",y:dateOf(+s.wk||0).year};
+  for(const t of c.contests||[]){if(t.place===1)o.wins++;if(!o.place||t.place<o.place.p)o.place={p:t.place,of:t.of,y:t.year};}
+  return o;}
+function lifeSale(pc,price,how){const c=car();if(!c||!c.life)return;const L=c.life;L.sold++;
+  if(+price>(L.best?L.best.amt:0))L.best={amt:Math.round(+price),name:String(pc.name||"").slice(0,60),how:how||"retail",y:c.year};}
 /* a sold-pieces row (resale and returns read it); a bought-back piece goes into stock from one */
-function soldRow(pc,price,to,how){return{id:pc.id,no:pc.no,name:pc.name,cfg:pc.cfg,seed:pc.seed,adjust:pc.adjust,cert:pc.cert,caseId:pc.caseId,
+function soldRow(pc,price,to,how){lifeSale(pc,price,how);return{id:pc.id,no:pc.no,name:pc.name,cfg:pc.cfg,seed:pc.seed,adjust:pc.adjust,cert:pc.cert,caseId:pc.caseId,
   thick:pc.thick,r:pc.r,value:pc.value,price,wk:car().wk,to:to||"a buyer",how:how||"retail"};}
 function stockFromSold(s){const c=car(),cs=CASES[s.caseId]||CASES["steel-dress"],r=SIM.simulate(s.cfg,skillLvls(),null,{seed:s.seed,adjust:s.adjust});
   const value=SIM.pieceValue(r,s.cert,cs);

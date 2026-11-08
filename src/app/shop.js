@@ -82,7 +82,7 @@ $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]"
   if(k==="case")caseSheet();
   if(k==="test")showTab("test");
   if(k==="dealer"){const x=stockBy(id);if(x)confirmSheet(`Sell ${x.name} to the dealer?`,`He pays ${fmt$(dealerPrice(x))} now. In stock it's worth ${fmt$(x.value)}.`,"Sell it",()=>{sellPiece(x,dealerPrice(x),"the dealer","dealer");save();shopChanged();});}
-  if(k==="deliver")deliver(id,b.dataset.pc);
+  if(k==="deliver")deliverAsk(id,b.dataset.pc);
   if(k==="lot")lotSheet(+id);
   if(k==="unlot"){consign(id,null);toast("Withdrawn from the sale.");}
   if(k==="cancel")confirmSheet("Cancel this commission?","The customer goes elsewhere. Nothing is paid either way.","Cancel it",()=>{cancelOrder(id);shopChanged();});
@@ -94,8 +94,13 @@ $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]"
   shopChanged();});
 
 /* ---- sheets ---- */
-function confirmSheet(title,text,yes,fn){openSheet(title,`<p>${text}</p><div class="row"><button class="btn pri" id="cfYes">${yes}</button><button class="btn" id="cfNo">Not now</button></div>`);
+function confirmSheet(title,text,yes,fn,no){openSheet(title,`<p>${text}</p><div class="row"><button class="btn pri" id="cfYes">${yes}</button><button class="btn" id="cfNo">${no||"Not now"}</button></div>`);
   $("cfNo").addEventListener("click",closeSheet);$("cfYes").addEventListener("click",()=>{closeSheet();fn();});}
+/* a commission piece worth far more than the customer pays (BIZ.warnOver) asks first: it could sell for more */
+function deliverAsk(orderId,stockId){const c=car(),o=c.orders.find(x=>x.id===+orderId),x=stockBy(stockId);if(!o||!x)return;
+  const pay=orderPay(o);if(!(x.value>BIZ.warnOver*pay)){deliver(orderId,stockId);return;}
+  confirmSheet(`Deliver ${x.name} for ${fmt$(pay)}?`,`It's worth about ${fmt$(x.value)} in stock, more than ${BIZ.warnOver === 2?"twice":BIZ.warnOver+" times"} what ${o.cust} pays. You could sell it instead and make a simpler piece for this commission.`,
+    "Deliver anyway",()=>{deliver(orderId,stockId);shopChanged();},"Keep it");}
 /* diagnose: every fault with its fix, hours and parts. A wrong one costs the work and the watch comes back */
 function fixSheet(id){const r=repairBy(id);if(!r)return;
   openSheet("What's wrong with it?",`<p><b>${capWord(r.watch)}</b> · ${r.cust}: “${FAULTS[r.fault].complaint}”</p>
