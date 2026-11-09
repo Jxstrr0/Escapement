@@ -34,7 +34,7 @@ Run all three before every commit. To play a local copy: `python3 -m http.server
 
 ## Deploy
 
-GitHub Pages serves the repo root from `main` (`.nojekyll` keeps Jekyll out). No workflow file: merging into `main` is the deploy. Allow a minute or two, then reload the live site. Installed copies show the "New version ready" bar because the service worker's cache name carries the version and a content hash.
+GitHub Pages serves the repo root from `main` (`.nojekyll` keeps Jekyll out). No deploy workflow: merging into `main` is the deploy. (`.github/workflows/publish-release.yml` only publishes a GitHub Release for each new `VERSION`, which is where the studio site gets this game's version number; free, no keys.) Allow a minute or two, then reload the live site. Installed copies show the "New version ready" bar because the service worker's cache name carries the version and a content hash.
 
 **Own address.** Since November 2026 every Longlight game has its own subdomain, so Escapement (`escapement.longlight.games`) has its own origin: its own localStorage, Cache Storage and storage quota. Saves from before the move stay on the old shared origin, `jxstrr0.github.io` (Kelbo accepted that). The prefix rules still apply, so old copies there stay apart from the other games: Escapement's localStorage keys all start `esc-` and its caches all start `esc-`; the service worker only ever deletes `esc-` caches. Never use another game's prefix, and never delete or clear anything outside `esc-`.
 
