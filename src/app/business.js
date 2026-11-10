@@ -65,6 +65,10 @@ function normCareer(c){if(!buObjS(c))return null;
 /* ---- money and the week ---- */
 function benchHours(){return BIZ.hoursWeek;}
 function hoursLeft(){const c=car();return Math.max(0,benchHours()-(+c.used||0));}
+/* your hours left once Close week has put them into the queued work (staff take their share first, as closeWeek does).
+   Shown as "h free" so queuing a job visibly takes hours (a play-tester saw 45 h left after queuing 36 h of work) */
+function hoursQueued(){const c=car();if(!c)return 0;let st=staffHrs(),q=0;for(const j of c.jobs){let h=Math.max(0,+j.h||0);if(j.staff&&st>0){const d=Math.min(st,h);h-=d;st-=d;}q+=h;}return q;}
+function hoursFree(){return Math.max(0,hoursLeft()-hoursQueued());}
 /* spend your own bench hours right now (adjusting). false if the week has run out */
 function spendHours(h){const c=car();if(!c)return true;if(hoursLeft()<h-1e-9)return false;c.used=(+c.used||0)+h;return true;}
 function pay(n,what){const c=car();if(!c)return true;if(c.cash<n){toast(`Not enough cash: ${what||"that"} costs ${fmt$(n)}.`);return false;}c.cash-=n;book("out",n,what);return true;}

@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.1.2.3";
+const VERSION="1.1.2.4";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -269,7 +269,7 @@ const fmtN=(n,d)=>Number(n).toFixed(d||0);
 /* ---- the header over the 3D view ---- */
 function hud(){const c=S.career;
   $("weekLbl").textContent=c?`The Haldis · ${c.year||START_YEAR} · week ${c.week||1}`:"The Haldis · "+START_YEAR;
-  $("cashLbl").textContent=c?fmt$(c.cash||0):"";$("repLbl").textContent=c&&!c.over?fmtN(hoursLeft(),1)+" h left":c?"closed":"Sandbox";}
+  $("cashLbl").textContent=c?fmt$(c.cash||0):"";$("repLbl").textContent=c&&!c.over?fmtN(hoursFree(),1)+" h free":c?"closed":"Sandbox";}
 
 /* ---- toast ---- */
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("on"),2600);}
