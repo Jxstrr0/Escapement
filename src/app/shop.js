@@ -8,13 +8,13 @@ const dealerPrice=x=>Math.round(x.value*BIZ.dealer/10)*10;
 const PRICE_STEPS=[[-.2,"−20%"],[0,"Value"],[.2,"+20%"],[.5,"+50%"]];
 const RESERVES=[[0,"No reserve"],[.8,"Reserve 80% of value"],[1,"Reserve at full value"]];
 function weekCard(){const c=car();
-  return `<div class="card shwk"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursLeft(),1)} of ${benchHours()} h left</span></h3>
+  return `<div class="card shwk"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursFree(),1)} of ${benchHours()} h free</span></h3>
 <div class="kv"><span>Cash</span><b>${fmt$(c.cash)}</b><span>Costs a week</span><b>${fmt$(weeklyCosts())}</b><span>Staff</span><b>${c.staff.length} of ${staffCap()}</b></div>
 <div class="row"><button class="btn pri" data-sh="close">Close week</button></div></div>`;}
 function jobsCard(){const c=car();if(!c.jobs.length)return "";
   return `<div class="card"><h3>Work in hand<span class="cnt">${fmtN(c.jobs.reduce((a,j)=>a+j.h,0),0)} h</span></h3><ul class="shlist">${c.jobs.map(j=>
     `<li><span>${j.label}${j.staff?"":" <small>(you)</small>"}</span><b class="num">${fmtN(j.h,1)} h</b></li>`).join("")}</ul>
-<p class="hint">Close week puts your hours left, and your staff's, into these in order. Staff take repairs and trade work.</p></div>`;}
+<p class="hint">Close week puts your hours, and your staff's, into these in order; the hours shown as free are what is left after them. Staff take repairs and trade work.</p></div>`;}
 function repairsCard(){const c=car(),L=c.repairs;
   return `<div class="card"><h3>Repairs<span class="cnt">${L.length}</span></h3>${L.length?`<ul class="shlist rep">${L.map(r=>{const on=S.tgOn&&S.tgOn.id===r.id;
     return `<li><div><b>${capWord(r.watch)}</b> <small>· ${r.cust}</small><br><small>“${FAULTS[r.fault].complaint}” · ${r.state==="fixing"?`being fixed: ${FAULTS[r.trying].fix.toLowerCase()}`:`collects ${whenTxt(r.due)}`}</small></div>
