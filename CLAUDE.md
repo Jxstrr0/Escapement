@@ -47,7 +47,7 @@ GitHub Pages serves the repo root from `main` (`.nojekyll` keeps Jekyll out). No
 ## Code conventions
 
 - Three namespaces, same split as PEW: `WATCH_SIM` (physics and economy maths; never touches the DOM or three.js; runs in plain node), `WATCH_VIS` (three.js; the app calls `setMovement`, `setRun`, `setView`, `setQuality`, `fps`; the vis never reads game state), and the app glue in `src/app/`. `WATCH_SOUND` (the tick) and `WORKSHOP_SOUND` (the recordings) are their own blocks.
-- Tuning numbers live in tables, not inline, under the names the plan gives them: `PARTS`, `DEFAULT_CFG` (`sim/parts.js`), `K` (`sim/movement.js`), `COMBOS`, `CERT`/`CERT_MULT`, `MARKET_ERA`; `SKILLS`, `SKILL_XP`, `TOOLS`, `UPGRADES`, `STAFF`, `FAULTS`, `CASES`, `COMMISSION_TEMPLATES`, `REP_TRACKS`, `REP_TIERS`, `RIVALS`, `CALENDAR`, `RETURNS`, `NEWS`, `GOALS`, `RND` at the top of `src/app/state.js` (`REP_GAIN` at the top of `src/app/calendar.js`, `CONTEST` in `sim/trial.js`).
+- Tuning numbers live in tables, not inline, under the names the plan gives them: `PARTS`, `DEFAULT_CFG` (`sim/parts.js`), `K` (`sim/movement.js`), `COMBOS`, `CERT`/`CERT_MULT`, `MARKET_ERA`; `SKILLS`, `SKILL_XP`, `TOOLS`, `UPGRADES`, `STAFF`, `STAFF_AREAS`, `STAFF_SKILL`, `STAFF_TRAITS`, `FAULTS`, `CASES`, `COMMISSION_TEMPLATES`, `REP_TRACKS`, `REP_TIERS`, `RIVALS`, `CALENDAR`, `RETURNS`, `NEWS`, `GOALS`, `RND` at the top of `src/app/state.js` (`REP_GAIN` at the top of `src/app/calendar.js`, `CONTEST` in `sim/trial.js`).
 - Three graphics tiers, `lite`, `full`, `ultra` (`src/app/perf.js`). Lite is the phone default and must keep working after every change. Every effect needs a Lite path that is cheaper, not just "off". Auto-adjust steps a tier down when the frame rate stays low; after any change, the "Graphics lowered" toast must not appear where it didn't before.
 - Colours in three.js are written as sRGB hex and converted with `.convertSRGBToLinear()` (the renderer outputs sRGB); skip that and everything washes out.
 - All localStorage access is wrapped in try/catch. Four keys: `esc-save`, `esc-slot1` to `esc-slot3`. **Stop and ask before adding a key**; a new one must also go into `buMake`/`buWrite` in `src/app/savecode.js` and `KEYS` in `check-savecode.js`.
@@ -93,9 +93,9 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: **euros** (`€4,850`, whole amounts; Kelbo, 1.0.2.3), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (1.1.3.0)
+## Current status (1.2.0.0)
 
-The full log from PR 0 to 1.1.3.0 (what each version added, the tables and
+The full log from PR 0 to 1.2.0.0 (what each version added, the tables and
 save fields it brought) is `docs/HISTORY.md`. Read the matching entry before
 changing a system it describes; add each new release there and update this
 section.
@@ -103,13 +103,14 @@ section.
 - Built: the whole plan (1.0.0.0 was the release), then fixes and features
   from phone testing: workshop sounds and ElevenLabs effects, the tour that
   explains the numbers, "Where to fix it" on a failed trial, career
-  difficulty and trial tuning, euros, the career summary at 2031, and the
-  bench kept free while a piece is at a trial.
+  difficulty and trial tuning, euros, the career summary at 2031, the
+  bench kept free while a piece is at a trial, and staff skills (1.2.0.0:
+  stars per kind of work, a trait, growth, automatic assigning).
 - Gotcha: top-level `const`s are not `window` properties; test them with
   `typeof`.
 - **Paused:** `docs/OPEN-QUESTIONS.md` holds the balance and design questions
   from the 1.0.2.1 audit, with Kelbo's decisions (2026-11-08) at the top.
-  Next: 1.2.0.0 (staff skills, pitch first). Still untried on a real phone:
+  Next: Kelbo's phone notes on staff skills. Still untried on a real phone:
   share and Full performance.
 - What to test on a phone after any change: the loading bar finishes and the
   bench renders on Lite; every tab opens; Settings opens and the theme

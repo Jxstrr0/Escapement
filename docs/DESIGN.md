@@ -214,6 +214,13 @@ Lite never downloads a model. It draws everything in code from the same numbers 
   brand, parts paid up front, paid on delivery.
 - **Upgrades** (14: machines, suppliers, the shop, a window, a second bench, climate control, a clean room) unlock parts and
   tools and change rent, staff places, buyers and repair hours. **Staff**: apprentice, watchmaker, master watchmaker.
+  Since 1.2.0.0 each hand has 1 to 5 stars in five kinds of work (`STAFF_AREAS`: quick jobs, services, hairsprings and
+  pivots, which are the `FAULTS` classes, plus trade batches) and one trait (`STAFF_TRAITS`). Rank sets the star range
+  (`STAFF[].stars`: apprentice 1-2, watchmaker 2-4, master 3-5). Stars set speed (`STAFF_SKILL.speed`, 0.6× to 1.4× yours).
+  A repair done mostly by a one- or two-star hand can come back once for half its hours again, with no money lost
+  (`STAFF_SKILL.redo`). Stars grow with the hours worked in an area (`STAFF_SKILL.grow` × stars to the next one). Jobs
+  are assigned automatically, in order, to the free hands fastest at them (`staffPlan` in `app/business.js`), and the
+  week report has a line saying who did what (Kelbo, 2026-11-10).
 - **The bank** lends once when the till goes below zero at Close week (8% over a year). Below zero again, the workshop closes.
 - **Save slots** (Career tab): three whole games on this phone. Loading one keeps this phone's settings.
 - Numbers to judge it by (a bot playing two years): repairs alone just pay the bills on a shared bench; repairs, pieces and
