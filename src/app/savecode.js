@@ -228,7 +228,7 @@ function buRemind(){
     buBar.innerHTML='<span id="buBarMsg"></span><button type="button" class="btn sm pri" id="buBarGo">Saves</button><button type="button" class="pwalater" id="buBarLater" aria-label="Dismiss until next visit">Later</button>';
     ($("app")||document.body).appendChild(buBar);
     $("buBarLater").addEventListener("click",buBarHide);
-    $("buBarGo").addEventListener("click",()=>{buBarHide();showTab("shop");
+    $("buBarGo").addEventListener("click",()=>{buBarHide();showTab("shop");if(typeof shopGo==="function")shopGo("saves");
       const c=$("savesCard");if(c)c.scrollIntoView({block:"center",behavior:reduced()?"auto":"smooth"});});}
   $("buBarMsg").textContent=last?`Last backup ${days} days ago.`:"No backup of this game yet.";
   buBar.classList.add("on");}

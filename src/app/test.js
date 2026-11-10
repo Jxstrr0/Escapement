@@ -193,6 +193,9 @@ function onTap(id,fn){$(id).addEventListener("click",e=>{WATCH_SOUND.unlock();fn
 const canAdj=kind=>{if(spendHours(SIM.hoursFor(kind)))return true;toast("No bench hours left this week: close the week on the Career tab.");return false;};
 onTap("regBtns",e=>{const b=e.target.closest("[data-reg]");if(!b||!canAdj("reg"))return;const p=curPiece();
   p.adjust=SIM.adjustPiece("reg",p.adjust,pieceCfg(),skillLvls(),+b.dataset.reg,p.seed+"#"+(p.n++));adjDone("reg");});
+/* the same readouts at the top of the Adjust card, so the numbers stay next to the buttons that move them (play-test:
+   the 3D view pushed the timegrapher off screen while adjusting). A copy, not a second render: whatever tgRead shows. */
+if(typeof MutationObserver!=="undefined"){const src=$("tgRead"),dst=$("adjRead");new MutationObserver(()=>{dst.innerHTML=src.innerHTML.replace(/ tabindex="0"/g,"");}).observe(src,{childList:true,subtree:true,characterData:true});}
 onTap("adjBeat",()=>{if(!canAdj("beat"))return;const p=curPiece();p.adjust=SIM.adjustPiece("beat",p.adjust,pieceCfg(),skillLvls(),0,p.seed+"#"+(p.n++));adjDone("beat");});
 onTap("adjPoise",()=>{if(!canAdj("poise"))return;const p=curPiece();p.adjust=SIM.adjustPiece("poise",p.adjust,pieceCfg(),skillLvls(),0,p.seed+"#"+(p.n++));adjDone("poise");});
 onTap("tgPos",e=>{const b=e.target.closest("[data-pos]");if(!b)return;
@@ -220,7 +223,7 @@ function goFix(f){closeSheet();showTab(f.tab);
   if(f.sec){S.bOpen=f.sec;save();renderBuildForm();}
   requestAnimationFrame(()=>{let el=null;
     if(f.sec){const h=document.querySelector(`#buildForm [data-sec="${f.sec}"]`);el=f.slot&&document.querySelector(`#buildForm [data-slot="${f.slot}"]`)||h&&h.closest(".acc");}
-    else if(f.up){const d=document.querySelector("#shopBody details.shup");if(d)d.open=true;el=document.querySelector(`#shopBody [data-upid="${f.up}"]`);}
+    else if(f.up){shopGo("workshop");const d=document.querySelector("#shopBody details.shup");if(d)d.open=true;el=document.querySelector(`#shopBody [data-upid="${f.up}"]`);}
     else el=document.querySelector(f.sel);
     if(!el)return;el.scrollIntoView({block:f.sec?"start":"center",behavior:reduced()?"auto":"smooth"});
     el.classList.remove("fixhi");void el.offsetWidth;el.classList.add("fixhi");setTimeout(()=>el.classList.remove("fixhi"),2400);});}
