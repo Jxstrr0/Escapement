@@ -247,6 +247,9 @@ html.reduce *,html.reduce *::before,html.reduce *::after{transition-duration:0s!
 #adjCard .slot>.lbl small{font-weight:400;color:var(--dim);letter-spacing:0}
 #regBtns button{font-family:var(--mono);font-weight:600}
 #regBtns button small{font-family:var(--font);font-weight:400}
+/* the readouts copied into the Adjust card: a slim strip that sticks to the top of the card while it scrolls */
+.tgbox.adjread{position:sticky;top:0;z-index:2;margin:0 0 10px;border-radius:10px}
+.adjread .tgread{padding:6px 10px}.adjread .tgread b{font-size:17px}
 .adjrow{margin-top:10px}
 .adjrow .btn{flex-direction:column;gap:0;line-height:1.2;padding:6px 10px}
 .adjrow .btn small{font-size:12px;font-weight:400;color:var(--muted);font-family:var(--mono)}
@@ -322,6 +325,13 @@ table.books td.neg,.weekd.neg{color:var(--crit)}
 .rnd details.more{margin-top:6px}
 #sheetBody .lbl{font-size:13px;font-weight:600;letter-spacing:.03em;color:var(--muted);margin:12px 0 4px}.calcore{margin:0 0 12px;font-size:14px;color:var(--chalk)}
 input.txt{box-sizing:border-box;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--rule);background:var(--felt);color:var(--chalk);font:16px/1.3 var(--font)}
+/* the Shop's page strip and the bar pinned to the bottom of each page (week, cash, hours, Close week) */
+.shsub{margin:0 0 12px}
+.shbar{position:sticky;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 8px);z-index:3;display:flex;align-items:center;gap:10px;margin:12px 0 0;padding:8px 8px 8px 12px;border-radius:12px;background:var(--panel2);border:1px solid var(--rule);box-shadow:0 6px 18px rgba(0,0,0,.28)}
+.shbar>div{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.shbar b{font-size:14px}.shbar small{font-size:12px;color:var(--muted);font-family:var(--mono)}
+.shbar .btn{flex:0 0 auto}
+@media (orientation:landscape) and (max-height:560px) and (min-width:640px){.shbar{bottom:0}}
 /* ---- events.css: the Career tab's calendar cards (app/events.js): coming up, reputation bars, news cards, goals; the
    Kessel Peak Trial leaderboard, the saleroom, and the cracked-crystal overlay. Light theme through the shared tokens;
    reduced motion turns off the race's sliding rows and the crack's flash. ---- */
@@ -536,6 +546,7 @@ html.reduce .phh small{animation:none;opacity:1}
       <div class="field"><span class="lbl" data-g="positions" role="button" tabindex="0">Position</span><div class="seg tgpos" id="tgPos" role="group" aria-label="Position"></div><p class="hint" id="tgPosHint" hidden></p></div>
       <div class="field" id="tgTempF" hidden><span class="lbl" data-g="temperature" role="button" tabindex="0">Temperature</span><div class="seg" id="tgTemp" role="group" aria-label="Temperature"></div></div>
       <div class="card" id="adjCard"><h3>Adjust<span class="cnt" id="adjHrs"></span></h3>
+        <div class="tgbox adjread" aria-hidden="true"><div class="tgread" id="adjRead"></div></div>
         <div class="slot"><span class="lbl">Regulate <small id="regRes"></small></span><div class="seg" id="regBtns" role="group" aria-label="Regulate"></div></div>
         <div class="row adjrow"><button class="btn" id="adjBeat"></button><button class="btn" id="adjPoise"></button></div>
         <p class="hint" id="adjSkills"></p>
@@ -2681,7 +2692,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.1.2.4";
+const VERSION="1.1.3.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -3225,7 +3236,7 @@ function buRemind(){
     buBar.innerHTML='<span id="buBarMsg"></span><button type="button" class="btn sm pri" id="buBarGo">Saves</button><button type="button" class="pwalater" id="buBarLater" aria-label="Dismiss until next visit">Later</button>';
     ($("app")||document.body).appendChild(buBar);
     $("buBarLater").addEventListener("click",buBarHide);
-    $("buBarGo").addEventListener("click",()=>{buBarHide();showTab("shop");
+    $("buBarGo").addEventListener("click",()=>{buBarHide();showTab("shop");if(typeof shopGo==="function")shopGo("saves");
       const c=$("savesCard");if(c)c.scrollIntoView({block:"center",behavior:reduced()?"auto":"smooth"});});}
   $("buBarMsg").textContent=last?`Last backup ${days} days ago.`:"No backup of this game yet.";
   buBar.classList.add("on");}
@@ -3733,6 +3744,9 @@ function onTap(id,fn){$(id).addEventListener("click",e=>{WATCH_SOUND.unlock();fn
 const canAdj=kind=>{if(spendHours(SIM.hoursFor(kind)))return true;toast("No bench hours left this week: close the week on the Career tab.");return false;};
 onTap("regBtns",e=>{const b=e.target.closest("[data-reg]");if(!b||!canAdj("reg"))return;const p=curPiece();
   p.adjust=SIM.adjustPiece("reg",p.adjust,pieceCfg(),skillLvls(),+b.dataset.reg,p.seed+"#"+(p.n++));adjDone("reg");});
+/* the same readouts at the top of the Adjust card, so the numbers stay next to the buttons that move them (play-test:
+   the 3D view pushed the timegrapher off screen while adjusting). A copy, not a second render: whatever tgRead shows. */
+if(typeof MutationObserver!=="undefined"){const src=$("tgRead"),dst=$("adjRead");new MutationObserver(()=>{dst.innerHTML=src.innerHTML.replace(/ tabindex="0"/g,"");}).observe(src,{childList:true,subtree:true,characterData:true});}
 onTap("adjBeat",()=>{if(!canAdj("beat"))return;const p=curPiece();p.adjust=SIM.adjustPiece("beat",p.adjust,pieceCfg(),skillLvls(),0,p.seed+"#"+(p.n++));adjDone("beat");});
 onTap("adjPoise",()=>{if(!canAdj("poise"))return;const p=curPiece();p.adjust=SIM.adjustPiece("poise",p.adjust,pieceCfg(),skillLvls(),0,p.seed+"#"+(p.n++));adjDone("poise");});
 onTap("tgPos",e=>{const b=e.target.closest("[data-pos]");if(!b)return;
@@ -3760,7 +3774,7 @@ function goFix(f){closeSheet();showTab(f.tab);
   if(f.sec){S.bOpen=f.sec;save();renderBuildForm();}
   requestAnimationFrame(()=>{let el=null;
     if(f.sec){const h=document.querySelector(`#buildForm [data-sec="${f.sec}"]`);el=f.slot&&document.querySelector(`#buildForm [data-slot="${f.slot}"]`)||h&&h.closest(".acc");}
-    else if(f.up){const d=document.querySelector("#shopBody details.shup");if(d)d.open=true;el=document.querySelector(`#shopBody [data-upid="${f.up}"]`);}
+    else if(f.up){shopGo("workshop");const d=document.querySelector("#shopBody details.shup");if(d)d.open=true;el=document.querySelector(`#shopBody [data-upid="${f.up}"]`);}
     else el=document.querySelector(f.sel);
     if(!el)return;el.scrollIntoView({block:f.sec?"start":"center",behavior:reduced()?"auto":"smooth"});
     el.classList.remove("fixhi");void el.offsetWidth;el.classList.add("fixhi");setTimeout(()=>el.classList.remove("fixhi"),2400);});}
@@ -4554,10 +4568,6 @@ const capWord=s=>s[0].toUpperCase()+s.slice(1);
 const dealerPrice=x=>Math.round(x.value*BIZ.dealer/10)*10;
 const PRICE_STEPS=[[-.2,"−20%"],[0,"Value"],[.2,"+20%"],[.5,"+50%"]];
 const RESERVES=[[0,"No reserve"],[.8,"Reserve 80% of value"],[1,"Reserve at full value"]];
-function weekCard(){const c=car();
-  return `<div class="card shwk"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursFree(),1)} of ${benchHours()} h free</span></h3>
-<div class="kv"><span>Cash</span><b>${fmt$(c.cash)}</b><span>Costs a week</span><b>${fmt$(weeklyCosts())}</b><span>Staff</span><b>${c.staff.length} of ${staffCap()}</b></div>
-<div class="row"><button class="btn pri" data-sh="close">Close week</button></div></div>`;}
 function jobsCard(){const c=car();if(!c.jobs.length)return "";
   return `<div class="card"><h3>Work in hand<span class="cnt">${fmtN(c.jobs.reduce((a,j)=>a+j.h,0),0)} h</span></h3><ul class="shlist">${c.jobs.map(j=>
     `<li><span>${j.label}${j.staff?"":" <small>(you)</small>"}</span><b class="num">${fmtN(j.h,1)} h</b></li>`).join("")}</ul>
@@ -4617,14 +4627,26 @@ function booksCard(){const c=car(),B=c.books.slice(-8).reverse();
   return `<details class="card"><summary><h3>The books</h3></summary>${c.loan?`<p>Bank loan: ${fmt$(c.loan.left)} still to pay, ${fmt$(c.loan.pay)} a week.</p>`:""}
 <table class="books"><thead><tr><th>Week</th><th>In</th><th>Out</th><th>Net</th></tr></thead><tbody>${B.map(b=>`<tr><td>${b.year} · ${b.week}</td><td>${fmt$(b.in)}</td><td>${fmt$(b.out)}</td><td class="${b.in-b.out<0?"neg":""}">${fmt$(b.in-b.out)}</td></tr>`).join("")||`<tr><td colspan="4">Nothing yet.</td></tr>`}</tbody></table>
 <p class="hint">Rent ${fmt$(rent())} and your keep ${fmt$(BIZ.keep)} a week${wages()?`, wages ${fmt$(wages())}`:""}.</p></details>`;}
-function renderShop(){const el=$("shopBody");
+/* the Shop's pages (play-test: one long page buried Close week, the stock and the dealer). Not saved: it opens on Work.
+   The week's line and Close week sit in a bar pinned to the bottom of every page. */
+const SH_PAGES=[["work","Work"],["stock","Stock"],["workshop","Workshop"],["saves","Saves"]];
+let shPage="work";
+function shopGo(p){shPage=p;if(curTab==="shop")renderShop();}
+function shopBar(){const c=car();
+  return `<div class="shbar"><div><b>${c.year} · week ${c.week}</b><small>${fmt$(c.cash)} · ${fmtN(hoursFree(),1)} of ${benchHours()} h free · costs ${fmt$(weeklyCosts())} a week</small></div><button class="btn pri" data-sh="close">Close week</button></div>`;}
+function renderShop(){const el=$("shopBody"),sv=$("savesCard");if(sv){if(sv.parentNode===el)el.after(sv);sv.hidden=false;}   // the Saves page borrows the card; put it back first
   if(!S.career){el.innerHTML=`<div class="card"><h3>The Sandbox</h3><p>No career running: every part is on offer and nothing costs money. Start a career to take in repairs, sell pieces and pay the rent.</p><div class="row"><button class="btn pri" data-sh="new">Start a career</button></div></div>`;return;}
   if(car().over){el.innerHTML=`<div class="card"><h3>The workshop is closed</h3><p>The bank wouldn't lend again. Start over from the Career tab.</p><div class="row"><button class="btn pri" data-sh="new">New game</button></div></div>`;return;}
-  el.innerHTML=weekCard()+benchCard()+repairsCard()+stockCard()+ordersCard()+tradeCard()+jobsCard()+upgradesCard()+staffCard()+booksCard();}
+  const pg=shPage==="stock"?stockCard()||`<div class="card"><h3>In stock</h3><p>Nothing in stock. Make a piece on the Build tab and it lands here to price and sell.</p></div>`
+    :shPage==="workshop"?upgradesCard()+staffCard()+booksCard():shPage==="saves"?"":benchCard()+repairsCard()+ordersCard()+tradeCard()+jobsCard();
+  if(sv)sv.hidden=shPage!=="saves";
+  el.innerHTML=`<div class="seg shsub" role="group" aria-label="Shop pages">${SH_PAGES.map(([k,n])=>`<button data-shp="${k}" class="${k===shPage?"on":""}" aria-pressed="${k===shPage}">${n}</button>`).join("")}</div>`+pg+shopBar();
+  if(sv&&shPage==="saves")el.insertBefore(sv,el.lastElementChild);}
 TAB_RENDER.shop=renderShop;
 function shopChanged(){hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();}
 $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]");
   if(pf){const x=stockBy(pf.parentNode.dataset.stk);if(x){x.price=Math.round(x.value*(1+ +pf.dataset.pf)/10)*10;save();renderShop();}return;}
+  const sp=e.target.closest("[data-shp]");if(sp){shopGo(sp.dataset.shp);$("panel").scrollTop=0;return;}
   const b=e.target.closest("[data-sh]");if(!b)return;const k=b.dataset.sh,id=b.dataset.id;
   if(k==="close")doCloseWeek();
   if(k==="new")newGameSheet();
