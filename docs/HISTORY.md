@@ -2,7 +2,7 @@
 
 The full version-by-version log, moved out of `CLAUDE.md` (which loads on every Claude turn) so it's read only when needed. Newest entries are added to the end of the matching list, the same way they were in `CLAUDE.md`. `CLAUDE.md` keeps a short current status.
 
-## Current status (1.1.2.4)
+## Current status (1.1.3.0)
 
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
@@ -38,3 +38,4 @@ The full version-by-version log, moved out of `CLAUDE.md` (which loads on every 
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
 - 1.1.2.3: quick wins from the first-time playtest. Close week asks first when 8 or more bench hours are free and a repair is waiting for a diagnosis or your piece still needs adjusting (`doCloseWeek` in `app/career.js`); tapping the tab you are on scrolls its page back to the top (`app/boot.js`). Sim unchanged.
 - 1.1.2.4: hours count queued work (playtest round 2). The header, the Shop's week card, the Career card and the Test card show hours **free**: your hours left once Close week has put them into the queued jobs, staff taking their share first (`hoursQueued`, `hoursFree` in `src/app/business.js`). A player saw "45.0 h left" after queuing 36 h of work. The Close week warning uses the same count.
+- 1.1.3.0: the Shop in pages (playtest round 3, first minutes). The Shop is four pages under a strip, Work (bench, repairs, orders, trade, jobs), Stock, Workshop (upgrades, staff, books) and Saves, with a Close week bar pinned at the bottom (`SH_PAGES`, `shPage`, `shopGo`, `shopBar` in `src/app/shop.js`; the old week card is gone). A player lost the Close week button under a long scroll. On the Test tab the Adjust card carries a copy of the four readings that sticks at its top while the buttons scroll (`#adjRead`, copied from `#tgRead`), so a regulate press shows its effect without scrolling back up. The backup reminder opens the Saves page.
