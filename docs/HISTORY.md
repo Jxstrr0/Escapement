@@ -2,7 +2,7 @@
 
 The full version-by-version log, moved out of `CLAUDE.md` (which loads on every Claude turn) so it's read only when needed. Newest entries are added to the end of the matching list, the same way they were in `CLAUDE.md`. `CLAUDE.md` keeps a short current status.
 
-## Current status (1.1.2.0)
+## Current status (1.1.2.3)
 
 
 - PR 0 done: scaffold, five tabs (Bench, Build, Test, Shop, Career), intro, Settings sheet (graphics tier, auto-adjust, theme, motion, saves, install), PWA with the update bar, `ESC1:` save codes, a placeholder balance wheel swinging at 28,800 bph on the bench in 3D (Lite / Full shadows / Ultra bloom).
@@ -36,3 +36,4 @@ The full version-by-version log, moved out of `CLAUDE.md` (which loads on every 
 - 1.1.2.0: the bench is free while a piece is at a trial (`c.away`: at a trial, or back and waiting; `shelfToBench`, `caseSheet(id)`); the trial-result button shows only in the week it came back (`p.backWk`); audio unlocks on every gesture event (`GESTURES`).
 - **Paused: `docs/OPEN-QUESTIONS.md`** holds the balance and design questions from the 1.0.2.1 audit, with Kelbo's decisions (2026-11-08) at the top. Next: 1.2.0.0 (staff skills, pitch first).
 - What to test on a phone after any change: the loading bar finishes and the bench renders on Lite; every tab opens; Settings opens and the theme switches; Back up then Restore round trips; portrait and landscape; no console errors on desktop.
+- 1.1.2.3: quick wins from the first-time playtest. Close week asks first when 8 or more bench hours are free and a repair is waiting for a diagnosis or your piece still needs adjusting (`doCloseWeek` in `app/career.js`); tapping the tab you are on scrolls its page back to the top (`app/boot.js`). Sim unchanged.
