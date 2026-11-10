@@ -50,7 +50,8 @@ function normCareer(c){if(!buObjS(c))return null;
   if(!("newsN" in c)||!(+c.newsN>=0))c.newsN=newsSkip(c);c.newsN=Math.min(NEWS.length,+c.newsN||0);
   for(const k of ["cash","year","week","wk","used","seq","made"])c[k]=+c[k]||0;
   if(!c.year)c.year=c.start||START_YEAR;if(!c.week)c.week=1;
-  c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]);c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
+  c.staff=c.staff.filter(s=>buObjS(s)&&STAFF[s.kind]).map(s=>normHand(s,c.seed));c.cands=c.cands.filter(x=>buObjS(x)&&STAFF[x.kind]).map(x=>normHand(x,c.seed));   // skills since 1.2.0.0
+  c.repairs=c.repairs.filter(r=>buObjS(r)&&FAULTS[r.fault]&&buObjS(r.cfg));
   c.stock=c.stock.filter(x=>buObjS(x)&&buObjS(x.cfg)&&CASES[x.caseId]);c.jobs=c.jobs.filter(j=>buObjS(j)&&+j.h>0);
   if(c.bench&&!(buObjS(c.bench)&&buObjS(c.bench.cfg)))c.bench=null;
   c.away=(Array.isArray(c.away)?c.away:[]).filter(p=>buObjS(p)&&buObjS(p.cfg));   // pieces at a Bureau or Observatory trial, or back and waiting
@@ -67,7 +68,7 @@ function benchHours(){return BIZ.hoursWeek;}
 function hoursLeft(){const c=car();return Math.max(0,benchHours()-(+c.used||0));}
 /* your hours left once Close week has put them into the queued work (staff take their share first, as closeWeek does).
    Shown as "h free" so queuing a job visibly takes hours (a play-tester saw 45 h left after queuing 36 h of work) */
-function hoursQueued(){const c=car();if(!c)return 0;let st=staffHrs(),q=0;for(const j of c.jobs){let h=Math.max(0,+j.h||0);if(j.staff&&st>0){const d=Math.min(st,h);h-=d;st-=d;}q+=h;}return q;}
+function hoursQueued(){const c=car();if(!c)return 0;const P=staffPlan();let q=0;for(const j of c.jobs)q+=P.left.get(j);return q;}
 function hoursFree(){return Math.max(0,hoursLeft()-hoursQueued());}
 /* spend your own bench hours right now (adjusting). false if the week has run out */
 function spendHours(h){const c=car();if(!c)return true;if(hoursLeft()<h-1e-9)return false;c.used=(+c.used||0)+h;return true;}
@@ -82,7 +83,44 @@ function wages(){return car().staff.reduce((a,s)=>a+STAFF[s.kind].wage,0);}
 function weeklyCosts(){const c=car();return rent()+BIZ.keep+wages()+(c.loan?c.loan.pay:0);}
 function staffCap(){let n=0;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].staff)n+=UPGRADES[id].staff;return n;}
 function walkCap(){return SIM.walkInCap(repTier("press"),car().year);}   // the most walk-in buyers like to pay
-function staffHrs(){return car().staff.reduce((a,s)=>a+BIZ.staffHours*STAFF[s.kind].eff,0);}
+/* staff work in a week, in your hours (their hours × their average speed over the kinds of work) */
+function staffHrs(){return car().staff.reduce((a,s)=>a+BIZ.staffHours*handAvg(s),0);}
+/* ---- staff skills (1.2.0.0) ---- */
+/* a new hand's stars (drawn from their rank's range) and trait. Staff and candidates from older saves get theirs from a
+   generator seeded with their name, so they come out the same on every load */
+function handCard(kind,R){const[lo,hi]=STAFF[kind].stars,sk={};for(const a in STAFF_AREAS)sk[a]=lo+Math.floor(R()*(hi-lo+1));
+  return{sk,xp:{},trait:pick(R,Object.keys(STAFF_TRAITS))};}
+function normHand(s,seed){if(!buObjS(s.sk)||!STAFF_TRAITS[s.trait])Object.assign(s,handCard(s.kind,SIM.rng(`${seed}|hand|${s.name}`)));
+  for(const a in STAFF_AREAS)s.sk[a]=Math.max(1,Math.min(5,Math.round(+s.sk[a]||1)));
+  if(!buObjS(s.xp))s.xp={};for(const a in s.xp)s.xp[a]=+s.xp[a]||0;return s;}
+/* which kind of work a job is (null: not staff work) */
+function jobArea(j){if(j.kind==="trade")return"trade";if(j.kind==="warranty")return"service";
+  if(j.kind==="repair"){const r=repairBy(j.ref);return r&&FAULTS[r.trying]?FAULTS[r.trying].cls:"quick";}return null;}
+function handSpeed(s,a){const T=STAFF_TRAITS[s.trait]||{};return STAFF_SKILL.speed[s.sk[a]]*(T.speed&&(!T.area||T.area===a)?T.speed:1);}
+function handAvg(s){const A=Object.keys(STAFF_AREAS);return A.reduce((t,a)=>t+handSpeed(s,a),0)/A.length;}
+/* the chance a repair they did comes back */
+function handRedo(s,a){const T=STAFF_TRAITS[s.trait]||{};return T.redoX===0?0:STAFF_SKILL.redo[s.sk[a]]+(T.redoAdd||0);}
+const firstName=n=>String(n).split(" ")[0];
+/* who does what this week: each staff job, in order, goes to the free hands fastest at that kind of work. It works on
+   copies: left is the hours each job still has after staff, hands what each did (w: job hours done, own: their hours).
+   closeWeek commits it; hoursQueued only reads it */
+function staffPlan(){const c=car(),hands=c.staff.map(s=>({s,h:BIZ.staffHours,did:[]})),left=new Map();
+  for(const j of c.jobs){let h=Math.max(0,+j.h||0);
+    if(j.staff&&h>0){const a=jobArea(j);
+      for(const H of hands.slice().sort((x,y)=>handSpeed(y.s,a)-handSpeed(x.s,a))){if(h<=1e-9)break;if(H.h<=1e-9)continue;
+        const sp=handSpeed(H.s,a),w=Math.min(h,H.h*sp);h-=w;H.h-=w/sp;H.did.push({j,a,w,own:w/sp});}}
+    left.set(j,h);}
+  return{left,hands};}
+/* after the week: learning (stars grow with hours in an area) and one line on who did what */
+function staffWeek(P,rep){const lines=[];
+  for(const H of P.hands){const s=H.s,T=STAFF_TRAITS[s.trait]||{},per={};
+    for(const d of H.did){per[d.a]=(per[d.a]||0)+d.own;s.xp[d.a]=(s.xp[d.a]||0)+d.own;}
+    for(const a in per){for(let need=STAFF_SKILL.grow*s.sk[a]/(T.grow||1);s.sk[a]<5&&s.xp[a]>=need;need=STAFF_SKILL.grow*s.sk[a]/(T.grow||1)){
+      s.xp[a]-=need;s.sk[a]++;rep.push(`${s.name} is getting better at ${STAFF_AREAS[a].name.toLowerCase()}: ${s.sk[a]} stars now.`);}
+      if(s.sk[a]>=5)s.xp[a]=0;}
+    const bits=Object.keys(per).sort((x,y)=>per[y]-per[x]).map(a=>`${Math.round(per[a])} h ${STAFF_AREAS[a].name.toLowerCase()}`);
+    if(H.h>=1)bits.push(`${Math.round(H.h)} h idle`);lines.push(`${firstName(s.name)} ${bits.join(", ")}`);}
+  if(lines.length)rep.push(`Staff: ${lines.join("; ")}.`);}
 /* hours of repairs and trade work waiting that staff could take */
 function staffWork(){return car().jobs.filter(j=>j.staff).reduce((a,j)=>a+j.h,0);}
 function demand(){let d=1;for(const id in UPGRADES)if(upOwned(id)&&UPGRADES[id].demand)d*=UPGRADES[id].demand;return .2*d*(1+.12*repTier("press"))*SIM.eraMult(car().year,"retail");}
@@ -99,10 +137,10 @@ function buyUpgrade(id){const U=UPGRADES[id],c=car();if(!U||upOwned(id)||upNeeds
   if(!pay(U.cost,U.name))return false;c.up[id]=true;c.unlocks["shop:"+id]=true;toast(`${U.name}: yours.`);if(BUY_SOUND.machine.includes(id))sfx("newmachine");checkGoals();save();return true;}
 function refreshCands(R){const c=car(),kinds=Object.keys(STAFF).filter(k=>!STAFF[k].needs||upOwned(STAFF[k].needs));
   const taken=new Set(c.staff.map(s=>s.name));c.cands=[];
-  for(let i=0;i<3;i++){let n=pick(R,STAFF_NAMES);for(let j=0;j<6&&taken.has(n);j++)n=pick(R,STAFF_NAMES);taken.add(n);c.cands.push({name:n,kind:kinds[i%kinds.length]});}}
+  for(let i=0;i<3;i++){let n=pick(R,STAFF_NAMES);for(let j=0;j<6&&taken.has(n);j++)n=pick(R,STAFF_NAMES);taken.add(n);const kind=kinds[i%kinds.length];c.cands.push(Object.assign({name:n,kind},handCard(kind,R)));}}
 function hire(i){const c=car(),x=c.cands[i];if(!x)return;if(c.staff.length>=staffCap()){toast(staffCap()?"No room for more staff: a second bench or a clean room makes room.":"A shared bench has no room for staff: get your own shop first.");return;}
   const K=STAFF[x.kind];if(K.hire&&!pay(K.hire,"signing "+x.name))return;
-  c.staff.push({name:x.name,kind:x.kind,since:c.wk});c.cands.splice(i,1);save();toast(`${x.name} starts on Monday.`);}
+  c.staff.push({name:x.name,kind:x.kind,since:c.wk,sk:x.sk,xp:{},trait:x.trait});c.cands.splice(i,1);save();toast(`${x.name} starts on Monday.`);}
 function letGo(i){const c=car(),s=c.staff[i];if(!s)return;if(!pay(STAFF[s.kind].wage,"a week's notice for "+s.name))return;c.staff.splice(i,1);
   if(c.year>=2015&&c.year<=2018)c.slumpLetGo=true;save();toast(`${s.name} has left.`);}
 
@@ -202,15 +240,22 @@ function sellPiece(pc,price,to,how){const c=car();sfx("sale");c.stock=c.stock.fi
 function closeWeek(){
   const c=car();if(!c||c.over)return null;const rep=[],R=weekRng("close");calFx={};
   /* 1. the work: staff on repairs and trade, then your hours on everything in order */
-  let staffH=staffHrs(),mine=hoursLeft(),myRepair=false;
-  for(const j of c.jobs){if(j.staff&&staffH>0){const d=Math.min(staffH,j.h);j.h-=d;staffH-=d;}}
+  const P=staffPlan(),byJob=new Map();let mine=hoursLeft(),myRepair=false;
+  const h0=new Map(c.jobs.map(j=>[j,+j.h||0]));   // each job's hours before this week, to tell whose work a job mostly was
+  for(const H of P.hands)for(const d of H.did){const b=byJob.get(d.j);if(!b||d.w>b.w)byJob.set(d.j,{s:H.s,a:d.a,w:d.w});}   // the hand who did most of each job
+  for(const j of c.jobs)j.h=P.left.get(j);
   for(const j of c.jobs){if(mine<=0)break;if(j.h>0){const d=Math.min(mine,j.h);j.h-=d;mine-=d;if(j.kind==="repair")myRepair=true;}}
+  staffWeek(P,rep);
   const done=c.jobs.filter(j=>j.h<=1e-6);c.jobs=c.jobs.filter(j=>j.h>1e-6);
   for(const j of done){
     if(j.kind==="piece"&&c.bench&&c.bench.id===j.ref){c.bench.made=true;rep.push(`No. ${c.bench.no} is assembled: put it on the timegrapher.`);
       if(!c.bench.xpDone){c.bench.xpDone=true;const r=SIM.simulate(c.bench.cfg,{});levelToast("assembly",gainXp("assembly",4));
         if(r.complexity)levelToast("complications",gainXp("complications",r.complexity));if(r.cfg.finish.length)levelToast("finishing",gainXp("finishing",2*r.cfg.finish.length));}}
     if(j.kind==="repair"){const r=repairBy(j.ref);if(!r)continue;
+      const by=byJob.get(j);
+      if(r.trying===r.fault&&by&&by.w>=h0.get(j)/2&&!r.redone&&weekRng("redo"+r.id)()<handRedo(by.s,by.a)){r.redone=true;   // it comes back once at most; no money lost, only hours
+        const h=fixHours(r.trying)*STAFF_SKILL.redoShare;c.jobs.push({id:nextId(),kind:"repair",ref:r.id,h,label:`Redo: ${FAULTS[r.trying].fix.toLowerCase()}, ${r.watch}`,staff:true});
+        rep.push(`${capWord(r.watch)} came off ${firstName(by.s.name)}'s bench still running badly: ${fmtN(h,0)} h more on it before ${r.cust} gets it back.`);continue;}
       if(r.trying===r.fault){const F=FAULTS[r.fault],amt=Math.round(F.pay*SIM.eraMult(c.year,"repairs"));earn(amt,`${F.fix.toLowerCase()} for ${r.cust}`);
         rep.push(`Repaired ${r.watch} for ${r.cust}: ${fmt$(amt)}.`);c.repairs=c.repairs.filter(x=>x!==r);if(myRepair)levelToast("assembly",gainXp("assembly",1));addRep(REP_GAIN.repair,rep);}
       else{r.tried.push(r.trying);addRep(REP_GAIN.repairWrong,rep);r.state="in";rep.push(`${r.watch[0].toUpperCase()+r.watch.slice(1)} (${r.cust}) still runs badly: it wasn't ${FAULTS[r.trying].name.toLowerCase()}. Back on the timegrapher.`);r.trying=null;}}

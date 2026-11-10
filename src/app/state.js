@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.1.3.0";
+const VERSION="1.2.0.0";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -49,10 +49,26 @@ const UPGRADES={
   cleanroom:{name:"Clean room",cost:16000,needs:["shop"],staff:1,blurb:"Dust-free assembly: room for one more watchmaker."}};
 /* staff you can hire: the kinds (each candidate gets a name). eff = share of an hour of your work in one of theirs.
    They take repairs and trade work; the pieces you build stay yours. hire = signing fee; leaving pays one week */
+/* staff (1.2.0.0): each hand has 1 to 5 stars in each area of STAFF_AREAS; stars is the range a new hand's stars are drawn
+   from for that rank. Everyone works BIZ.staffHours a week; their stars set how fast that goes (STAFF_SKILL.speed) */
 const STAFF={
-  apprentice:{name:"Apprentice",wage:260,eff:.6,hire:0,blurb:"Keen, slow, careful with services."},
-  watchmaker:{name:"Watchmaker",wage:620,eff:1,hire:300,blurb:"Trained in the valley school. Works as fast as you."},
-  master:{name:"Master watchmaker",wage:1050,eff:1.35,hire:900,needs:"shop",blurb:"Thirty years at the bench. Faster than you."}};
+  apprentice:{name:"Apprentice",wage:260,stars:[1,2],hire:0,blurb:"Keen and slow, but learns on the job."},
+  watchmaker:{name:"Watchmaker",wage:620,stars:[2,4],hire:300,blurb:"Trained in the valley school."},
+  master:{name:"Master watchmaker",wage:1050,stars:[3,5],hire:900,needs:"shop",blurb:"Thirty years at the bench."}};
+/* the kinds of work staff do: the first four are FAULTS[].cls (a warranty job counts as a service), trade is trade batches */
+const STAFF_AREAS={quick:{name:"Quick jobs",short:"Quick"},service:{name:"Services",short:"Service"},fine:{name:"Hairsprings",short:"Hairspr."},
+  pivot:{name:"Pivots",short:"Pivots"},trade:{name:"Trade batches",short:"Trade"}};
+/* speed[stars]: work done per hour of theirs, against your 1. redo[stars]: the chance a repair they did comes back for
+   redoShare of its hours again (no money lost). grow: hours of work in an area to go from n stars to n+1 is grow × n
+   (about a star a year for a busy hand) */
+const STAFF_SKILL={speed:[0,.6,.8,1,1.2,1.4],redo:[0,.15,.06,.02,0,0],redoShare:.5,grow:400};
+/* one trait each: speed multiplies the speed (in area, or everywhere), redo adds to the redo chance, grow speeds learning */
+const STAFF_TRAITS={
+  steady:{name:"Steady",blurb:"Nothing they fix comes back.",redoX:0},
+  quick:{name:"Quick",blurb:"Fast, a little careless.",speed:1.1,redoAdd:.03},
+  learner:{name:"Quick learner",blurb:"Picks up a skill twice as fast.",grow:2},
+  spring:{name:"Hairspring hands",blurb:"A light touch: faster on hairsprings.",area:"fine",speed:1.25},
+  batch:{name:"Likes a long run",blurb:"Faster on trade batches.",area:"trade",speed:1.2}};
 const STAFF_NAMES=["Anneli Brask","Joris Halm","Mette Ostrander","Tobin Vael","Ilse Karrow","Pieter Lund","Saskia Dorn","Emil Fasch","Runa Velt","Kasimir Ott","Lotte Hesse","Bram Iversen"];
 /* repair faults. On the timegrapher each one shows a pattern: rate (s/d added), amp (amplitude multiplied), beat (ms added),
    jit (extra scatter), stop (no beats at all). The complaint is what the customer says (shared between faults on
