@@ -11,7 +11,7 @@ Found by the 1.0.2.1 audit (code review, design check, playthrough, 15-year mone
 - 8: a career summary at 2031 week 1 with Keep going. **Done in 1.1.0.0.**
 - 4: warn before delivering a commission piece worth more than twice what the customer pays. **Done in 1.1.0.0.**
 - 10: the bench is free while a piece is at a trial. **Done in 1.1.2.0.**
-- 12: staff get skill profiles. Planned for 1.2.0.0 (details to be pitched first).
+- 12: staff get skill profiles. **Done in 1.2.0.0** (Kelbo, 2026-11-10: slower and sometimes back when weak, grow slowly with work, jobs assigned automatically).
 - 11: no "hand the batch back". Closed.
 
 ## Balance (from the money runs)
