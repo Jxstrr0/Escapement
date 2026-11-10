@@ -44,8 +44,11 @@ function newGameGo(k){closeSheet();
     applyAll();showTab(k==="sandbox"?"build":"shop");}
 
 /* ---- Close week ---- */
-function doCloseWeek(){const c=car();if(!c||c.over)return;
+function doCloseWeek(sure){const c=car();if(!c||c.over)return;
   if(c.cash<0&&!c.loanUsed){loanSheet();return;}   // the bank sheet was closed without an answer: ask again before the week moves
+  /* unused hours are lost at Close week: ask first when a day or more is free and something could use it (playtest, 1.1.2.3) */
+  if(sure!==true){const free=hoursLeft()-c.jobs.reduce((n,j)=>n+Math.max(0,+j.h||0),0),rin=c.repairs.filter(r=>r.state==="in").length,p=c.bench,adj=p&&p.made&&!p.trial&&!p.cert;
+    if(free>=8&&(rin||adj)){confirmSheet("Hours left this week",`You have <b>${Math.floor(free)} bench hours</b> with nothing queued, and ${rin?`${rin} repair${rin>1?"s":""} waiting for a diagnosis`:`No. ${p.no} still to adjust`}. Hours you don't use are gone when the week closes.`,"Close week anyway",()=>doCloseWeek(true),"Go back");return;}}
   const was={year:c.year,week:c.week,cash:c.cash};
   sfx("chime");if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.hold();   // sound/workshop.js: the bell and the till wait for the clock's strokes
   let res;try{res=closeWeek();}finally{if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.release(2.9,1.6);}if(!res)return;hud();
