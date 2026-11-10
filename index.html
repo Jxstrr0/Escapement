@@ -2681,7 +2681,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.1.2.3";
+const VERSION="1.1.2.4";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -2943,7 +2943,7 @@ const fmtN=(n,d)=>Number(n).toFixed(d||0);
 /* ---- the header over the 3D view ---- */
 function hud(){const c=S.career;
   $("weekLbl").textContent=c?`The Haldis · ${c.year||START_YEAR} · week ${c.week||1}`:"The Haldis · "+START_YEAR;
-  $("cashLbl").textContent=c?fmt$(c.cash||0):"";$("repLbl").textContent=c&&!c.over?fmtN(hoursLeft(),1)+" h left":c?"closed":"Sandbox";}
+  $("cashLbl").textContent=c?fmt$(c.cash||0):"";$("repLbl").textContent=c&&!c.over?fmtN(hoursFree(),1)+" h free":c?"closed":"Sandbox";}
 
 /* ---- toast ---- */
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("on"),2600);}
@@ -3644,7 +3644,7 @@ function segBtns(list,cur,attr,lockFn){return list.map(([v,l,s])=>{const lk=lock
 function toolFor(need){for(const id in TOOLS){const t=TOOLS[id];if(need(t))return t;}return null;}
 /* the career card over the trace: what is on the machine and what you can do with it */
 function renderTestCareer(st){const el=$("tgCar"),c=car();el.hidden=!inCareer();if(!inCareer())return;
-  const p=c.bench,h=hoursLeft(),hrs=`<span class="cnt">${fmtN(h,1)} h left this week</span>`;let body="";
+  const p=c.bench,h=hoursLeft(),hrs=`<span class="cnt">${fmtN(hoursFree(),1)} h free this week</span>`;let body="";
   if(st.mode==="repair"){const rp=tgRepair(),F=FAULTS[rp.fault];
     body=`<h3>${rp.watch[0].toUpperCase()+rp.watch.slice(1)}${hrs}</h3><p>${rp.cust}: “${F.complaint}”${rp.tried.length?` Already tried: ${rp.tried.map(f=>FAULTS[f].fix.toLowerCase()).join(", ")}.`:""}</p>
 <p class="hint">Read the trace: how fast it runs, how far it swings, how far apart the two lines sit, how ragged they are. Then choose the fix.</p>
@@ -4049,6 +4049,10 @@ function normCareer(c){if(!buObjS(c))return null;
 /* ---- money and the week ---- */
 function benchHours(){return BIZ.hoursWeek;}
 function hoursLeft(){const c=car();return Math.max(0,benchHours()-(+c.used||0));}
+/* your hours left once Close week has put them into the queued work (staff take their share first, as closeWeek does).
+   Shown as "h free" so queuing a job visibly takes hours (a play-tester saw 45 h left after queuing 36 h of work) */
+function hoursQueued(){const c=car();if(!c)return 0;let st=staffHrs(),q=0;for(const j of c.jobs){let h=Math.max(0,+j.h||0);if(j.staff&&st>0){const d=Math.min(st,h);h-=d;st-=d;}q+=h;}return q;}
+function hoursFree(){return Math.max(0,hoursLeft()-hoursQueued());}
 /* spend your own bench hours right now (adjusting). false if the week has run out */
 function spendHours(h){const c=car();if(!c)return true;if(hoursLeft()<h-1e-9)return false;c.used=(+c.used||0)+h;return true;}
 function pay(n,what){const c=car();if(!c)return true;if(c.cash<n){toast(`Not enough cash: ${what||"that"} costs ${fmt$(n)}.`);return false;}c.cash-=n;book("out",n,what);return true;}
@@ -4551,13 +4555,13 @@ const dealerPrice=x=>Math.round(x.value*BIZ.dealer/10)*10;
 const PRICE_STEPS=[[-.2,"−20%"],[0,"Value"],[.2,"+20%"],[.5,"+50%"]];
 const RESERVES=[[0,"No reserve"],[.8,"Reserve 80% of value"],[1,"Reserve at full value"]];
 function weekCard(){const c=car();
-  return `<div class="card shwk"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursLeft(),1)} of ${benchHours()} h left</span></h3>
+  return `<div class="card shwk"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursFree(),1)} of ${benchHours()} h free</span></h3>
 <div class="kv"><span>Cash</span><b>${fmt$(c.cash)}</b><span>Costs a week</span><b>${fmt$(weeklyCosts())}</b><span>Staff</span><b>${c.staff.length} of ${staffCap()}</b></div>
 <div class="row"><button class="btn pri" data-sh="close">Close week</button></div></div>`;}
 function jobsCard(){const c=car();if(!c.jobs.length)return "";
   return `<div class="card"><h3>Work in hand<span class="cnt">${fmtN(c.jobs.reduce((a,j)=>a+j.h,0),0)} h</span></h3><ul class="shlist">${c.jobs.map(j=>
     `<li><span>${j.label}${j.staff?"":" <small>(you)</small>"}</span><b class="num">${fmtN(j.h,1)} h</b></li>`).join("")}</ul>
-<p class="hint">Close week puts your hours left, and your staff's, into these in order. Staff take repairs and trade work.</p></div>`;}
+<p class="hint">Close week puts your hours, and your staff's, into these in order; the hours shown as free are what is left after them. Staff take repairs and trade work.</p></div>`;}
 function repairsCard(){const c=car(),L=c.repairs;
   return `<div class="card"><h3>Repairs<span class="cnt">${L.length}</span></h3>${L.length?`<ul class="shlist rep">${L.map(r=>{const on=S.tgOn&&S.tgOn.id===r.id;
     return `<li><div><b>${capWord(r.watch)}</b> <small>· ${r.cust}</small><br><small>“${FAULTS[r.fault].complaint}” · ${r.state==="fixing"?`being fixed: ${FAULTS[r.trying].fix.toLowerCase()}`:`collects ${whenTxt(r.due)}`}</small></div>
@@ -4687,7 +4691,7 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
   if(!c)h=`<div class="card"><h3>Start a career</h3><p>You're in the Sandbox: every part, no money. A career starts with a bench, a little cash and the rent to pay.</p><div class="row"><button class="btn pri" data-cr="new">New game</button></div></div>`;
   else if(c.over)h=`<div class="card"><h3>The workshop is closed</h3><p>It ran from ${c.start} to ${c.year}: ${c.made} piece${c.made===1?"":"s"} made, ${c.sold.length} sold. The bank wouldn't lend twice.</p><div class="row"><button class="btn pri" data-cr="new">Start again</button></div></div>`;
   else{const done=c.sold.length,cert=Object.keys(c.certs).map(k=>`${c.certs[k]} ${SIM.CERT[k].name}`).join(", ");
-    h=`<div class="card"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursLeft(),1)} h left</span></h3>
+    h=`<div class="card"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursFree(),1)} h free</span></h3>
 <p>${c.kind==="shop"?"Your shop on the Haldis high street":upOwned("shop")?"Your shop on the high street":"A shared bench in a rented corner of a workshop"}, since ${c.start}. ${fmt$(c.cash)} in the till; ${fmt$(weeklyCosts())} a week goes out.</p>
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
 ${c.cash<2*weeklyCosts()?`<p class="hint lockt">${c.cash<weeklyCosts()?"Not enough in the till for next week's costs.":"Two weeks of costs or less in the till."} ${c.loanUsed?"The bank won't lend again: below zero, the workshop closes.":"Below zero, the Haldis Savings Bank lends once."} Repairs and trade bring cash in fastest.</p>`:""}
@@ -4727,7 +4731,7 @@ function newGameGo(k){closeSheet();
 function doCloseWeek(sure){const c=car();if(!c||c.over)return;
   if(c.cash<0&&!c.loanUsed){loanSheet();return;}   // the bank sheet was closed without an answer: ask again before the week moves
   /* unused hours are lost at Close week: ask first when a day or more is free and something could use it (playtest, 1.1.2.3) */
-  if(sure!==true){const free=hoursLeft()-c.jobs.reduce((n,j)=>n+Math.max(0,+j.h||0),0),rin=c.repairs.filter(r=>r.state==="in").length,p=c.bench,adj=p&&p.made&&!p.trial&&!p.cert;
+  if(sure!==true){const free=hoursFree(),rin=c.repairs.filter(r=>r.state==="in").length,p=c.bench,adj=p&&p.made&&!p.trial&&!p.cert;
     if(free>=8&&(rin||adj)){confirmSheet("Hours left this week",`You have <b>${Math.floor(free)} bench hours</b> with nothing queued, and ${rin?`${rin} repair${rin>1?"s":""} waiting for a diagnosis`:`No. ${p.no} still to adjust`}. Hours you don't use are gone when the week closes.`,"Close week anyway",()=>doCloseWeek(true),"Go back");return;}}
   const was={year:c.year,week:c.week,cash:c.cash};
   sfx("chime");if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.hold();   // sound/workshop.js: the bell and the till wait for the clock's strokes

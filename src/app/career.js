@@ -7,7 +7,7 @@ function renderCareer(){const el=$("careerBody"),c=car();let h="";
   if(!c)h=`<div class="card"><h3>Start a career</h3><p>You're in the Sandbox: every part, no money. A career starts with a bench, a little cash and the rent to pay.</p><div class="row"><button class="btn pri" data-cr="new">New game</button></div></div>`;
   else if(c.over)h=`<div class="card"><h3>The workshop is closed</h3><p>It ran from ${c.start} to ${c.year}: ${c.made} piece${c.made===1?"":"s"} made, ${c.sold.length} sold. The bank wouldn't lend twice.</p><div class="row"><button class="btn pri" data-cr="new">Start again</button></div></div>`;
   else{const done=c.sold.length,cert=Object.keys(c.certs).map(k=>`${c.certs[k]} ${SIM.CERT[k].name}`).join(", ");
-    h=`<div class="card"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursLeft(),1)} h left</span></h3>
+    h=`<div class="card"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursFree(),1)} h free</span></h3>
 <p>${c.kind==="shop"?"Your shop on the Haldis high street":upOwned("shop")?"Your shop on the high street":"A shared bench in a rented corner of a workshop"}, since ${c.start}. ${fmt$(c.cash)} in the till; ${fmt$(weeklyCosts())} a week goes out.</p>
 <p class="hint">${c.made} made · ${done} sold${cert?" · certificates: "+cert:""}${c.loan?` · loan ${fmt$(c.loan.left)} left`:""}</p>
 ${c.cash<2*weeklyCosts()?`<p class="hint lockt">${c.cash<weeklyCosts()?"Not enough in the till for next week's costs.":"Two weeks of costs or less in the till."} ${c.loanUsed?"The bank won't lend again: below zero, the workshop closes.":"Below zero, the Haldis Savings Bank lends once."} Repairs and trade bring cash in fastest.</p>`:""}
@@ -47,7 +47,7 @@ function newGameGo(k){closeSheet();
 function doCloseWeek(sure){const c=car();if(!c||c.over)return;
   if(c.cash<0&&!c.loanUsed){loanSheet();return;}   // the bank sheet was closed without an answer: ask again before the week moves
   /* unused hours are lost at Close week: ask first when a day or more is free and something could use it (playtest, 1.1.2.3) */
-  if(sure!==true){const free=hoursLeft()-c.jobs.reduce((n,j)=>n+Math.max(0,+j.h||0),0),rin=c.repairs.filter(r=>r.state==="in").length,p=c.bench,adj=p&&p.made&&!p.trial&&!p.cert;
+  if(sure!==true){const free=hoursFree(),rin=c.repairs.filter(r=>r.state==="in").length,p=c.bench,adj=p&&p.made&&!p.trial&&!p.cert;
     if(free>=8&&(rin||adj)){confirmSheet("Hours left this week",`You have <b>${Math.floor(free)} bench hours</b> with nothing queued, and ${rin?`${rin} repair${rin>1?"s":""} waiting for a diagnosis`:`No. ${p.no} still to adjust`}. Hours you don't use are gone when the week closes.`,"Close week anyway",()=>doCloseWeek(true),"Go back");return;}}
   const was={year:c.year,week:c.week,cash:c.cash};
   sfx("chime");if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.hold();   // sound/workshop.js: the bell and the till wait for the clock's strokes

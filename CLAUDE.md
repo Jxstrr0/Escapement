@@ -93,9 +93,9 @@ From PR 1, `tools/sim-test.js` does this and runs `DEFAULT_CFG` and the named `T
 - Going broke: the **Haldis Savings Bank lends once** (8% over a year); below zero a second time, the workshop closes with a restart offer.
 - Money: **euros** (`€4,850`, whole amounts; Kelbo, 1.0.2.3), formatted by `fmt$` in `src/app/state.js`. Prices are sized like Swiss francs: a repair 80 to 400, a decent piece a few thousand, a Chronometer piece 5,000 to 15,000, an auction lot up to six figures.
 
-## Current status (1.1.2.3)
+## Current status (1.1.2.4)
 
-The full log from PR 0 to 1.1.2.3 (what each version added, the tables and
+The full log from PR 0 to 1.1.2.4 (what each version added, the tables and
 save fields it brought) is `docs/HISTORY.md`. Read the matching entry before
 changing a system it describes; add each new release there and update this
 section.

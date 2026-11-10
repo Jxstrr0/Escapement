@@ -104,7 +104,7 @@ function segBtns(list,cur,attr,lockFn){return list.map(([v,l,s])=>{const lk=lock
 function toolFor(need){for(const id in TOOLS){const t=TOOLS[id];if(need(t))return t;}return null;}
 /* the career card over the trace: what is on the machine and what you can do with it */
 function renderTestCareer(st){const el=$("tgCar"),c=car();el.hidden=!inCareer();if(!inCareer())return;
-  const p=c.bench,h=hoursLeft(),hrs=`<span class="cnt">${fmtN(h,1)} h left this week</span>`;let body="";
+  const p=c.bench,h=hoursLeft(),hrs=`<span class="cnt">${fmtN(hoursFree(),1)} h free this week</span>`;let body="";
   if(st.mode==="repair"){const rp=tgRepair(),F=FAULTS[rp.fault];
     body=`<h3>${rp.watch[0].toUpperCase()+rp.watch.slice(1)}${hrs}</h3><p>${rp.cust}: “${F.complaint}”${rp.tried.length?` Already tried: ${rp.tried.map(f=>FAULTS[f].fix.toLowerCase()).join(", ")}.`:""}</p>
 <p class="hint">Read the trace: how fast it runs, how far it swings, how far apart the two lines sit, how ragged they are. Then choose the fix.</p>
