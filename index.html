@@ -2681,7 +2681,7 @@ window.WATCH_VIS=WATCH_VIS;
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.1.2.2";
+const VERSION="1.1.2.3";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
@@ -3301,7 +3301,8 @@ function showTab(t){
   if(TAB_RENDER[t])TAB_RENDER[t]();
   $("panel").scrollTop=tabScroll[t]||0;
   save();}
-$("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)showTab(b.dataset.tab);});
+/* tapping the tab you are on goes back to the top of its page (playtest: long pages, 1.1.2.3) */
+$("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(!b)return;if(b.dataset.tab===curTab){try{$("panel").scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches||document.documentElement.classList.contains("reduce")?"auto":"smooth"});}catch(_){$("panel").scrollTop=0;}return;}showTab(b.dataset.tab);});
 
 /* ---- Settings ---- */
 function segHtml(id,attr,opts,cur){return `<div class="seg" id="${id}" role="group">${opts.map(([v,l,s])=>`<button type="button" data-${attr}="${v}" class="${String(v)===String(cur)?"on":""}" aria-pressed="${String(v)===String(cur)}">${l}${s?`<small>${s}</small>`:""}</button>`).join("")}</div>`;}
@@ -4723,8 +4724,11 @@ function newGameGo(k){closeSheet();
     applyAll();showTab(k==="sandbox"?"build":"shop");}
 
 /* ---- Close week ---- */
-function doCloseWeek(){const c=car();if(!c||c.over)return;
+function doCloseWeek(sure){const c=car();if(!c||c.over)return;
   if(c.cash<0&&!c.loanUsed){loanSheet();return;}   // the bank sheet was closed without an answer: ask again before the week moves
+  /* unused hours are lost at Close week: ask first when a day or more is free and something could use it (playtest, 1.1.2.3) */
+  if(sure!==true){const free=hoursLeft()-c.jobs.reduce((n,j)=>n+Math.max(0,+j.h||0),0),rin=c.repairs.filter(r=>r.state==="in").length,p=c.bench,adj=p&&p.made&&!p.trial&&!p.cert;
+    if(free>=8&&(rin||adj)){confirmSheet("Hours left this week",`You have <b>${Math.floor(free)} bench hours</b> with nothing queued, and ${rin?`${rin} repair${rin>1?"s":""} waiting for a diagnosis`:`No. ${p.no} still to adjust`}. Hours you don't use are gone when the week closes.`,"Close week anyway",()=>doCloseWeek(true),"Go back");return;}}
   const was={year:c.year,week:c.week,cash:c.cash};
   sfx("chime");if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.hold();   // sound/workshop.js: the bell and the till wait for the clock's strokes
   let res;try{res=closeWeek();}finally{if(typeof WORKSHOP_SOUND!=="undefined")WORKSHOP_SOUND.release(2.9,1.6);}if(!res)return;hud();
