@@ -7,10 +7,6 @@ const capWord=s=>s[0].toUpperCase()+s.slice(1);
 const dealerPrice=x=>Math.round(x.value*BIZ.dealer/10)*10;
 const PRICE_STEPS=[[-.2,"−20%"],[0,"Value"],[.2,"+20%"],[.5,"+50%"]];
 const RESERVES=[[0,"No reserve"],[.8,"Reserve 80% of value"],[1,"Reserve at full value"]];
-function weekCard(){const c=car();
-  return `<div class="card shwk"><h3>${c.year} · week ${c.week}<span class="cnt">${fmtN(hoursFree(),1)} of ${benchHours()} h free</span></h3>
-<div class="kv"><span>Cash</span><b>${fmt$(c.cash)}</b><span>Costs a week</span><b>${fmt$(weeklyCosts())}</b><span>Staff</span><b>${c.staff.length} of ${staffCap()}</b></div>
-<div class="row"><button class="btn pri" data-sh="close">Close week</button></div></div>`;}
 function jobsCard(){const c=car();if(!c.jobs.length)return "";
   return `<div class="card"><h3>Work in hand<span class="cnt">${fmtN(c.jobs.reduce((a,j)=>a+j.h,0),0)} h</span></h3><ul class="shlist">${c.jobs.map(j=>
     `<li><span>${j.label}${j.staff?"":" <small>(you)</small>"}</span><b class="num">${fmtN(j.h,1)} h</b></li>`).join("")}</ul>
@@ -70,14 +66,26 @@ function booksCard(){const c=car(),B=c.books.slice(-8).reverse();
   return `<details class="card"><summary><h3>The books</h3></summary>${c.loan?`<p>Bank loan: ${fmt$(c.loan.left)} still to pay, ${fmt$(c.loan.pay)} a week.</p>`:""}
 <table class="books"><thead><tr><th>Week</th><th>In</th><th>Out</th><th>Net</th></tr></thead><tbody>${B.map(b=>`<tr><td>${b.year} · ${b.week}</td><td>${fmt$(b.in)}</td><td>${fmt$(b.out)}</td><td class="${b.in-b.out<0?"neg":""}">${fmt$(b.in-b.out)}</td></tr>`).join("")||`<tr><td colspan="4">Nothing yet.</td></tr>`}</tbody></table>
 <p class="hint">Rent ${fmt$(rent())} and your keep ${fmt$(BIZ.keep)} a week${wages()?`, wages ${fmt$(wages())}`:""}.</p></details>`;}
-function renderShop(){const el=$("shopBody");
+/* the Shop's pages (play-test: one long page buried Close week, the stock and the dealer). Not saved: it opens on Work.
+   The week's line and Close week sit in a bar pinned to the bottom of every page. */
+const SH_PAGES=[["work","Work"],["stock","Stock"],["workshop","Workshop"],["saves","Saves"]];
+let shPage="work";
+function shopGo(p){shPage=p;if(curTab==="shop")renderShop();}
+function shopBar(){const c=car();
+  return `<div class="shbar"><div><b>${c.year} · week ${c.week}</b><small>${fmt$(c.cash)} · ${fmtN(hoursFree(),1)} of ${benchHours()} h free · costs ${fmt$(weeklyCosts())} a week</small></div><button class="btn pri" data-sh="close">Close week</button></div>`;}
+function renderShop(){const el=$("shopBody"),sv=$("savesCard");if(sv){if(sv.parentNode===el)el.after(sv);sv.hidden=false;}   // the Saves page borrows the card; put it back first
   if(!S.career){el.innerHTML=`<div class="card"><h3>The Sandbox</h3><p>No career running: every part is on offer and nothing costs money. Start a career to take in repairs, sell pieces and pay the rent.</p><div class="row"><button class="btn pri" data-sh="new">Start a career</button></div></div>`;return;}
   if(car().over){el.innerHTML=`<div class="card"><h3>The workshop is closed</h3><p>The bank wouldn't lend again. Start over from the Career tab.</p><div class="row"><button class="btn pri" data-sh="new">New game</button></div></div>`;return;}
-  el.innerHTML=weekCard()+benchCard()+repairsCard()+stockCard()+ordersCard()+tradeCard()+jobsCard()+upgradesCard()+staffCard()+booksCard();}
+  const pg=shPage==="stock"?stockCard()||`<div class="card"><h3>In stock</h3><p>Nothing in stock. Make a piece on the Build tab and it lands here to price and sell.</p></div>`
+    :shPage==="workshop"?upgradesCard()+staffCard()+booksCard():shPage==="saves"?"":benchCard()+repairsCard()+ordersCard()+tradeCard()+jobsCard();
+  if(sv)sv.hidden=shPage!=="saves";
+  el.innerHTML=`<div class="seg shsub" role="group" aria-label="Shop pages">${SH_PAGES.map(([k,n])=>`<button data-shp="${k}" class="${k===shPage?"on":""}" aria-pressed="${k===shPage}">${n}</button>`).join("")}</div>`+pg+shopBar();
+  if(sv&&shPage==="saves")el.insertBefore(sv,el.lastElementChild);}
 TAB_RENDER.shop=renderShop;
 function shopChanged(){hud();if(TAB_RENDER[curTab])TAB_RENDER[curTab]();}
 $("shopBody").addEventListener("click",e=>{const pf=e.target.closest("[data-pf]");
   if(pf){const x=stockBy(pf.parentNode.dataset.stk);if(x){x.price=Math.round(x.value*(1+ +pf.dataset.pf)/10)*10;save();renderShop();}return;}
+  const sp=e.target.closest("[data-shp]");if(sp){shopGo(sp.dataset.shp);$("panel").scrollTop=0;return;}
   const b=e.target.closest("[data-sh]");if(!b)return;const k=b.dataset.sh,id=b.dataset.id;
   if(k==="close")doCloseWeek();
   if(k==="new")newGameSheet();
