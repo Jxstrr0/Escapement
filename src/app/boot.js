@@ -18,7 +18,8 @@ function showTab(t){
   if(TAB_RENDER[t])TAB_RENDER[t]();
   $("panel").scrollTop=tabScroll[t]||0;
   save();}
-$("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)showTab(b.dataset.tab);});
+/* tapping the tab you are on goes back to the top of its page (playtest: long pages, 1.1.2.3) */
+$("tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(!b)return;if(b.dataset.tab===curTab){try{$("panel").scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches||document.documentElement.classList.contains("reduce")?"auto":"smooth"});}catch(_){$("panel").scrollTop=0;}return;}showTab(b.dataset.tab);});
 
 /* ---- Settings ---- */
 function segHtml(id,attr,opts,cur){return `<div class="seg" id="${id}" role="group">${opts.map(([v,l,s])=>`<button type="button" data-${attr}="${v}" class="${String(v)===String(cur)?"on":""}" aria-pressed="${String(v)===String(cur)}">${l}${s?`<small>${s}</small>`:""}</button>`).join("")}</div>`;}
