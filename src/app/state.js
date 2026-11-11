@@ -7,7 +7,7 @@
    localStorage keys (every access wrapped in try/catch): "esc-save" (the current game, settings included) and
    "esc-slot1" .. "esc-slot3" (the save slots). A new key must also go into buMake / buWrite in app/savecode.js;
    stop and ask before adding one. */
-const VERSION="1.2.0.0";
+const VERSION="1.2.0.1";
 const SIM=WATCH_SIM;
 const $=id=>document.getElementById(id);
 
