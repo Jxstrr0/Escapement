@@ -7,7 +7,7 @@ Sister project: Prairie Engine Works (`Jxstrr0/350Chev`). The stack, build scrip
 ## Stack
 
 - Plain HTML, CSS and classic (non-module) JavaScript in a few big `<script>` blocks. No package.json, no npm, no bundler, no CI. The node scripts below are the only checks.
-- three.js **r128** from cdnjs. The bloom addons for Ultra come from jsdelivr `three@0.128.0` (the `ESC_LIBS` list in `src/html/body.html`, loaded on demand through `window.__escPost`; a Lite phone never loads them). Google Fonts: Space Grotesk (UI) and JetBrains Mono (readouts). Nothing else external.
+- three.js **r128** from cdnjs. The bloom addons for Ultra come from jsdelivr `three@0.128.0` (the `ESC_LIBS` list in `src/html/body.html`, loaded on demand through `window.__escPost`; a Lite phone never loads them). Google Fonts: Space Grotesk (UI) and JetBrains Mono (readouts). Cloudflare Web Analytics (`static.cloudflareinsights.com/beacon.min.js` in `src/html/tail.html`, cookieless visit counts; Kelbo, 1.2.0.2). Nothing else external.
 - PWA: `manifest.webmanifest`, `icons/`, and the generated `sw.js`. Installed copies work offline.
 - Assets: CC0 and CC-BY assets are fine, and so are sounds Kelbo has made with ElevenLabs on his paid plan (quote the credits and wait for a yes before generating). Every one gets a line in a `CREDITS.md` next to its folder (`sounds/CREDITS.md`, `models/CREDITS.md`, `textures/CREDITS.md`); ask Kelbo when a licence is unclear.
 - Node 16 or newer for the scripts (22 is what was last used). Nothing to install. `tools/make-icons.js` needs Playwright (run by hand; output is committed).
